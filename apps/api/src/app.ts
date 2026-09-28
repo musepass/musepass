@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { cors } from 'hono/cors';
 import type { Address, Hex } from 'viem';
 import {
   buildEip712Domain,
@@ -50,6 +51,20 @@ export function createApp(deps: MusenameDeps) {
   const { config, reservedIndex, chain, names, requests, sponsorship, clock } = deps;
   const app = new Hono();
   const buckets = new Map<string, RateBucket>();
+
+  // The web app runs on its own origin, so the API has to say who may call it.
+  // The list comes from config (brand site URL plus local dev ports) and can be
+  // overridden with MUSENAME_ALLOWED_ORIGINS.
+  const allowedOrigins = new Set(config.allowedOrigins);
+  app.use(
+    '/v1/*',
+    cors({
+      origin: (origin) => (origin && allowedOrigins.has(origin) ? origin : null),
+      allowMethods: ['GET', 'POST', 'OPTIONS'],
+      allowHeaders: ['Content-Type'],
+      maxAge: 600,
+    }),
+  );
 
   /** Tokens are stored only as a hash: a database leak must not hand out confirm links. */
   const hashToken = (token: string): string =>

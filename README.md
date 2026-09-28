@@ -13,8 +13,8 @@
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 0 | 前置决策与准备 | ✅ 工程完成；品牌/根名字等决策已记录（含价格查证） |
-| 1 | 名字：能在钱包里解析 | 🟡 合约、合规校验、领取 API、端到端链路均完成；待真链部署、网关、4 钱包验证、网页 |
-| 2 | 名片 | 🟡 格式校验、可见性模型、AI 起草草稿完成；待 IPFS 落盘、网页编辑页、ERC-8004 登记 |
+| 1 | 名字：能在钱包里解析 | 🟡 合约、合规校验、领取 API、网页（领取 / 确认 / 名字主页）、端到端链路均完成；待真链部署、网关、4 钱包验证 |
+| 2 | 名片 | 🟡 格式校验、可见性模型、AI 起草草稿、名字页展示完成；待 IPFS 落盘、编辑页、ERC-8004 登记 |
 | 3 | AI 一句话注册（MCP） | 🟡 5 个工具 + 确认链接流程完成，通过真实 MCP 协议测试；待接入说明页与两个真 AI 客户端验证 |
 | 4 | 两周验证期（门槛） | ⬜ 未开始 |
 | 5 | 认证履历 | ⬜ 未开始（按规矩要等门槛通过） |
@@ -29,18 +29,29 @@
 ```bash
 pnpm install                 # 一键安装
 pnpm check                   # 类型检查 + 单元测试 + 合约测试
-pnpm verify:local            # 起本地链 + API + MCP，跑通整条链路
+pnpm verify:local            # 起本地链 + API + MCP + 网页，跑通整条链路
 ```
 
-`pnpm verify:local` 会真的部署合约并铸造一个名字，然后断言：
+`pnpm verify:local` 会真的部署合约、铸造一个名字、起 API、起 MCP、起网页，然后断言：
 
 - 链下算出的 EIP-712 摘要与链上 `hashRegister()` **逐字节一致**
 - 名字归属于**签名者本人**，代付 gas 的平台地址不是 owner
 - 平台地址**不是** registrar，因此无法修改任何已发放的名字
 - 链上地址记录按 ENSIP-11 与 mainnet coinType 各写一条
 - 接着启动 API 与 MCP：AI 客户端通过 streamable HTTP 列出并调用 5 个工具，拿到一条待主人确认的注册链接
+- 最后启动网页：首页、领取页、名字主页、开发者页都能渲染，品牌与价格来自 API 配置
 
 不需要任何测试网资金，也不需要私钥。
+
+只看网页：
+
+```bash
+pnpm --filter @musename/core build
+pnpm --filter @musename/api build
+pnpm --filter @musename/web dev        # http://localhost:3000
+```
+
+网页向 `MUSENAME_API_URL`（默认 `http://localhost:3001`）取配置；API 没起也能渲染，用的是内置兜底配置。
 
 ---
 
@@ -51,7 +62,7 @@ config/             品牌名、价格、限额、保留名单（全部配置化
 packages/core/      归一化、易混淆检测、保留名单、价格、namehash、名片、签名校验
 packages/verify/    履历离线验证脚本（阶段 5）
 contracts/          Foundry 工程：一个无资金的政策合约 + 部署脚本 + 23 个测试
-apps/web/           网页：领取、主页、管理（待做）
+apps/web/           网页：首页、领取页、确认页、名字主页（Next.js）
 apps/api/           查询 API + 注册后端 + 注册请求（已完成）
 apps/mcp/           MCP 服务：5 个工具（已完成）
 apps/gateway/       CCIP-Read 解析网关（阶段 1 待做）

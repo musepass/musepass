@@ -20,3 +20,5 @@ data/*.sqlite
 .mcp.log
 .api.pid
 .mcp.pid
+.web.log
+.web.pid

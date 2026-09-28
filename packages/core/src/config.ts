@@ -100,6 +100,8 @@ export interface MusenameConfig {
   pricing: PricingConfig;
   limits: LimitsConfig;
   reserved: ReservedConfig;
+  /** Origins allowed to call the API from a browser. Config, not code. */
+  allowedOrigins: string[];
 }
 
 export interface LoadConfigOptions {
@@ -198,8 +200,37 @@ export function loadConfig(options: LoadConfigOptions = {}): MusenameConfig {
     pricing: readJson<PricingConfig>(join(configDir, 'pricing.json')),
     limits: readJson<LimitsConfig>(join(configDir, 'limits.json')),
     reserved: readJson<ReservedConfig>(join(configDir, 'reserved-names.json')),
+    allowedOrigins: [],
   };
 
   assertShape(config);
-  return applyEnvOverrides(config, env);
+  return applyEnvOverrides({ ...config, allowedOrigins: resolveAllowedOrigins(config, env) }, env);
+}
+
+function resolveAllowedOrigins(
+  config: MusenameConfig,
+  env: Record<string, string | undefined>,
+): string[] {
+  if (env.MUSENAME_ALLOWED_ORIGINS) {
+    return env.MUSENAME_ALLOWED_ORIGINS.split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+  }
+  const origins = new Set<string>();
+  try {
+    origins.add(new URL(config.brand.siteUrl).origin);
+  } catch {
+    // A malformed siteUrl should not stop the API from booting.
+  }
+  if (config.chains.l2.explorer) {
+    try {
+      origins.add(new URL(config.chains.l2.explorer).origin);
+    } catch {
+      // ignore
+    }
+  }
+  for (const dev of ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:3100']) {
+    origins.add(dev);
+  }
+  return [...origins];
 }

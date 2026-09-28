@@ -157,6 +157,45 @@ describe('GET /v1/config', () => {
   });
 });
 
+describe('browser access', () => {
+  it('answers a preflight from an allowed origin', async () => {
+    const { app } = buildApp();
+    const response = await app.request('/v1/names/aguang/available', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'http://localhost:3000',
+        'access-control-request-method': 'GET',
+      },
+    });
+    expect(response.status).toBeLessThan(300);
+    expect(response.headers.get('access-control-allow-origin')).toBe('http://localhost:3000');
+  });
+
+  it('does not hand an unknown origin a CORS grant', async () => {
+    const { app } = buildApp();
+    const response = await app.request('/v1/names/aguang/available', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://evil.example',
+        'access-control-request-method': 'GET',
+      },
+    });
+    expect(response.headers.get('access-control-allow-origin')).not.toBe('https://evil.example');
+  });
+
+  it('allows the configured site origin', async () => {
+    const { app } = buildApp();
+    const response = await app.request('/v1/names/aguang/available', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://musename.xyz',
+        'access-control-request-method': 'GET',
+      },
+    });
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://musename.xyz');
+  });
+});
+
 describe('GET /v1/names/{name}/available', () => {
   it('accepts a free name and leads with a plain language summary', async () => {
     const { app } = buildApp();
