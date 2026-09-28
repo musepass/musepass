@@ -109,6 +109,7 @@ TODO.md             后续所有阶段的工作清单
 ## 文档
 
 - [技术核实报告](docs/tech-verification-report.md) — Durin、ERC-8004、ERC-8412、ENSIP-15 的实际查证结果，以及必须调整的地方
+- [决策记录](docs/decisions.md) — 官网域名、ENS 根名字、名字主页域名等产品边界决定
 - [TODO.md](TODO.md) — 阶段 2–6 的工作清单
 - [contracts/README.md](contracts/README.md) — 合约与部署流程
 
