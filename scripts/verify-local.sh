@@ -80,7 +80,7 @@ echo "    registry  ${REGISTRY}"
 echo "    registrar ${REGISTRAR}"
 
 echo "==> [1/3] chain: sign off chain, mint on chain"
-node "$ROOT_DIR/scripts/local-claim-e2e.mjs" \
+node "$ROOT_DIR/scripts/claim-e2e.mjs" \
   --rpc "$RPC" \
   --registry "$REGISTRY" \
   --registrar "$REGISTRAR" \

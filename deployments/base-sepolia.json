@@ -1,0 +1,55 @@
+{
+  "$comment": "Real deployments. Chain is the source of truth; this file is the record of what was deployed and by whom.",
+  "chain": { "name": "base-sepolia", "chainId": 84532, "explorer": "https://sepolia.basescan.org" },
+  "l2RegistryFactory": "0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d",
+  "registryImplementation": "0xdeB09eB3111cB75d538216e8B8fC30047d75fb34",
+  "l2Registry": {
+    "address": "0xdb0e02b4e3509d72c660241f4069b3a477815eb9",
+    "deployedVia": "L2RegistryFactory.deployRegistry(\"musename.eth\", \"MUSENAME\", \"\", admin)",
+    "tx": "0x9819772805b78f9aca665bb7066d5183002361b5b8d138785c6a00fe6f4efda2",
+    "baseNode": "0x731b1833caa2654d40fc77e8ab70baeaf4ebf8f5391d625fa1272af73ff76d45",
+    "baseNodeMatchesNamehash": true
+  },
+  "registrar": {
+    "address": "0x2cd84dea0e7a662b1f2963be3e9add61011a3da5",
+    "constructor": {
+      "registry": "0xdb0e02b4e3509d72c660241f4069b3a477815eb9",
+      "name": "MuseName",
+      "version": "1",
+      "minLabelBytes": 3
+    },
+    "addRegistrarTx": "0x22a74f7f5851c4d1ca1b4badbd9c8ebd3bb5e83df54caef84f056114982cf1e1",
+    "setRelayerTx": "0x1ff3c8c055d7e076910c144b98370886a22cd95bdafd83bb4de83d63379509d1"
+  },
+  "admin": "0x2A9574dE1B1C7FEa588C483d9a692b05A62e0d46",
+  "issuer": "0x2A9574dE1B1C7FEa588C483d9a692b05A62e0d46",
+  "verifiedOnChain": {
+    "registrars(registrarContract)": true,
+    "registrars(adminEoa)": false,
+    "relayers(admin)": true,
+    "isAvailable(aguang)": true,
+    "isAvailable(ab)": false,
+    "chainCoinType": 2147568180,
+    "totalSupplyAfterTestClaims": 6
+  },
+  "firstClaim": {
+    "label": "aguang",
+    "fullName": "aguang.musename.eth",
+    "node": "0xb734fb4c51128b0685597a4e803792e75a6990a0f923fe9c9f9fbe639273b520",
+    "signedBy": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "sponsoredBy": "0x2A9574dE1B1C7FEa588C483d9a692b05A62e0d46",
+    "note": "The signer received the name; the sponsoring key did not. That is the property the whole design rests on."
+  },
+  "notYetDone": [
+    "L1 resolution: the Sepolia ENS name still has to point at Durin's L1 resolver, then setL2Registry(registry, 84532)",
+    "Gateway deployment",
+    "Wallet compatibility pass on the four chosen wallets",
+    "Note: most wallets only resolve ENS on mainnet, so the four wallet acceptance test needs the mainnet deployment, not this one"
+  ],
+  "l1": {
+    "durinL1ResolverOnSepolia": "0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61",
+    "durinL1ResolverHasCode": true,
+    "note": "Durin deploys the L1 resolver deterministically, so the same address exists on mainnet and Sepolia",
+    "sepoliaEnsNameOwner_musename.eth": "0x0000000000000000000000000000000000000000"
+  }
+}

@@ -22,3 +22,4 @@ data/*.sqlite
 .mcp.pid
 .web.log
 .web.pid
+contracts/.sepolia-keys

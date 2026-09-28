@@ -22,8 +22,8 @@
     "rpcEnv": "BASE_SEPOLIA_RPC_URL",
     "explorer": "https://sepolia.basescan.org",
     "durinRegistryFactory": "0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d",
-    "l2Registry": "",
-    "registrar": "",
+    "l2Registry": "0xdb0e02b4e3509d72c660241f4069b3a477815eb9",
+    "registrar": "0x2cd84dea0e7a662b1f2963be3e9add61011a3da5",
     "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
   }
 }
