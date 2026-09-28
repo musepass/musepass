@@ -122,6 +122,17 @@ done
 curl -sf "http://127.0.0.1:${API_PORT}/healthz" >/dev/null || { echo "api never became healthy"; tail -20 "$ROOT_DIR/.api.log"; exit 1; }
 curl -sf "http://127.0.0.1:${MCP_PORT}/healthz" >/dev/null || { echo "mcp never became healthy"; tail -20 "$ROOT_DIR/.mcp.log"; exit 1; }
 
+echo "    api /v1/config:"
+curl -sf "http://127.0.0.1:${API_PORT}/v1/config" \
+  | python3 -c "
+import json, sys
+data = json.load(sys.stdin)['data']
+print('      product   ', data['productName'])
+print('      rootName  ', data['rootName'])
+print('      registrar ', data['registrar'])
+print('      features  ', data['features'])
+"
+
 MUSENAME_SMOKE_NAME="$SMOKE_LABEL" \
   node "$ROOT_DIR/apps/mcp/scripts/smoke.mjs" "http://127.0.0.1:${MCP_PORT}/mcp" \
   | sed 's/^/    /'

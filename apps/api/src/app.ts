@@ -95,6 +95,71 @@ export function createApp(deps: MusenameDeps) {
   );
 
   /* ------------------------------------------------------------------ */
+  /* GET /v1/config                                                      */
+  /* ------------------------------------------------------------------ */
+  /**
+   * Everything a front end needs to render brand text, build the EIP-712
+   * domain and show prices. Published so the front end never hardcodes a brand
+   * name, a root name or a price: renaming the product stays a config change.
+   */
+  app.get('/v1/config', (c) => {
+    const { brand, chains, pricing, limits } = config;
+    return c.json({
+      summary: {
+        zh: `这是 ${brand.productName} 的公开配置。`,
+        en: `Public configuration for ${brand.productName}.`,
+      },
+      data: {
+        productName: brand.productName,
+        tagline: brand.tagline,
+        rootName: brand.rootName,
+        siteUrl: brand.siteUrl,
+        supportEmail: brand.supportEmail,
+        legalDisclaimer: brand.legalDisclaimer,
+        exampleLabel: brand.naming.exampleLabel,
+        chain: {
+          name: chains.l2.name,
+          chainId: chains.l2.chainId,
+          explorer: chains.l2.explorer ?? null,
+        },
+        registrar: registrarAddress || null,
+        l2Registry: chains.l2.l2Registry ?? null,
+        usdc: chains.l2.usdc ?? null,
+        pricing: {
+          currency: pricing.currency,
+          freeMinUnits: pricing.freeTier.minUnits,
+          lengthMetric: limits.lengthMetric,
+          premiumTiers: pricing.premiumTiers.map((tier) => ({
+            id: tier.id,
+            minUnits: tier.minCodePoints,
+            maxUnits: tier.maxCodePoints,
+            priceUsd: tier.priceUsd,
+            // Phase 1 refuses to sell premium names, so the front end must not
+            // offer a purchase even though a price exists.
+            sellable: tier.status !== 'placeholder',
+          })),
+          certificationMonthlyUsd: pricing.certification.monthlyUsd,
+        },
+        limits: {
+          freeNamesPerWallet: limits.freeNamesPerWallet,
+          minLabelUnits: limits.minLabelUnitsPremium,
+          maxLabelBytes: limits.maxLabelBytes,
+          confirmTokenTtlMinutes: limits.registrationRequest.confirmTokenTtlMinutes,
+        },
+        // Honest feature flags: the front end must not promise what is not built.
+        features: {
+          cards: false,
+          trackRecord: false,
+          premiumPurchase: false,
+          aiRegistration: true,
+        },
+      },
+      errors: [],
+      meta: meta(false),
+    });
+  });
+
+  /* ------------------------------------------------------------------ */
   /* GET /v1/names/{name}/available                                      */
   /* ------------------------------------------------------------------ */
   app.get('/v1/names/:name/available', async (c) => {

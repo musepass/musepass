@@ -116,6 +116,47 @@ describe('GET /healthz', () => {
   });
 });
 
+describe('GET /v1/config', () => {
+  it('publishes the brand, chain and prices the front end needs', async () => {
+    const { app } = buildApp();
+    const body = await (await app.request('/v1/config')).json();
+
+    expect(body.data.productName).toBe('MuseName');
+    expect(body.data.rootName).toBe('musename.eth');
+    expect(body.data.siteUrl).toBe('https://musename.xyz');
+    expect(body.data.chain.chainId).toBe(8453);
+    expect(body.data.registrar).toBe(REGISTRAR);
+    expect(body.data.legalDisclaimer.zh).toContain('Meta');
+  });
+
+  it('gives the front end everything the EIP-712 domain needs', async () => {
+    const { app } = buildApp();
+    const body = await (await app.request('/v1/config')).json();
+    expect(body.data.productName).toBeTruthy();
+    expect(body.data.chain.chainId).toBeTruthy();
+    expect(body.data.registrar).toMatch(/^0x[0-9a-fA-F]{40}$/);
+  });
+
+  it('does not let the front end promise unbuilt features', async () => {
+    const { app } = buildApp();
+    const body = await (await app.request('/v1/config')).json();
+    expect(body.data.features).toEqual({
+      cards: false,
+      trackRecord: false,
+      premiumPurchase: false,
+      aiRegistration: true,
+    });
+  });
+
+  it('reports the decided certification price and the free tier threshold', async () => {
+    const { app } = buildApp();
+    const body = await (await app.request('/v1/config')).json();
+    expect(body.data.pricing.certificationMonthlyUsd).toBe(5);
+    expect(body.data.pricing.freeMinUnits).toBe(5);
+    expect(body.data.pricing.lengthMetric).toBe('display-width');
+  });
+});
+
 describe('GET /v1/names/{name}/available', () => {
   it('accepts a free name and leads with a plain language summary', async () => {
     const { app } = buildApp();
