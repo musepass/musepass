@@ -12,7 +12,7 @@ contract MockL2Registry is IL2Registry {
     bytes32 public override baseNode;
     mapping(bytes32 => address) internal _owners;
     mapping(address => bool) public override registrars;
-    mapping(bytes32 => mapping(uint256 => bytes)) public addrRecords;
+    mapping(bytes32 => mapping(uint256 => bytes)) internal _addrRecords;
 
     constructor(bytes32 baseNode_) {
         baseNode = baseNode_;
@@ -53,7 +53,12 @@ contract MockL2Registry is IL2Registry {
             registrars[msg.sender] || _owners[node] == msg.sender,
             "MockL2Registry: unauthorized"
         );
-        addrRecords[node][coinType] = a;
+        _addrRecords[node][coinType] = a;
+    }
+
+    /// @dev Same getter as the real registry, which is an ENS resolver.
+    function addr(bytes32 node, uint256 coinType) external view returns (bytes memory) {
+        return _addrRecords[node][coinType];
     }
 }
 
@@ -126,8 +131,8 @@ contract MuseNameRegistrarTest is Test {
         bytes32 node = registrar.register("aguang", beneficiary, deadline, signature);
 
         uint256 expectedCoinType = uint256(0x80000000) | block.chainid;
-        assertEq(registry.addrRecords(node, expectedCoinType), abi.encodePacked(beneficiary));
-        assertEq(registry.addrRecords(node, 60), abi.encodePacked(beneficiary));
+        assertEq(registry.addr(node, expectedCoinType), abi.encodePacked(beneficiary));
+        assertEq(registry.addr(node, 60), abi.encodePacked(beneficiary));
     }
 
     function test_Register_EmitsEvent() public {

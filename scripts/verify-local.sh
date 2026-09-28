@@ -17,6 +17,7 @@ ANVIL_PORT="${MUSENAME_ANVIL_PORT:-8545}"
 API_PORT="${MUSENAME_API_PORT:-3101}"
 MCP_PORT="${MUSENAME_MCP_PORT:-3102}"
 WEB_PORT="${MUSENAME_WEB_PORT:-3103}"
+GATEWAY_PORT="${MUSENAME_GATEWAY_PORT:-3104}"
 RPC="http://127.0.0.1:${ANVIL_PORT}"
 DEV_ADDRESS="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 DEV_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
@@ -29,9 +30,10 @@ ANVIL_PID=""
 API_PID=""
 MCP_PID=""
 WEB_PID=""
+GATEWAY_PID=""
 
 cleanup() {
-  for pid in "$WEB_PID" "$MCP_PID" "$API_PID" "$ANVIL_PID"; do
+  for pid in "$GATEWAY_PID" "$WEB_PID" "$MCP_PID" "$API_PID" "$ANVIL_PID"; do
     if [[ -n "$pid" ]]; then
       kill "$pid" 2>/dev/null || true
       wait "$pid" 2>/dev/null || true
@@ -120,23 +122,49 @@ echo "==> [4/4] web: the real pages against the same API"
 )
 WEB_PID="$(cat "$ROOT_DIR/.web.pid")"
 
+echo "==> [5/5] gateway: CCIP-Read resolution against the local registry"
+(
+  cd "$ROOT_DIR/apps/gateway"
+  MUSENAME_GATEWAY_SIGNER_KEY="$DEV_KEY" \
+  MUSENAME_GATEWAY_ALLOWED_SENDERS="$REGISTRAR" \
+  MUSENAME_LOCAL_RPC_URL="$RPC" \
+  GATEWAY_PORT="$GATEWAY_PORT" \
+    node dist/index.js >"$ROOT_DIR/.gateway.log" 2>&1 &
+  echo $! >"$ROOT_DIR/.gateway.pid"
+)
+GATEWAY_PID="$(cat "$ROOT_DIR/.gateway.pid")"
+
 for _ in $(seq 1 60); do
   api_ok=0
   mcp_ok=0
   web_ok=0
+  gateway_ok=0
   curl -sf "http://127.0.0.1:${API_PORT}/healthz" >/dev/null 2>&1 && api_ok=1
   curl -sf "http://127.0.0.1:${MCP_PORT}/healthz" >/dev/null 2>&1 && mcp_ok=1
   curl -sf "http://127.0.0.1:${WEB_PORT}/" >/dev/null 2>&1 && web_ok=1
-  if [[ "$api_ok" == "1" && "$mcp_ok" == "1" && "$web_ok" == "1" ]]; then break; fi
+  curl -sf "http://127.0.0.1:${GATEWAY_PORT}/healthz" >/dev/null 2>&1 && gateway_ok=1
+  if [[ "$api_ok" == "1" && "$mcp_ok" == "1" && "$web_ok" == "1" && "$gateway_ok" == "1" ]]; then break; fi
   if ! kill -0 "$API_PID" 2>/dev/null; then echo "api died:"; tail -20 "$ROOT_DIR/.api.log"; exit 1; fi
   if ! kill -0 "$MCP_PID" 2>/dev/null; then echo "mcp died:"; tail -20 "$ROOT_DIR/.mcp.log"; exit 1; fi
   if ! kill -0 "$WEB_PID" 2>/dev/null; then echo "web died:"; tail -20 "$ROOT_DIR/.web.log"; exit 1; fi
+  if ! kill -0 "$GATEWAY_PID" 2>/dev/null; then echo "gateway died:"; tail -20 "$ROOT_DIR/.gateway.log"; exit 1; fi
   sleep 0.25
 done
 
 curl -sf "http://127.0.0.1:${API_PORT}/healthz" >/dev/null || { echo "api never became healthy"; tail -20 "$ROOT_DIR/.api.log"; exit 1; }
 curl -sf "http://127.0.0.1:${MCP_PORT}/healthz" >/dev/null || { echo "mcp never became healthy"; tail -20 "$ROOT_DIR/.mcp.log"; exit 1; }
 curl -sf "http://127.0.0.1:${WEB_PORT}/" >/dev/null || { echo "web never became healthy"; tail -20 "$ROOT_DIR/.web.log"; exit 1; }
+curl -sf "http://127.0.0.1:${GATEWAY_PORT}/healthz" >/dev/null || { echo "gateway never became healthy"; tail -20 "$ROOT_DIR/.gateway.log"; exit 1; }
+
+echo "    gateway:"
+node "$ROOT_DIR/apps/gateway/scripts/smoke.mjs" \
+  --url "http://127.0.0.1:${GATEWAY_PORT}" \
+  --resolver "$REGISTRAR" \
+  --registry "$REGISTRY" \
+  --chain-id 31337 \
+  --label "$LABEL" \
+  --expect 0x70997970C51812dc3A010C7d01b50e0d17dc79C8 \
+  | sed 's/^/      /'
 
 echo "    web pages:"
 python3 - "$WEB_PORT" "$SMOKE_LABEL" <<'PY'

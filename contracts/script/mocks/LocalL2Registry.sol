@@ -16,7 +16,7 @@ contract LocalL2Registry is IL2Registry {
     bytes32 public override baseNode;
     mapping(bytes32 => address) internal _owners;
     mapping(address => bool) public override registrars;
-    mapping(bytes32 => mapping(uint256 => bytes)) public addrRecords;
+    mapping(bytes32 => mapping(uint256 => bytes)) internal _addrRecords;
 
     constructor(bytes32 baseNode_) {
         baseNode = baseNode_;
@@ -55,6 +55,12 @@ contract LocalL2Registry is IL2Registry {
             registrars[msg.sender] || _owners[node] == msg.sender,
             "LocalL2Registry: unauthorized"
         );
-        addrRecords[node][coinType] = a;
+        _addrRecords[node][coinType] = a;
+    }
+
+    /// @dev The real registry is an ENS resolver, so records are read with the
+    ///      standard interface. A mock that invents its own getter hides bugs.
+    function addr(bytes32 node, uint256 coinType) external view returns (bytes memory) {
+        return _addrRecords[node][coinType];
     }
 }
