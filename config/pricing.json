@@ -1,18 +1,18 @@
 {
-  "$comment": "Rule 6: prices are configuration. Premium tiers are phase 6 and are NOT active in phase 1 (phase 1 issues free names only). Values below are placeholders pending the project owner's decision.",
+  "$comment": "Rule 6: prices are configuration. Prices decided 2026-09-29 (docs/decisions.md D6). Premium names are still NOT sellable in phase 1: the claim policy rejects every non-free tier until phase 6 turns it on.",
   "currency": "USDC",
   "$comment_units": "All length thresholds use limits.lengthMetric (default: display width, so one CJK character counts as two).",
   "freeTier": {
     "minUnits": 5
   },
   "premiumTiers": [
-    { "id": "tier-1-2", "minCodePoints": 1, "maxCodePoints": 2, "priceUsd": 2500, "status": "placeholder" },
-    { "id": "tier-3", "minCodePoints": 3, "maxCodePoints": 3, "priceUsd": 640, "status": "placeholder" },
-    { "id": "tier-4", "minCodePoints": 4, "maxCodePoints": 4, "priceUsd": 160, "status": "placeholder" }
+    { "id": "tier-1-2", "minCodePoints": 1, "maxCodePoints": 2, "priceUsd": 1500, "status": "approved" },
+    { "id": "tier-3", "minCodePoints": 3, "maxCodePoints": 3, "priceUsd": 600, "status": "approved" },
+    { "id": "tier-4", "minCodePoints": 4, "maxCodePoints": 4, "priceUsd": 150, "status": "approved" }
   ],
   "certification": {
     "monthlyUsd": 5,
-    "status": "placeholder",
+    "status": "approved",
     "phase": 5
   }
 }

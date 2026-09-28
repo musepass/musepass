@@ -16,6 +16,10 @@ import {LocalL2Registry} from "./mocks/LocalL2Registry.sol";
  *   anvil
  *   forge script script/DeployLocalStack.s.sol \
  *     --rpc-url http://127.0.0.1:8545 --broadcast
+ *
+ * The admin is always the deployer, so this script cannot fail with a mismatch
+ * between "who deployed" and "who owns it". It reads MUSENAME_LOCAL_KEY (anvil
+ * account #0 by default) and never the production variables.
  */
 contract DeployLocalStack is Script {
     bytes32 internal constant ETH_NODE =
@@ -23,10 +27,10 @@ contract DeployLocalStack is Script {
 
     function run() external returns (address registryAddress, address registrarAddress) {
         uint256 deployerKey = vm.envOr(
-            "MUSENAME_DEPLOYER_KEY",
+            "MUSENAME_LOCAL_KEY",
             uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
         );
-        address admin = vm.envOr("MUSENAME_REGISTRAR_OWNER", msg.sender);
+        address admin = vm.addr(deployerKey);
 
         bytes32 baseNode = keccak256(abi.encodePacked(ETH_NODE, keccak256(bytes("musename"))));
 

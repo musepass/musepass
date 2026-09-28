@@ -15,7 +15,7 @@ describe('quoteLabel', () => {
     const quote = quoteLabel(4, config.pricing);
     expect(quote.tier).toBe('premium');
     expect(quote.tierId).toBe('tier-4');
-    expect(quote.priceUsd).toBe(160);
+    expect(quote.priceUsd).toBe(150);
   });
 
   it('prices three character names in the three character tier', () => {
@@ -27,8 +27,16 @@ describe('quoteLabel', () => {
     expect(quoteLabel(2, config.pricing).tierId).toBe('tier-1-2');
   });
 
-  it('marks placeholder tiers as inactive so phase 1 can refuse to sell them', () => {
-    expect(quoteLabel(4, config.pricing).active).toBe(false);
+  it('marks decided tiers as active', () => {
+    expect(quoteLabel(4, config.pricing).active).toBe(true);
+  });
+
+  it('still reports a placeholder tier as inactive', () => {
+    const withPlaceholder = {
+      ...config.pricing,
+      premiumTiers: config.pricing.premiumTiers.map((tier) => ({ ...tier, status: 'placeholder' })),
+    };
+    expect(quoteLabel(4, withPlaceholder).active).toBe(false);
   });
 
   it('reads the currency from config instead of hardcoding it', () => {

@@ -1,34 +1,47 @@
 #!/usr/bin/env bash
 #
-# One command that proves the phase 1 claim path works end to end:
-#   normalize -> sign -> on chain digest agreement -> mint -> ownership check.
+# One command that proves the phase 1-3 wiring on a throwaway local chain:
 #
-# Requires: foundry (anvil, forge, cast), node, python3, and a built @musename/core.
+#   chain   : real registrar deployed, real signature, real mint
+#   api     : availability, request creation, claim
+#   mcp     : an AI client connects over streamable HTTP and calls the tools
+#
+# Requires: foundry (anvil, forge, cast), node, python3, pnpm.
 #
 #   ./scripts/verify-local.sh [label]
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PORT="${MUSENAME_LOCAL_PORT:-8545}"
-RPC="http://127.0.0.1:${PORT}"
+ANVIL_PORT="${MUSENAME_ANVIL_PORT:-8545}"
+API_PORT="${MUSENAME_API_PORT:-3101}"
+MCP_PORT="${MUSENAME_MCP_PORT:-3102}"
+RPC="http://127.0.0.1:${ANVIL_PORT}"
 DEV_ADDRESS="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-DEV_KEY_1_ADDRESS="0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+DEV_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 LABEL="${1:-aguang}"
+# The claim in step 1 mints LABEL, so the MCP smoke in step 3 asks for a
+# different one — otherwise it would be testing the "already taken" path.
+SMOKE_LABEL="${LABEL}x"
+
 ANVIL_PID=""
+API_PID=""
+MCP_PID=""
 
 cleanup() {
-  if [[ -n "$ANVIL_PID" ]]; then
-    kill "$ANVIL_PID" 2>/dev/null || true
-    wait "$ANVIL_PID" 2>/dev/null || true
-  fi
+  for pid in "$MCP_PID" "$API_PID" "$ANVIL_PID"; do
+    if [[ -n "$pid" ]]; then
+      kill "$pid" 2>/dev/null || true
+      wait "$pid" 2>/dev/null || true
+    fi
+  done
 }
 trap cleanup EXIT
 
-echo "==> building @musename/core"
-(cd "$ROOT_DIR" && pnpm --filter @musename/core build >/dev/null)
+echo "==> building workspaces"
+(cd "$ROOT_DIR" && pnpm build >/dev/null)
 
-echo "==> starting anvil on port ${PORT}"
-anvil --port "$PORT" --silent >"$ROOT_DIR/.anvil.log" 2>&1 &
+echo "==> starting anvil on port ${ANVIL_PORT}"
+anvil --port "$ANVIL_PORT" --silent >"$ROOT_DIR/.anvil.log" 2>&1 &
 ANVIL_PID=$!
 
 for _ in $(seq 1 40); do
@@ -40,8 +53,9 @@ cast chain-id --rpc-url "$RPC" >/dev/null
 echo "==> deploying the local stack"
 (
   cd "$ROOT_DIR/contracts"
-  MUSENAME_REGISTRAR_OWNER="$DEV_ADDRESS" \
-    forge script script/DeployLocalStack.s.sol --rpc-url "$RPC" --broadcast >/dev/null
+  MUSENAME_LOCAL_KEY="$DEV_KEY" \
+    forge script script/DeployLocalStack.s.sol --rpc-url "$RPC" --broadcast 2>&1 \
+    | grep -vE "WARN|^$" >/dev/null
 )
 
 BROADCAST="$ROOT_DIR/contracts/broadcast/DeployLocalStack.s.sol/31337/run-latest.json"
@@ -59,15 +73,57 @@ print(addresses["LocalL2Registry"], addresses["MuseNameRegistrar"])
 PY
 )
 
-echo "==> registry    ${REGISTRY}"
-echo "==> registrar   ${REGISTRAR}"
-echo "==> beneficiary ${DEV_KEY_1_ADDRESS}"
+echo "    registry  ${REGISTRY}"
+echo "    registrar ${REGISTRAR}"
 
-echo "==> running the claim"
+echo "==> [1/3] chain: sign off chain, mint on chain"
 node "$ROOT_DIR/scripts/local-claim-e2e.mjs" \
   --rpc "$RPC" \
   --registry "$REGISTRY" \
   --registrar "$REGISTRAR" \
-  --label "$LABEL"
+  --label "$LABEL" \
+  | sed 's/^/    /'
 
-echo "==> phase 1 claim path verified"
+echo "==> [2/3] api: availability and registration requests"
+(
+  cd "$ROOT_DIR/apps/api"
+  MUSENAME_L2_CHAIN_ID=31337 \
+  MUSENAME_RPC_URL="$RPC" \
+  MUSENAME_L2_REGISTRY="$REGISTRY" \
+  MUSENAME_REGISTRAR="$REGISTRAR" \
+  MUSENAME_ISSUER_KEY="$DEV_KEY" \
+  PORT="$API_PORT" \
+    node dist/index.js >"$ROOT_DIR/.api.log" 2>&1 &
+  echo $! >"$ROOT_DIR/.api.pid"
+)
+API_PID="$(cat "$ROOT_DIR/.api.pid")"
+
+echo "==> [3/3] mcp: an AI client over streamable HTTP"
+(
+  cd "$ROOT_DIR/apps/mcp"
+  MCP_PORT="$MCP_PORT" \
+  MUSENAME_API_URL="http://127.0.0.1:${API_PORT}" \
+    node dist/index.js >"$ROOT_DIR/.mcp.log" 2>&1 &
+  echo $! >"$ROOT_DIR/.mcp.pid"
+)
+MCP_PID="$(cat "$ROOT_DIR/.mcp.pid")"
+
+for _ in $(seq 1 60); do
+  api_ok=0
+  mcp_ok=0
+  curl -sf "http://127.0.0.1:${API_PORT}/healthz" >/dev/null 2>&1 && api_ok=1
+  curl -sf "http://127.0.0.1:${MCP_PORT}/healthz" >/dev/null 2>&1 && mcp_ok=1
+  if [[ "$api_ok" == "1" && "$mcp_ok" == "1" ]]; then break; fi
+  if ! kill -0 "$API_PID" 2>/dev/null; then echo "api died:"; tail -20 "$ROOT_DIR/.api.log"; exit 1; fi
+  if ! kill -0 "$MCP_PID" 2>/dev/null; then echo "mcp died:"; tail -20 "$ROOT_DIR/.mcp.log"; exit 1; fi
+  sleep 0.25
+done
+
+curl -sf "http://127.0.0.1:${API_PORT}/healthz" >/dev/null || { echo "api never became healthy"; tail -20 "$ROOT_DIR/.api.log"; exit 1; }
+curl -sf "http://127.0.0.1:${MCP_PORT}/healthz" >/dev/null || { echo "mcp never became healthy"; tail -20 "$ROOT_DIR/.mcp.log"; exit 1; }
+
+MUSENAME_SMOKE_NAME="$SMOKE_LABEL" \
+  node "$ROOT_DIR/apps/mcp/scripts/smoke.mjs" "http://127.0.0.1:${MCP_PORT}/mcp" \
+  | sed 's/^/    /'
+
+echo "==> phase 1-3 local wiring verified"

@@ -30,6 +30,10 @@ describe('checkLabel — happy path', () => {
     const taken = check('aguang', { onChainFree: false });
     expect(taken.available).toBe(false);
     expect(taken.summary.zh).toContain('已经被注册');
+    // Taken is an availability fact, not a rule violation: it must appear as a
+    // machine readable reason while policyOk stays true.
+    expect(taken.issues.map((issue) => issue.code)).toContain('NAME_TAKEN');
+    expect(taken.policyOk).toBe(true);
   });
 });
 
@@ -54,21 +58,32 @@ describe('checkLabel — rejections', () => {
   });
 
   it('accepts the same short name once premium sales are enabled', () => {
+    // Without allowPremium (phase 1) a short name is refused.
+    expect(check('abc', {}).policyOk).toBe(false);
+    // With it (phase 6) the same name is acceptable, at the tier price.
     const result = check('abc', { allowPremium: true });
-    // tier-3 is still a placeholder, so it stays closed until the owner sets a price.
-    expect(result.policyOk).toBe(false);
+    expect(result.policyOk).toBe(true);
+    expect(result.price?.tier).toBe('premium');
+    expect(result.price?.priceUsd).toBe(600);
+  });
+
+  it('keeps a tier closed while its price is still a placeholder', () => {
     const priced = checkLabel('abc', {
       config: {
         ...config,
         pricing: {
           ...config.pricing,
-          premiumTiers: config.pricing.premiumTiers.map((tier) => ({ ...tier, status: 'active' })),
+          premiumTiers: config.pricing.premiumTiers.map((tier) => ({
+            ...tier,
+            status: 'placeholder',
+          })),
         },
       },
       reservedIndex,
       allowPremium: true,
     });
-    expect(priced.policyOk).toBe(true);
+    expect(priced.policyOk).toBe(false);
+    expect(priced.issues.map((issue) => issue.code)).toContain('NOT_FREE_TIER');
     expect(priced.price?.tier).toBe('premium');
   });
 

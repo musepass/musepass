@@ -2,6 +2,9 @@ import type { Address } from 'viem';
 import type {
   NamesRepo,
   NewRegistry,
+  RegistrationRequest,
+  RegistrationRequestRepo,
+  RegistrationRequestStatus,
   Registry,
   SponsorshipEntry,
   SponsorshipRepo,
@@ -13,9 +16,14 @@ import type {
  * The chain remains the source of truth: this only caches what the API already
  * learned from the chain, so losing it costs nothing but a re-read.
  */
-export function createMemoryRepos(): { names: NamesRepo; sponsorship: SponsorshipRepo } {
+export function createMemoryRepos(): {
+  names: NamesRepo;
+  sponsorship: SponsorshipRepo;
+  requests: RegistrationRequestRepo;
+} {
   const byNormalized = new Map<string, Registry>();
   const sponsorships: Array<SponsorshipEntry & { sponsoredAt: Date }> = [];
+  const registrationRequests = new Map<string, RegistrationRequest>();
   let nextId = 1;
 
   const names: NamesRepo = {
@@ -58,5 +66,36 @@ export function createMemoryRepos(): { names: NamesRepo; sponsorship: Sponsorshi
     },
   };
 
-  return { names, sponsorship };
+  const requests: RegistrationRequestRepo = {
+    async insert(record) {
+      const stored: RegistrationRequest = { ...record, createdAt: record.createdAt ?? new Date() };
+      registrationRequests.set(stored.id, stored);
+      return stored;
+    },
+    async findById(id) {
+      return registrationRequests.get(id) ?? null;
+    },
+    async countOpenByHost(host) {
+      return [...registrationRequests.values()].filter(
+        (request) => request.status === 'pending' && request.requestedByHost === host,
+      ).length;
+    },
+    async countOpenBySubject(subject) {
+      const target = subject.toLowerCase();
+      return [...registrationRequests.values()].filter(
+        (request) => request.status === 'pending' && request.requestedFor.toLowerCase() === target,
+      ).length;
+    },
+    async markStatus(id, status: RegistrationRequestStatus, at) {
+      const existing = registrationRequests.get(id);
+      if (!existing) return;
+      registrationRequests.set(id, {
+        ...existing,
+        status,
+        confirmedAt: status === 'confirmed' ? at : existing.confirmedAt,
+      });
+    },
+  };
+
+  return { names, sponsorship, requests };
 }

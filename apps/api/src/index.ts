@@ -7,7 +7,7 @@ import { createMemoryRepos } from './repositories/memory.js';
 
 const config = loadConfig();
 
-const { names, sponsorship } = createMemoryRepos();
+const { names, sponsorship, requests } = createMemoryRepos();
 const issuerPrivateKey = process.env.MUSENAME_ISSUER_KEY as `0x${string}` | undefined;
 const chain = createChainReader({ config, issuerPrivateKey: issuerPrivateKey ?? null });
 
@@ -16,6 +16,7 @@ const app = createApp({
   reservedIndex: buildReservedIndex(config.reserved),
   chain,
   names,
+  requests,
   sponsorship,
   clock: () => new Date(),
 });

@@ -16,3 +16,7 @@ contracts/out/
 contracts/cache/
 data/*.sqlite
 .anvil.log
+.api.log
+.mcp.log
+.api.pid
+.mcp.pid

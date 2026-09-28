@@ -81,6 +81,8 @@ function issueToSummary(issue: LabelIssue): BilingualText {
       return SUMMARY.premium;
     case 'RESERVED_NAME':
       return SUMMARY.reserved;
+    case 'NAME_TAKEN':
+      return SUMMARY.taken;
     default:
       return SUMMARY.invalid;
   }
@@ -181,8 +183,18 @@ export function checkLabel(rawLabel: string, options: LabelCheckOptions): LabelC
     }
   }
 
-  const policyOk = issues.length === 0;
   const taken = onChainFree === false;
+  // "Taken" is an availability fact, not a rule violation, so it is reported as
+  // an issue (every consumer needs a machine readable reason) while policyOk
+  // keeps meaning "this name breaks no rule".
+  const policyOk = issues.length === 0;
+  if (taken) {
+    issues.push({
+      code: 'NAME_TAKEN',
+      message: 'name is already registered on chain',
+      field: 'onChainFree',
+    });
+  }
   const available = onChainFree === null ? null : policyOk && !taken;
 
   let summary: BilingualText;

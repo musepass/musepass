@@ -8,6 +8,7 @@ export type MuseNameErrorCode =
   | 'MIXED_SCRIPT'
   | 'EMOJI_NOT_ALLOWED'
   | 'RESERVED_NAME'
+  | 'NAME_TAKEN'
   | 'NOT_FREE_TIER'
   | 'QUOTA_EXCEEDED'
   | 'SPONSORSHIP_EXCEEDED'

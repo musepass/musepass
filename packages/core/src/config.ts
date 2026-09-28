@@ -11,6 +11,8 @@ export interface BrandConfig {
   rootName: string;
   legalDisclaimer: { en: string; zh: string };
   naming: { subnameSuffix: string; exampleLabel: string };
+  /** Fallback identity if the primary brand has to be retired. See docs/decisions.md D7. */
+  backupBrand?: { productName: string; rootName: string; siteUrl: string };
 }
 
 export interface ChainInfo {
@@ -156,6 +158,10 @@ function applyEnvOverrides(config: MusenameConfig, env: Record<string, string | 
 
   if (env.MUSENAME_L2_REGISTRY) l2.l2Registry = env.MUSENAME_L2_REGISTRY;
   if (env.MUSENAME_REGISTRAR) l2.registrar = env.MUSENAME_REGISTRAR;
+  // Lets `pnpm verify:local` and any local node stand in for Base without
+  // editing config/chains.json.
+  if (env.MUSENAME_L2_CHAIN_ID) l2.chainId = Number(env.MUSENAME_L2_CHAIN_ID);
+  if (env.MUSENAME_RPC_URL) l2.rpcUrl = env.MUSENAME_RPC_URL;
   if (env.MUSENAME_L1_RESOLVER) l1.durinL1Resolver = env.MUSENAME_L1_RESOLVER;
 
   return { ...config, brand, chains: { l1, l2, l2Testnet } };

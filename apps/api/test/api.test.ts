@@ -74,6 +74,7 @@ function buildApp(overrides: Partial<MusenameDeps> = {}, config = testConfig()) 
     reservedIndex: buildReservedIndex(config.reserved),
     chain: fakeChain(),
     names: repos.names,
+    requests: repos.requests,
     sponsorship: repos.sponsorship,
     clock: () => FIXED_NOW,
     ...overrides,

@@ -50,11 +50,40 @@ export interface ChainReader {
   }): Promise<{ txHash: Hex; node: Hex }>;
 }
 
+export type RegistrationRequestStatus = 'pending' | 'confirmed' | 'expired' | 'rejected';
+
+/**
+ * A registration an AI asked for on its owner's behalf. It is only a request:
+ * nothing is minted until the owner signs, and the token is stored hashed so a
+ * database leak does not hand out confirm links.
+ */
+export interface RegistrationRequest {
+  id: string;
+  label: string;
+  requestedByHost: string | null;
+  /** Email address or wallet address the link is meant for. */
+  requestedFor: string;
+  confirmTokenHash: string;
+  expiresAt: Date;
+  status: RegistrationRequestStatus;
+  createdAt: Date;
+  confirmedAt: Date | null;
+}
+
+export interface RegistrationRequestRepo {
+  insert(record: Omit<RegistrationRequest, 'createdAt'> & { createdAt?: Date }): Promise<RegistrationRequest>;
+  findById(id: string): Promise<RegistrationRequest | null>;
+  countOpenByHost(host: string): Promise<number>;
+  countOpenBySubject(subject: string): Promise<number>;
+  markStatus(id: string, status: RegistrationRequestStatus, at: Date): Promise<void>;
+}
+
 export interface MusenameDeps {
   config: MusenameConfig;
   reservedIndex: ReservedIndex;
   chain: ChainReader;
   names: NamesRepo;
+  requests: RegistrationRequestRepo;
   sponsorship: SponsorshipRepo;
   /** Injectable so tests are not time dependent. */
   clock: () => Date;

@@ -1,3 +1,4 @@
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Hono } from 'hono';
 import type { Context } from 'hono';
 import type { Address, Hex } from 'viem';
@@ -46,9 +47,13 @@ function boom(
 }
 
 export function createApp(deps: MusenameDeps) {
-  const { config, reservedIndex, chain, names, sponsorship, clock } = deps;
+  const { config, reservedIndex, chain, names, requests, sponsorship, clock } = deps;
   const app = new Hono();
   const buckets = new Map<string, RateBucket>();
+
+  /** Tokens are stored only as a hash: a database leak must not hand out confirm links. */
+  const hashToken = (token: string): string =>
+    createHash('sha256').update(token).digest('hex');
 
   const meta = (verified: boolean): ApiMeta => ({
     asOf: clock().toISOString(),
@@ -237,6 +242,250 @@ export function createApp(deps: MusenameDeps) {
               registeredVia: indexed.registeredVia,
             }
           : null,
+      },
+      errors: [],
+      meta: meta(true),
+    });
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* POST /v1/names/claim                                                */
+  /* ------------------------------------------------------------------ */
+
+  /* ------------------------------------------------------------------ */
+  /* POST /v1/requests  — an AI asks for a name on its owner's behalf    */
+  /* ------------------------------------------------------------------ */
+  app.post('/v1/requests', async (c) => {
+    let body: Record<string, unknown>;
+    try {
+      body = (await c.req.json()) as Record<string, unknown>;
+    } catch {
+      return c.json(
+        {
+          summary: { zh: '请求格式不对。', en: 'The request body is not valid JSON.' },
+          errors: [
+            boom('BAD_REQUEST', 'invalid JSON body', {
+              zh: '请求格式不对。',
+              en: 'The request body is not valid JSON.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    const rawLabel = typeof body.label === 'string' ? body.label : '';
+    const requestedFor = typeof body.requestedFor === 'string' ? body.requestedFor.trim() : '';
+    const host = typeof body.host === 'string' && body.host.trim() ? body.host.trim() : null;
+
+    if (!requestedFor) {
+      return c.json(
+        {
+          summary: {
+            zh: '需要告诉我这个名字要给谁——主人的邮箱或钱包地址。',
+            en: 'Tell me who this name is for: the owner email or wallet address.',
+          },
+          errors: [
+            boom('BAD_REQUEST', 'requestedFor is required', {
+              zh: '需要告诉我这个名字要给谁——主人的邮箱或钱包地址。',
+              en: 'Tell me who this name is for: the owner email or wallet address.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    let label: string;
+    try {
+      label = normalizeLabel(rawLabel).normalized;
+    } catch (error) {
+      return c.json(
+        {
+          summary: { zh: '这个名字不合规，换一个吧。', en: 'That name is not valid; pick another.' },
+          errors: [
+            boom(
+              isMuseNameError(error) ? error.code : 'INVALID_NAME',
+              error instanceof Error ? error.message : String(error),
+              { zh: '这个名字不合规，换一个吧。', en: 'That name is not valid; pick another.' },
+            ),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    let onChainFree: boolean;
+    try {
+      onChainFree = await chain.isLabelAvailable(label);
+    } catch (error) {
+      return c.json(
+        {
+          summary: {
+            zh: '链上暂时查不通，请稍后再试。',
+            en: 'The chain is not reachable right now; please retry.',
+          },
+          errors: [
+            boom('CHAIN_UNAVAILABLE', error instanceof Error ? error.message : String(error), {
+              zh: '链上暂时查不通，请稍后再试。',
+              en: 'The chain is not reachable right now; please retry.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        503,
+      );
+    }
+
+    const policy = checkLabel(label, { config, reservedIndex, onChainFree });
+    if (!policy.policyOk || !onChainFree) {
+      return c.json(
+        {
+          summary: policy.summary,
+          data: { label, fullName: policy.fullName },
+          errors: policy.issues.map((issue) => ({ code: issue.code, message: issue.message })),
+          meta: meta(true),
+        },
+        409,
+      );
+    }
+
+    const { maxOpenRequestsPerHost, maxOpenRequestsPerOwner, confirmTokenTtlMinutes } =
+      config.limits.registrationRequest;
+
+    if (host) {
+      const open = await requests.countOpenByHost(host);
+      if (open >= maxOpenRequestsPerHost) {
+        return c.json(
+          {
+            summary: {
+              zh: '这个 AI 待确认的注册请求太多了，先让主人处理几个。',
+              en: 'This AI has too many requests waiting for confirmation.',
+            },
+            errors: [
+              boom('RATE_LIMITED', `host has ${open} open requests`, {
+                zh: '这个 AI 待确认的注册请求太多了，先让主人处理几个。',
+                en: 'This AI has too many requests waiting for confirmation.',
+              }),
+            ],
+            meta: meta(true),
+          },
+          429,
+        );
+      }
+    }
+
+    const openForSubject = await requests.countOpenBySubject(requestedFor);
+    if (openForSubject >= maxOpenRequestsPerOwner) {
+      return c.json(
+        {
+          summary: {
+            zh: '这位主人已经有待确认的注册请求了，先确认或等它过期。',
+            en: 'This owner already has a request waiting for confirmation.',
+          },
+          errors: [
+            boom('RATE_LIMITED', `subject has ${openForSubject} open requests`, {
+              zh: '这位主人已经有待确认的注册请求了，先确认或等它过期。',
+              en: 'This owner already has a request waiting for confirmation.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        429,
+      );
+    }
+
+    const id = randomUUID();
+    const token = randomBytes(32).toString('hex');
+    const now = clock();
+    const expiresAt = new Date(now.getTime() + confirmTokenTtlMinutes * 60 * 1000);
+
+    await requests.insert({
+      id,
+      label,
+      requestedByHost: host,
+      requestedFor,
+      confirmTokenHash: hashToken(token),
+      expiresAt,
+      status: 'pending',
+      confirmedAt: null,
+    });
+
+    const confirmUrl = `${config.brand.siteUrl.replace(/\/$/, '')}/confirm/${id}?token=${token}`;
+
+    return c.json(
+      {
+        summary: {
+          zh: `我已经把 ${label}.${config.brand.rootName} 准备好了，请把下面这条链接交给主人确认，${confirmTokenTtlMinutes} 分钟内有效。`,
+          en: `I have prepared ${label}.${config.brand.rootName}. Give this link to the owner to confirm; it expires in ${confirmTokenTtlMinutes} minutes.`,
+        },
+        data: {
+          requestId: id,
+          label,
+          fullName: `${label}.${config.brand.rootName}`,
+          confirmUrl,
+          expiresAt: expiresAt.toISOString(),
+          requestedFor,
+          requestedByHost: host,
+        },
+        errors: [],
+        meta: meta(true),
+      },
+      201,
+    );
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* GET /v1/requests/{id}                                               */
+  /* ------------------------------------------------------------------ */
+  app.get('/v1/requests/:id', async (c) => {
+    const request = await requests.findById(c.req.param('id'));
+    if (!request) {
+      return c.json(
+        {
+          summary: { zh: '没有这个注册请求。', en: 'No such registration request.' },
+          errors: [
+            boom('NOT_FOUND', 'unknown request id', {
+              zh: '没有这个注册请求。',
+              en: 'No such registration request.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        404,
+      );
+    }
+
+    const expired = request.status === 'pending' && request.expiresAt <= clock();
+    const status = expired ? 'expired' : request.status;
+
+    return c.json({
+      summary: {
+        zh:
+          status === 'confirmed'
+            ? `${request.label} 已经注册好了。`
+            : status === 'expired'
+              ? '这个确认链接已经过期了，重新发起一次就可以。'
+              : '还在等主人确认。',
+        en:
+          status === 'confirmed'
+            ? `${request.label} has been registered.`
+            : status === 'expired'
+              ? 'This confirmation link has expired; just start again.'
+              : 'Waiting for the owner to confirm.',
+      },
+      data: {
+        requestId: request.id,
+        label: request.label,
+        fullName: `${request.label}.${config.brand.rootName}`,
+        status,
+        requestedFor: request.requestedFor,
+        requestedByHost: request.requestedByHost,
+        expiresAt: request.expiresAt.toISOString(),
+        confirmedAt: request.confirmedAt?.toISOString() ?? null,
       },
       errors: [],
       meta: meta(true),
@@ -445,7 +694,107 @@ export function createApp(deps: MusenameDeps) {
       );
     }
 
-    // 3. sponsorship budget.
+    // 3. If an AI started this, the confirmation token has to match too. The
+    //    token proves the person clicking is the person the AI asked for; the
+    //    signature above proves they are the wallet that will own the name.
+    const requestId = typeof body.requestId === 'string' ? body.requestId : null;
+    const confirmToken = typeof body.confirmToken === 'string' ? body.confirmToken : null;
+    let confirmedRequestId: string | null = null;
+
+    if (requestId) {
+      const request = await requests.findById(requestId);
+      if (!request) {
+        return c.json(
+          {
+            summary: { zh: '没有这个注册请求。', en: 'No such registration request.' },
+            errors: [
+              boom('NOT_FOUND', 'unknown request id', {
+                zh: '没有这个注册请求。',
+                en: 'No such registration request.',
+              }),
+            ],
+            meta: meta(false),
+          },
+          404,
+        );
+      }
+      if (request.label !== label) {
+        return c.json(
+          {
+            summary: {
+              zh: '这个确认链接是给另一个名字的。',
+              en: 'This confirmation link is for a different name.',
+            },
+            errors: [
+              boom('REQUEST_MISMATCH', 'request label does not match', {
+                zh: '这个确认链接是给另一个名字的。',
+                en: 'This confirmation link is for a different name.',
+              }),
+            ],
+            meta: meta(false),
+          },
+          409,
+        );
+      }
+      if (request.status === 'confirmed') {
+        return c.json(
+          {
+            summary: {
+              zh: '这个请求已经确认过了。',
+              en: 'This request has already been confirmed.',
+            },
+            errors: [
+              boom('REQUEST_ALREADY_CONFIRMED', 'request already confirmed', {
+                zh: '这个请求已经确认过了。',
+                en: 'This request has already been confirmed.',
+              }),
+            ],
+            meta: meta(false),
+          },
+          409,
+        );
+      }
+      if (request.status !== 'pending' || request.expiresAt <= clock()) {
+        if (request.status === 'pending') await requests.markStatus(request.id, 'expired', clock());
+        return c.json(
+          {
+            summary: {
+              zh: '这个确认链接已经过期了，让 AI 重新发起一次就行。',
+              en: 'This confirmation link has expired; ask the AI to start again.',
+            },
+            errors: [
+              boom('EXPIRED', 'confirmation link expired', {
+                zh: '这个确认链接已经过期了，让 AI 重新发起一次就行。',
+                en: 'This confirmation link has expired; ask the AI to start again.',
+              }),
+            ],
+            meta: meta(false),
+          },
+          410,
+        );
+      }
+      if (!confirmToken || hashToken(confirmToken) !== request.confirmTokenHash) {
+        return c.json(
+          {
+            summary: {
+              zh: '确认链接里的口令不对，请用 AI 给你的那条完整链接。',
+              en: 'The token in the link is wrong; use the full link your AI gave you.',
+            },
+            errors: [
+              boom('INVALID_TOKEN', 'confirmation token mismatch', {
+                zh: '确认链接里的口令不对，请用 AI 给你的那条完整链接。',
+                en: 'The token in the link is wrong; use the full link your AI gave you.',
+              }),
+            ],
+            meta: meta(false),
+          },
+          403,
+        );
+      }
+      confirmedRequestId = request.id;
+    }
+
+    // 4. sponsorship budget.
     const startOfDay = new Date(clock());
     startOfDay.setUTCHours(0, 0, 0, 0);
     const [walletFreeNames, walletSponsoredToday, walletSponsoredLifetime, platformSponsoredToday] =
@@ -490,7 +839,7 @@ export function createApp(deps: MusenameDeps) {
       );
     }
 
-    // 4. issue.
+    // 5. issue.
     let txHash: Hex;
     let node: Hex;
     try {
@@ -528,6 +877,9 @@ export function createApp(deps: MusenameDeps) {
       txHash,
     });
     await sponsorship.record({ wallet: owner, txHash, nameId: record.id });
+    if (confirmedRequestId) {
+      await requests.markStatus(confirmedRequestId, 'confirmed', clock());
+    }
 
     return c.json(
       {

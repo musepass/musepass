@@ -7,7 +7,7 @@ import {
   type Hex,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { base, baseSepolia } from 'viem/chains';
+import { base, baseSepolia, foundry } from 'viem/chains';
 import type { MusenameConfig } from '@musename/core';
 import type { ChainReader } from '../deps.js';
 
@@ -74,7 +74,14 @@ export function createChainReader(options: ChainReaderOptions): ChainReader {
   const l2Registry = config.chains.l2.l2Registry as Address | undefined;
   const baseNode = namehash(config.brand.rootName);
 
-  const chainDefinition = config.chains.l2.chainId === base.id ? base : baseSepolia;
+  const chainDefinition =
+    config.chains.l2.chainId === base.id
+      ? base
+      : config.chains.l2.chainId === baseSepolia.id
+        ? baseSepolia
+        : config.chains.l2.chainId === foundry.id
+          ? foundry
+          : baseSepolia;
   const rpcUrl = options.rpcUrl ?? config.chains.l2.rpcUrl ?? chainDefinition.rpcUrls.default.http[0];
   const transport = http(rpcUrl);
   const publicClient = createPublicClient({ chain: chainDefinition, transport });

@@ -14,5 +14,11 @@
   "naming": {
     "subnameSuffix": "eth",
     "exampleLabel": "aguang"
+  },
+  "backupBrand": {
+    "$comment": "Decided 2026-09-29 (docs/decisions.md D7). Renaming is a config-only change; it invalidates outstanding EIP-712 signatures by design.",
+    "productName": "VeriName",
+    "rootName": "veriname.eth",
+    "siteUrl": "https://veriname.xyz"
   }
 }
