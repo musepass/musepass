@@ -110,7 +110,8 @@ TODO.md             后续所有阶段的工作清单
 ## 文档
 
 - [技术核实报告](docs/tech-verification-report.md) — Durin、ERC-8004、ERC-8412、ENSIP-15 的实际查证结果，以及必须调整的地方
-- [前端对接文档](docs/frontend-integration.md) — 冻結的后端契约：接口、EIP-712 签名、错误码、首页设计稿的状态映射
+- [需求验证](docs/demand-validation.md) — 阶段 4 门槛的可证伪测试；以及"平台自己做"这条风险已经发生了的部分
+- [前端对接文档](docs/frontend-integration.md) — 冻结的后端契约：接口、EIP-712 签名、错误码、首页设计稿的状态映射
 - [决策记录](docs/decisions.md) — 官网域名、ENS 根名字、名字主页域名等产品边界决定
 - [TODO.md](TODO.md) — 阶段 2–6 的工作清单
 - [contracts/README.md](contracts/README.md) — 合约与部署流程
