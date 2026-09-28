@@ -1,0 +1,29 @@
+{
+  "$comment": "Rule 6: every quota and limit is configuration. Phase 1 acceptance tests read these values.",
+  "freeNamesPerWallet": 1,
+  "lengthMetric": "display-width",
+  "minLabelUnitsPremium": 1,
+  "maxLabelBytes": 255,
+  "labelPolicy": {
+    "allowEmoji": false,
+    "disallowMixedConfusableScripts": true,
+    "disallowEdgeHyphen": true
+  },
+  "sponsorship": {
+    "perWalletPerDay": 3,
+    "perWalletLifetime": 3,
+    "platformPerDay": 500,
+    "platformTotalCapUsd": 200,
+    "estimatedGasUsdPerName": 0.01
+  },
+  "registrationRequest": {
+    "confirmTokenTtlMinutes": 15,
+    "maxOpenRequestsPerHost": 10,
+    "maxOpenRequestsPerOwner": 5
+  },
+  "rateLimits": {
+    "availabilityPerMinutePerIp": 60,
+    "claimPerHourPerWallet": 5,
+    "mcpRequestsPerHourPerHost": 120
+  }
+}

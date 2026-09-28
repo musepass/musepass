@@ -1,0 +1,22 @@
+{
+  "name": "musename",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MuseName — ENS names, ERC-8004 cards and verifiable track records for personal AI",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "install:all": "pnpm install",
+    "build": "pnpm -r --if-present build",
+    "typecheck": "pnpm build && pnpm -r --if-present typecheck",
+    "test": "pnpm build && pnpm -r --if-present test",
+    "test:contracts": "cd contracts && forge test -vv",
+    "verify:local": "./scripts/verify-local.sh",
+    "check": "pnpm typecheck && pnpm test && pnpm test:contracts",
+    "clean": "pnpm -r --if-present clean"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

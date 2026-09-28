@@ -1,0 +1,23 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+
+onlyBuiltDependencies:
+  - esbuild
+
+allowBuilds:
+  esbuild: true
+
+# This repo is developed on Apple Silicon with an x86_64 Node (Rosetta), so the
+# pnpm binary and the Node that runs the tests report different CPU
+# architectures. Installing optional native binaries for both avoids the
+# "@rollup/rollup-darwin-x64 not found" class of failures.
+supportedArchitectures:
+  os:
+    - current
+  cpu:
+    - x64
+    - arm64
+
+minimumReleaseAgeExclude:
+  - hono@4.13.10

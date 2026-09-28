@@ -1,0 +1,54 @@
+{
+  "$comment": "Rule: reserved names are checked against the ENSIP-15 normalized label. Glob support is limited to a single leading or trailing '*'. This v1 list needs human review (legal + community) before launch.",
+  "version": 1,
+  "reviewStatus": "draft-pending-human-review",
+  "categories": {
+    "system": {
+      "note": "Infrastructure and impersonation-prone system words.",
+      "labels": [
+        "admin", "administrator", "root", "owner", "system", "sysadmin", "support",
+        "help", "helpdesk", "official", "security", "billing", "payment", "payments",
+        "invoice", "refund", "api", "www", "mail", "email", "smtp", "ns", "dns",
+        "resolver", "gateway", "registry", "registrar", "test", "testing", "dev",
+        "staging", "status", "docs", "blog", "team", "staff", "moderator", "mod",
+        "null", "undefined", "true", "false", "wallet", "treasury", "vault",
+        "muse", "ens", "eth", "base", "mainnet",
+        "giveaway", "airdrop", "claim", "verify", "verified", "certified"
+      ],
+      "patterns": ["admin*", "support*", "official*"]
+    },
+    "brand": {
+      "note": "Our own brand terms and close variants.",
+      "labels": ["musename", "musenames", "muse-name", "muse_name"],
+      "patterns": ["musename*", "*musename"]
+    },
+    "platform": {
+      "note": "Platform and product names. Avoids implying an official integration that does not exist.",
+      "labels": [
+        "meta", "facebook", "instagram", "whatsapp", "threads", "google", "gemini",
+        "openai", "chatgpt", "gpt", "anthropic", "claude", "x", "twitter", "grok",
+        "xai", "microsoft", "copilot", "apple", "siri", "amazon", "alexa", "coinbase",
+        "metamask", "ethereum", "ethereumfoundation", "ensdomains", "namestone",
+        "justaname", "basenames", "alibaba", "qwen", "tencent", "wechat", "douyin",
+        "tiktok", "bytedance", "baidu", "deepseek", "moonshot", "kimi", "zhipu",
+        "minimax", "solana", "binance", "okx"
+      ],
+      "patterns": []
+    },
+    "public_figure": {
+      "note": "PLACEHOLDER ONLY. A real list must be built from a licensed data source and reviewed by counsel; shipping an ad-hoc list invites both impersonation and false-accusation risk.",
+      "labels": ["vitalik", "vitalikbuterin"],
+      "patterns": []
+    },
+    "sensitive": {
+      "note": "PLACEHOLDER ONLY. Needs legal review for the launch jurisdictions. Keep this list short and auditable rather than broad and unmaintainable.",
+      "labels": ["nazi", "hitler"],
+      "patterns": []
+    }
+  },
+  "appeal": {
+    "allowed": true,
+    "channel": "support@musename.xyz",
+    "slaHours": 48
+  }
+}

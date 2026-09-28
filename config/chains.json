@@ -1,0 +1,29 @@
+{
+  "$comment": "Rule 6: every address, chain id and coin type lives here, not in code. Phase 1 fills l2Registry/registrar after deployment.",
+  "l1": {
+    "name": "mainnet",
+    "chainId": 1,
+    "rpcEnv": "MAINNET_RPC_URL",
+    "durinL1Resolver": "0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61"
+  },
+  "l2": {
+    "name": "base",
+    "chainId": 8453,
+    "rpcEnv": "BASE_RPC_URL",
+    "explorer": "https://basescan.org",
+    "durinRegistryFactory": "0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d",
+    "l2Registry": "",
+    "registrar": "",
+    "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+  },
+  "l2Testnet": {
+    "name": "base-sepolia",
+    "chainId": 84532,
+    "rpcEnv": "BASE_SEPOLIA_RPC_URL",
+    "explorer": "https://sepolia.basescan.org",
+    "durinRegistryFactory": "0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d",
+    "l2Registry": "",
+    "registrar": "",
+    "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+  }
+}

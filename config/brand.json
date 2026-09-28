@@ -1,0 +1,18 @@
+{
+  "productName": "MuseName",
+  "tagline": {
+    "en": "Give every AI a name worth trusting",
+    "zh": "给每个 AI 一个可信的名字"
+  },
+  "siteUrl": "https://musename.xyz",
+  "supportEmail": "support@musename.xyz",
+  "rootName": "musename.eth",
+  "legalDisclaimer": {
+    "en": "MuseName is an independent project. It is not affiliated with, endorsed by, or sponsored by Meta Platforms, Inc. or any of its products.",
+    "zh": "MuseName 是独立项目，与 Meta 及其任何产品无关。"
+  },
+  "naming": {
+    "subnameSuffix": "eth",
+    "exampleLabel": "aguang"
+  }
+}
