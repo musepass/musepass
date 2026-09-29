@@ -28,6 +28,7 @@ import {
 } from '@musename/core';
 import { isAddress } from 'viem';
 import type { ChainReader, MusenameDeps } from './deps.js';
+import { createLogger, requestObservability, type Logger } from './observability.js';
 
 export interface ApiMeta {
   asOf: string;
@@ -63,6 +64,9 @@ export function createApp(deps: MusenameDeps) {
   const { config, reservedIndex, chain, names, requests, sponsorship, clock } = deps;
   const app = new Hono();
   const buckets = new Map<string, RateBucket>();
+
+  const logger: Logger = deps.logger ?? createLogger();
+  app.use('*', requestObservability(logger));
 
   // The web app runs on its own origin, so the API has to say who may call it.
   // The list comes from config (brand site URL plus local dev ports) and can be

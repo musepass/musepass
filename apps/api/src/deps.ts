@@ -1,5 +1,6 @@
 import type { MusenameConfig, ReservedIndex } from '@musename/core';
 import type { Address, Hex } from 'viem';
+import type { Logger } from './observability.js';
 
 export type Registry = {
   id: number;
@@ -98,4 +99,6 @@ export interface MusenameDeps {
   sponsorship: SponsorshipRepo;
   /** Injectable so tests are not time dependent. */
   clock: () => Date;
+  /** Injectable so tests can assert on log lines. */
+  logger?: Logger;
 }
