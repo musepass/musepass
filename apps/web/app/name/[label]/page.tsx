@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CardEditor } from '@/components/CardEditor';
+import { PrimaryNameCard } from '@/components/PrimaryNameCard';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { ApiError, fetchConfig, fetchName, type NameData } from '@/lib/api';
@@ -199,6 +200,8 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
             ownerAddress={data.owner ?? ''}
             published={data.card}
           />
+
+          <PrimaryNameCard fullName={data.fullName} ownerAddress={data.owner ?? ''} />
 
           <Link className="btn" href="/">
             回首页

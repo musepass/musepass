@@ -1,0 +1,214 @@
+#!/usr/bin/env node
+/**
+ * One command that answers "is the thing that is supposed to work still
+ * working?", from outside, the way a stranger would check it.
+ *
+ *   node scripts/health-report.mjs            # human readable
+ *   node scripts/health-report.mjs --json     # for a monitor or a webhook
+ *
+ * Exit code 0 when every hard check passes, 1 otherwise, so a cron job can
+ * alert on the exit code even before there is anywhere to send an alert.
+ *
+ * What it deliberately does not check: anything that needs a private key or
+ * shell access to the host. If a check cannot be made from the outside, it is
+ * not in here pretending to be one.
+ */
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { connect as tlsConnect } from 'node:tls';
+
+import { createPublicClient, http, namehash, parseAbi } from 'viem';
+import { mainnet } from 'viem/chains';
+import { getEnsAddress } from 'viem/ens';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(here, '..');
+// Paths are overridable so the same bundle can run from the server, where the
+// repository is not checked out.
+const configDir = process.env.MUSENAME_CONFIG_DIR ?? resolve(repoRoot, 'config');
+const anchorsFile =
+  process.env.MUSENAME_ANCHORS_FILE ?? resolve(repoRoot, 'deployments/receipt-anchors.json');
+const chains = JSON.parse(readFileSync(resolve(configDir, 'chains.json'), 'utf8'));
+
+const NAME = 'xiaoming.musename.eth';
+const EXPECTED_ADDRESS = '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d';
+const RESOLVER = '0x9eA7A8896a68717e587BC1EE17B6b0B80EEeb443';
+const SPONSOR = '0x66F499e8F0A92e44A0F9c59a305E73a12b5684e7';
+const MIN_SPONSOR_ETH = 0.0002;
+const MAX_ANCHOR_AGE_DAYS = 2;
+
+const checks = [];
+const record = (name, ok, detail, hard = true) => {
+  checks.push({ name, ok, detail, hard });
+  const mark = ok ? 'ok  ' : hard ? 'FAIL' : 'warn';
+  console.log(`${mark} ${name.padEnd(38)} ${detail}`);
+};
+
+async function httpStatus(url, init) {
+  const started = Date.now();
+  try {
+    const response = await fetch(url, { ...init, signal: AbortSignal.timeout(15000) });
+    return { status: response.status, ms: Date.now() - started, body: response };
+  } catch (error) {
+    return { status: 0, ms: Date.now() - started, error: String(error.message ?? error) };
+  }
+}
+
+function tlsDaysLeft(host) {
+  return new Promise((done) => {
+    const socket = tlsConnect({ host, port: 443, servername: host, timeout: 10000 }, () => {
+      const certificate = socket.getPeerCertificate();
+      socket.end();
+      const expires = new Date(certificate.valid_to).getTime();
+      done(Number.isNaN(expires) ? null : Math.round((expires - Date.now()) / 86_400_000));
+    });
+    socket.on('error', () => done(null));
+    socket.on('timeout', () => {
+      socket.destroy();
+      done(null);
+    });
+  });
+}
+
+const GATEWAY = 'https://gw.musename.xyz';
+const SITE = 'https://musename.xyz';
+
+// 1. The public surfaces answer.
+for (const [label, url] of [
+  ['gateway healthz', `${GATEWAY}/healthz`],
+  ['site home', `${SITE}/`],
+  ['api config', `${SITE}/v1/config`],
+  ['verify page', `${SITE}/verify`],
+]) {
+  const result = await httpStatus(url);
+  record(label, result.status === 200, result.status === 200 ? `${result.ms}ms` : `HTTP ${result.status} ${result.error ?? ''}`);
+}
+
+// 2. The gateway still speaks for the right chain and signer.
+{
+  const result = await httpStatus(`${GATEWAY}/healthz`);
+  const body = result.body ? await result.body.json().catch(() => null) : null;
+  const signerOk = body?.signer?.toLowerCase() === '0x47f471f726ee612cc769bc0b03f5482fa2ae1f1e';
+  record('gateway signer', signerOk, body?.signer ?? 'no body');
+  const allowed = body?.allowedSenders ?? [];
+  record(
+    'gateway allow list is pinned',
+    allowed.length > 0 && allowed.length <= 3,
+    allowed.join(', ') || 'empty — signs for any resolver',
+    false,
+  );
+}
+
+// 3. MCP answers a real initialize over HTTPS.
+{
+  const result = await httpStatus(`${SITE}/mcp`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'health-report', version: '1' } },
+    }),
+  });
+  record('mcp initialize', result.status === 200, `HTTP ${result.status}`);
+}
+
+// 4. Certificates are not about to expire.
+for (const host of ['musename.xyz', 'gw.musename.xyz']) {
+  const days = await tlsDaysLeft(host);
+  record(`tls ${host}`, days !== null && days > 21, days === null ? 'could not read' : `${days} days left`, days !== null && days < 0);
+}
+
+// 5. The product's actual promise: the name resolves, through the right resolver.
+{
+  const client = createPublicClient({ chain: mainnet, transport: http('https://ethereum-rpc.publicnode.com') });
+  const ens = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+  const abi = parseAbi([
+    'function resolver(bytes32) view returns (address)',
+    'function l2Registry(bytes32) view returns (uint64, address)',
+  ]);
+  const node = namehash('musename.eth');
+  try {
+    const resolver = await client.readContract({ address: ens, abi, functionName: 'resolver', args: [node] });
+    record('root resolver is ours', resolver.toLowerCase() === RESOLVER.toLowerCase(), resolver);
+    const [chainId, registry] = await client.readContract({
+      address: RESOLVER,
+      abi,
+      functionName: 'l2Registry',
+      args: [node],
+    });
+    record(
+      'resolver points at the L2 registry',
+      Number(chainId) === chains.l2.chainId && registry.toLowerCase() === chains.l2.l2Registry.toLowerCase(),
+      `${chainId} ${registry}`,
+    );
+    const address = await getEnsAddress(client, { name: NAME });
+    record('name resolves', address?.toLowerCase() === EXPECTED_ADDRESS.toLowerCase(), address ?? 'null');
+  } catch (error) {
+    record('resolution path', false, (error.shortMessage ?? error.message ?? '').split('\n')[0].slice(0, 60));
+  }
+}
+
+// 6. The sponsorship wallet can still pay for registrations.
+for (const [label, rpc, chain] of [
+  ['sponsor balance (robinhood)', chains.l2.rpcDefault, chains.l2.chainId],
+  ['sponsor balance (mainnet)', 'https://ethereum-rpc.publicnode.com', 1],
+]) {
+  try {
+    const client = createPublicClient({
+      chain: { id: chain, name: label, nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: [rpc] } } },
+      transport: http(rpc),
+    });
+    const balance = Number(await client.getBalance({ address: SPONSOR })) / 1e18;
+    const enough = chain === chains.l2.chainId ? balance > MIN_SPONSOR_ETH : true;
+    record(label, enough, `${balance.toFixed(6)} ETH`, chain === chains.l2.chainId);
+  } catch (error) {
+    record(label, false, String(error.message ?? error).slice(0, 50), chain === chains.l2.chainId);
+  }
+}
+
+// 7. Anchoring has not silently stopped.
+{
+  const ledger = JSON.parse(readFileSync(anchorsFile, 'utf8'));
+  const latest = ledger.at(-1);
+  const ageDays = latest ? (Date.now() / 1000 - latest.anchoredAt) / 86_400 : Infinity;
+  record(
+    'latest receipt anchor',
+    Number.isFinite(ageDays),
+    latest ? `${Math.floor(ageDays)} days old, ${latest.count} records` : 'none',
+    // Not hard yet: anchoring is manual until there are receipts to anchor.
+    ageDays > MAX_ANCHOR_AGE_DAYS,
+  );
+}
+
+const failures = checks.filter((check) => !check.ok && check.hard);
+
+// If a webhook is configured, that is where a failing report goes. Without one
+// the exit code and the journal entry are all there is — which is why the
+// runbook says to wire one up.
+const webhook = process.env.MUSENAME_ALERT_WEBHOOK;
+if (webhook && failures.length > 0) {
+  try {
+    await fetch(webhook, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        text: `MuseName health: ${failures.length} failing — ${failures.map((check) => check.name).join(', ')}`,
+        checks,
+      }),
+    });
+    console.log(`alert sent to the configured webhook`);
+  } catch (error) {
+    console.log(`could not reach the alert webhook: ${String(error.message ?? error).slice(0, 60)}`);
+  }
+}
+
+if (process.argv.includes('--json')) {
+  console.log(JSON.stringify({ checkedAt: new Date().toISOString(), checks, failures: failures.length }, null, 2));
+}
+console.log('');
+console.log(`${checks.length - failures.length}/${checks.length} checks passed`);
+if (failures.length > 0) console.log(`failing: ${failures.map((check) => check.name).join(', ')}`);
+process.exit(failures.length === 0 ? 0 : 1);
