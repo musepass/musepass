@@ -48,6 +48,9 @@ function fakeChain(): FakeChain {
     taken,
     registrations,
     failNext: false,
+    async listNames() {
+      return [];
+    },
     async isLabelAvailable(label) {
       return !taken.has(label);
     },
@@ -77,6 +80,7 @@ function buildApp(overrides: Partial<MusenameDeps> = {}, config = testConfig()) 
     requests: repos.requests,
     cards: repos.cards,
     sponsorship: repos.sponsorship,
+    indexKind: 'memory',
     clock: () => FIXED_NOW,
     ...overrides,
   };

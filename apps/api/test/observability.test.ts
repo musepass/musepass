@@ -11,6 +11,9 @@ function build(logLines: string[]) {
   const config = loadConfig({ configDir: new URL('../../../config', import.meta.url).pathname, env: {} });
   const repos = createMemoryRepos();
   const chain: ChainReader = {
+    async listNames() {
+      return [];
+    },
     async isLabelAvailable() {
       return true;
     },
@@ -38,6 +41,7 @@ function build(logLines: string[]) {
     requests: repos.requests,
       cards: repos.cards,
     sponsorship: repos.sponsorship,
+    indexKind: 'memory',
     clock: () => new Date('2026-09-29T00:00:00.000Z'),
     logger,
   };
@@ -145,6 +149,7 @@ describe('request observability', () => {
       requests: repos.requests,
       cards: repos.cards,
       sponsorship: repos.sponsorship,
+    indexKind: 'memory',
       clock: () => new Date('2026-09-29T00:00:00.000Z'),
       logger: createLogger((line) => lines.push(line)),
     });

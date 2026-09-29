@@ -61,7 +61,7 @@ function boom(
 }
 
 export function createApp(deps: MusenameDeps) {
-  const { config, reservedIndex, chain, names, requests, cards, sponsorship, clock } = deps;
+  const { config, reservedIndex, chain, names, requests, cards, sponsorship, indexKind, clock } = deps;
   const app = new Hono();
   const buckets = new Map<string, RateBucket>();
 
@@ -193,6 +193,118 @@ export function createApp(deps: MusenameDeps) {
   /* ------------------------------------------------------------------ */
   /* GET /v1/names/{name}/available                                      */
   /* ------------------------------------------------------------------ */
+  app.get('/v1/metrics', async (c) => {
+    /**
+     * The public scoreboard, and the honest part of it: the numbers below are
+     * the ones this service can actually compute. Everything it cannot measure
+     * yet is listed in `notMeasured` with the reason, because a dashboard that
+     * quietly omits half the picture is the same failure mode as an overstated
+     * homepage.
+     *
+     * Source: our index, not the chain. The chain has the final word on who owns
+     * a name; these counts describe what this service has seen and served.
+     */
+    /**
+     * Two sources, labelled. The chain decides how many names exist; the index
+     * only knows what this service saw, and can legitimately be empty (a memory
+     * index is emptied by a restart). The earlier version of this endpoint
+     * counted the index alone, which would have published "0 names" while the
+     * chain held one.
+     */
+    const rows = await names.listAll();
+    let chainNames: Awaited<ReturnType<ChainReader['listNames']>> = [];
+    let chainError: string | null = null;
+    try {
+      chainNames = await chain.listNames();
+    } catch (error) {
+      // A scoreboard that cannot reach the chain must say so, not report zero.
+      chainError = error instanceof Error ? error.message.slice(0, 120) : String(error).slice(0, 120);
+    }
+    const byTier: Record<string, number> = { free: 0, premium: 0, enterprise: 0 };
+    const byChannel: Record<string, number> = { web: 0, mcp: 0 };
+    const byStatus: Record<string, number> = { active: 0, expired: 0, reserved: 0 };
+
+    let withCard = 0;
+    let firstRegisteredAt: string | null = null;
+    for (const row of rows) {
+      byTier[row.tier] = (byTier[row.tier] ?? 0) + 1;
+      byChannel[row.registeredVia] = (byChannel[row.registeredVia] ?? 0) + 1;
+      byStatus[row.status] = (byStatus[row.status] ?? 0) + 1;
+      const stamp = row.registeredAt.toISOString();
+      if (firstRegisteredAt === null || stamp < firstRegisteredAt) firstRegisteredAt = stamp;
+      const versions = await cards.listVersions(row.id);
+      if (versions.length > 0) withCard += 1;
+    }
+
+    const chainCount = chainNames.length;
+    const indexedOwners = new Set(rows.map((row) => row.ownerAddress.toLowerCase()));
+    const ownersOnChain = new Set(chainNames.map((entry) => entry.owner.toLowerCase()));
+
+    return c.json(
+      {
+        summary: {
+          zh: chainError
+            ? `链上暂时读不到名字数量；索引里有 ${rows.length} 条。`
+            : `链上 ${chainCount} 个名字，索引里 ${rows.length} 条（其中 ${withCard} 个发布了名片）。`,
+          en: chainError
+            ? `The chain count is unavailable right now; the index holds ${rows.length} rows.`
+            : `${chainCount} names on chain, ${rows.length} rows in the index (${withCard} with a published card).`,
+        },
+        data: {
+          /** What the chain says. This is the number a stranger can verify. */
+          chain: {
+            names: chainError ? null : chainCount,
+            firstRegisteredBlock: chainNames[0]?.blockNumber ?? null,
+            owners: ownersOnChain.size,
+            error: chainError,
+            howToCheck: 'read the registrar NameRegistered events, or run `pnpm snapshot:names`',
+          },
+          /** What this service has indexed. Useful, but not the truth about the world. */
+          index: {
+            kind: indexKind,
+            names: rows.length,
+            owners: indexedOwners.size,
+            ...(indexKind === 'memory'
+              ? {
+                  warning:
+                    'a memory index is emptied by a restart, so these counts describe this process, not the chain',
+                }
+              : {}),
+          },
+          namesWithCard: withCard,
+          byTier,
+          byChannel,
+          byStatus,
+          firstRegisteredAt,
+          /** Anything a token story would want and this service cannot prove yet. */
+          /** Anything a token story would want and this service cannot prove yet. */
+          notMeasured: [
+            {
+              metric: 'queries by anyone other than us',
+              why: 'we do not count API or MCP calls by caller yet, and self-tests would inflate it',
+            },
+            {
+              metric: 'records and their verdicts',
+              why: 'the record registry is written and tested but not deployed, so there is nothing to read',
+            },
+            {
+              metric: 'records issued by an outside verifier',
+              why: 'the only verifier today is our own engine; calling that independent would be false',
+            },
+            {
+              metric: 'unique users',
+              why: 'a name is a wallet address, and one person can hold many; counting them as people would be a guess',
+            },
+          ],
+        },
+        errors: [],
+        meta: meta(false),
+      },
+      200,
+      { 'cache-control': 'public, max-age=60' },
+    );
+  });
+
   app.get('/v1/names/:name/available', async (c) => {
     const rawName = c.req.param('name');
     const limit = config.limits.rateLimits.availabilityPerMinutePerIp;

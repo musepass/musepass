@@ -11,6 +11,8 @@ import { base, baseSepolia, foundry } from 'viem/chains';
 import type { MusenameConfig } from '@musename/core';
 import type { ChainReader } from '../deps.js';
 
+type NamesList = Array<{ label: string; owner: Address; blockNumber: number; txHash: Hex }>;
+
 export const REGISTRAR_ABI = [
   {
     type: 'function',
@@ -32,6 +34,17 @@ export const REGISTRAR_ABI = [
     outputs: [{ name: 'node', type: 'bytes32' }],
   },
 ] as const;
+
+/** The registrar's own event: the only place a minted name is announced. */
+export const NAME_REGISTERED_EVENT = {
+  type: 'event',
+  name: 'NameRegistered',
+  inputs: [
+    { name: 'node', type: 'bytes32', indexed: true },
+    { name: 'label', type: 'string', indexed: false },
+    { name: 'owner', type: 'address', indexed: true },
+  ],
+} as const;
 
 export const L2_REGISTRY_ABI = [
   {
@@ -117,6 +130,13 @@ export function createChainReader(options: ChainReaderOptions): ChainReader {
       })
     : null;
 
+  /**
+   * Names read from the registrar's events, cached for five minutes. Walking
+   * logs is not a per-request operation, and a public count that changes on
+   * every refresh is worse than one that is a few minutes old and says so.
+   */
+  let namesCache: { value: NamesList; expiresAt: number } | null = null;
+
   const requireAddresses = (): { registrar: Address; l2Registry: Address } => {
     if (!registrar || !l2Registry) {
       throw new Error(
@@ -135,6 +155,67 @@ export function createChainReader(options: ChainReaderOptions): ChainReader {
     }) as Promise<Hex>;
 
   return {
+    /**
+     * Names read from the registrar's own events.
+     *
+     * Cached for five minutes: walking logs is not a per-request operation, and
+     * a public count that moves on every refresh is worse than one that is a few
+     * minutes old and says so. The scan walks backwards in chunks and stops
+     * after consecutive empty chunks, so the cost is a handful of calls.
+     */
+    async listNames() {
+      if (namesCache && namesCache.expiresAt > Date.now()) return namesCache.value;
+      const { registrar: registrarAddress } = requireAddresses();
+      const CHUNK = 1_000_000n;
+      const EMPTY_CHUNKS_TO_STOP = 3;
+      const MAX_CHUNKS = 150;
+
+      let toBlock = await publicClient.getBlockNumber();
+      let fromBlock = toBlock - CHUNK + 1n > 0n ? toBlock - CHUNK + 1n : 0n;
+      const found: Array<{ label: string; owner: Address; blockNumber: number; txHash: Hex }> = [];
+      let chunks = 0;
+      let emptyChunks = 0;
+
+      while (chunks < MAX_CHUNKS && toBlock >= 0n) {
+        chunks += 1;
+        const logs = await publicClient
+          .getLogs({
+            address: registrarAddress,
+            event: NAME_REGISTERED_EVENT,
+            fromBlock,
+            toBlock,
+          })
+          .catch(() => []);
+        if (logs.length === 0) {
+          emptyChunks += 1;
+          if (emptyChunks >= EMPTY_CHUNKS_TO_STOP) break;
+        } else {
+          emptyChunks = 0;
+          for (const log of logs) {
+            const { node: _node, label, owner } = log.args as {
+              node?: Hex;
+              label?: string;
+              owner?: Address;
+            };
+            if (!label || !owner) continue;
+            found.push({
+              label,
+              owner,
+              blockNumber: Number(log.blockNumber ?? 0n),
+              txHash: log.transactionHash as Hex,
+            });
+          }
+        }
+        if (fromBlock === 0n) break;
+        toBlock = fromBlock - 1n;
+        fromBlock = toBlock - CHUNK + 1n > 0n ? toBlock - CHUNK + 1n : 0n;
+      }
+
+      found.sort((a, b) => a.blockNumber - b.blockNumber || a.label.localeCompare(b.label));
+      namesCache = { value: found, expiresAt: Date.now() + 5 * 60 * 1000 };
+      return found;
+    },
+
     async isLabelAvailable(label) {
       return (await publicClient.readContract({
         address: requireAddresses().registrar,

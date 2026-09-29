@@ -42,6 +42,9 @@ function testConfig(): MusenameConfig {
 
 function fakeChain(taken = new Set<string>()): ChainReader {
   return {
+    async listNames() {
+      return [];
+    },
     async isLabelAvailable(label) {
       return !taken.has(label);
     },
@@ -67,6 +70,7 @@ function buildApp(overrides: Partial<MusenameDeps> = {}) {
     requests: repos.requests,
       cards: repos.cards,
     sponsorship: repos.sponsorship,
+    indexKind: 'memory',
     clock: () => now,
     ...overrides,
   };

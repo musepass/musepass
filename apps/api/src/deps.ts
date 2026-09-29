@@ -73,6 +73,15 @@ export interface CardsRepo {
 }
 
 export interface ChainReader {
+  /**
+   * Every name this registrar has minted, read from its own events.
+   *
+   * The index is a cache and can be empty (a memory index is emptied by a
+   * restart), so anything published as a fact about the world has to come from
+   * here. Implementations may cache: this walks logs, it is not a per-request
+   * read.
+   */
+  listNames(): Promise<Array<{ label: string; owner: Address; blockNumber: number; txHash: Hex }>>;
   /** Registrar's own view: min length, on-chain reserved mirror and ownership. */
   isLabelAvailable(label: string): Promise<boolean>;
   getOwner(label: string): Promise<Address | null>;
@@ -131,6 +140,15 @@ export interface MusenameDeps {
   requests: RegistrationRequestRepo;
   cards: CardsRepo;
   sponsorship: SponsorshipRepo;
+  /**
+   * 'postgres' when DATABASE_URL is set, 'memory' otherwise.
+   *
+   * Everything the index holds is a cache of chain facts, so a memory index is
+   * not wrong — but a restart empties it, and any count read from it would look
+   * like a fact about the world while actually being a fact about one process.
+   * Public numbers must say which one they are.
+   */
+  indexKind: 'memory' | 'postgres';
   /** Injectable so tests are not time dependent. */
   clock: () => Date;
   /** Injectable so tests can assert on log lines. */

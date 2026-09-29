@@ -22,6 +22,7 @@ let names: NamesRepo;
 let requests: RegistrationRequestRepo;
 let cards: CardsRepo;
 let sponsorship: SponsorshipRepo;
+let indexKind: 'memory' | 'postgres' = 'memory';
 if (process.env.DATABASE_URL) {
   // Imported only when it is actually used, so a deployment that runs without
   // Postgres does not need the driver installed at all.
@@ -35,6 +36,7 @@ if (process.env.DATABASE_URL) {
   };
   await migrate(sql);
   ({ names, requests, cards, sponsorship } = createPostgresRepos(sql));
+  indexKind = 'postgres';
   logger.log('info', 'using postgres for the index');
 } else {
   ({ names, requests, cards, sponsorship } = createMemoryRepos());
@@ -51,6 +53,7 @@ const app = createApp({
   requests,
   cards,
   sponsorship,
+  indexKind,
   clock: () => new Date(),
   logger,
 });

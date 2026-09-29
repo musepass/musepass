@@ -18,8 +18,32 @@ export interface Sql {
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-export function readSchemaSql(): string {
-  return readFileSync(resolve(here, '..', '..', 'sql', '001_init.sql'), 'utf8');
+/**
+ * Where the schema lives depends on how this code is running: from `src` under
+ * tsx, from `dist` after tsc, or from a single bundled `api.mjs` sitting next to
+ * a `sql/` directory. Guessing one layout and failing on the others is how a
+ * deployment ends up unable to start, so all three are tried and the env var
+ * wins over all of them.
+ */
+export function schemaCandidates(): string[] {
+  return [
+    process.env.MUSENAME_SCHEMA_FILE ?? '',
+    resolve(here, '..', '..', 'sql', '001_init.sql'),
+    resolve(here, 'sql', '001_init.sql'),
+  ].filter((candidate) => candidate.length > 0);
+}
+
+export function readSchemaSql(candidates: string[] = schemaCandidates()): string {
+  for (const candidate of candidates) {
+    try {
+      return readFileSync(candidate, 'utf8');
+    } catch {
+      // Try the next layout.
+    }
+  }
+  throw new Error(
+    `cannot find the schema file (tried ${candidates.join(', ')}); set MUSENAME_SCHEMA_FILE to its path`,
+  );
 }
 
 /**

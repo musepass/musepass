@@ -72,6 +72,9 @@ function fakeChain(): FakeChain {
     taken,
     texts,
     writes,
+    async listNames() {
+      return [];
+    },
     async isLabelAvailable(label) {
       return !taken.has(label);
     },
@@ -107,6 +110,7 @@ function buildApp(chain: FakeChain = fakeChain(), config = testConfig()) {
     requests: repos.requests,
       cards: repos.cards,
     sponsorship: repos.sponsorship,
+    indexKind: 'memory',
     clock: () => FIXED_NOW,
   };
   return { app: createApp(deps), deps, chain };
