@@ -62,11 +62,33 @@ export interface ClaimData {
   alreadyRegistered: boolean;
 }
 
+/**
+ * A card as the API serves it: only the fields the owner published, plus the
+ * content hash so a reader can verify the record independently.
+ */
+export interface RedactedCard {
+  name?: string;
+  address?: string;
+  description?: string;
+  image?: string;
+  services?: Array<{ name: string; endpoint: string; version?: string }>;
+  x402Support?: boolean;
+  active?: boolean;
+  registrations?: Array<{ agentId: number; agentRegistry: string }>;
+  supportedTrust?: string[];
+  owner?: string;
+  host?: string;
+  contact?: string;
+  payoutAddress?: string;
+  trackRecordEndpoint?: string;
+  contentHash?: string;
+}
+
 export interface NameData {
   label: string;
   fullName: string;
   owner: `0x${string}` | null;
-  card: unknown | null;
+  card: RedactedCard | null;
   trackRecord: unknown | null;
   index?: { tier: string; registeredAt: string; registeredVia: string } | null;
 }
@@ -168,6 +190,8 @@ export class ApiError extends Error {
 }
 
 export function apiBaseUrl(): string {
+  // NEXT_PUBLIC_* is inlined for the browser; MUSENAME_API_URL is read at
+  // runtime on the server, so one build can be pointed at any environment.
   const base =
     process.env.NEXT_PUBLIC_API_URL ??
     process.env.MUSENAME_API_URL ??

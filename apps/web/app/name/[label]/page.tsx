@@ -109,7 +109,68 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
               名片
             </h2>
             {data.card ? (
-              <pre className="mono-break">{JSON.stringify(data.card, null, 2)}</pre>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {data.card.description ? (
+                  <p className="body-2" style={{ fontSize: 16 }}>
+                    {data.card.description}
+                  </p>
+                ) : null}
+
+                <dl className="kv" style={{ gridTemplateColumns: '120px 1fr' }}>
+                  {data.card.host ? (
+                    <>
+                      <dt>运行在</dt>
+                      <dd>{data.card.host}</dd>
+                    </>
+                  ) : null}
+                  {data.card.owner ? (
+                    <>
+                      <dt>主人</dt>
+                      <dd>{data.card.owner}</dd>
+                    </>
+                  ) : null}
+                  {data.card.contact ? (
+                    <>
+                      <dt>联系</dt>
+                      <dd>{data.card.contact}</dd>
+                    </>
+                  ) : null}
+                  {data.card.payoutAddress ? (
+                    <>
+                      <dt>收款</dt>
+                      <dd className="mono-break">{data.card.payoutAddress}</dd>
+                    </>
+                  ) : null}
+                </dl>
+
+                {data.card.services?.length ? (
+                  <div>
+                    <div className="record-sample-label" style={{ color: 'var(--ink-3)' }}>
+                      它能做什么 / 怎么找到它
+                    </div>
+                    <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {data.card.services.map((service) => (
+                        <li key={`${service.name}-${service.endpoint}`} style={{ fontSize: 15 }}>
+                          <span className="mono">{service.name}</span>
+                          {' · '}
+                          <a className="mono-break" href={service.endpoint} target="_blank" rel="noreferrer">
+                            {service.endpoint}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {data.card.contentHash ? (
+                  <p className="record-sample-label" style={{ margin: 0, color: 'var(--ink-3)' }}>
+                    内容指纹 <span className="mono-break">{data.card.contentHash}</span>
+                    <br />
+                    这条记录存在链上的 ENS 文本记录里（键名 <span className="mono">musename.card</span>
+                    ），任何人都能独立取回并重算这个指纹。
+                  </p>
+                ) : null}
+              </div>
             ) : (
               <div className="notice notice-info">
                 还没有公开名片。名片按 ERC-8004 标准生成，公开哪些字段由主人逐项决定，默认只公开名字和地址。

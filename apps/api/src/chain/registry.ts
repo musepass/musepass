@@ -43,6 +43,30 @@ export const L2_REGISTRY_ABI = [
   },
   {
     type: 'function',
+    name: 'text',
+    stateMutability: 'view',
+    inputs: [
+      { name: 'node', type: 'bytes32' },
+      { name: 'key', type: 'string' },
+    ],
+    outputs: [{ type: 'string' }],
+  },
+  {
+    type: 'function',
+    name: 'setTextWithSignature',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'node', type: 'bytes32' },
+      { name: 'key', type: 'string' },
+      { name: 'value', type: 'string' },
+      { name: 'expiration', type: 'uint256' },
+      { name: 'signer', type: 'address' },
+      { name: 'signature', type: 'bytes' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
     name: 'makeNode',
     stateMutability: 'pure',
     inputs: [
@@ -128,6 +152,42 @@ export function createChainReader(options: ChainReaderOptions): ChainReader {
         args: [await nodeFor(label)],
       })) as Address;
       return owner === '0x0000000000000000000000000000000000000000' ? null : owner;
+    },
+
+    async readText(label, key) {
+      const value = (await publicClient.readContract({
+        address: requireAddresses().l2Registry,
+        abi: L2_REGISTRY_ABI,
+        functionName: 'text',
+        args: [await nodeFor(label), key],
+      })) as string;
+      return value ? value : null;
+    },
+
+    async writeText(input) {
+      if (!issuerWallet) {
+        throw new Error('issuer wallet is not configured; cannot publish on chain');
+      }
+      const txHash = await issuerWallet.writeContract({
+        address: requireAddresses().l2Registry,
+        abi: L2_REGISTRY_ABI,
+        functionName: 'setTextWithSignature',
+        args: [
+          await nodeFor(input.label),
+          input.key,
+          input.value,
+          input.expiration,
+          input.signer,
+          input.signature,
+        ],
+        account: issuerWallet.account,
+        chain: issuerWallet.chain,
+      });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+      if (receipt.status !== 'success') {
+        throw new Error(`publishing the record reverted: ${txHash}`);
+      }
+      return { txHash };
     },
 
     async register(input) {

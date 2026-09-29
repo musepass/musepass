@@ -42,6 +42,17 @@ export interface ChainReader {
   /** Registrar's own view: min length, on-chain reserved mirror and ownership. */
   isLabelAvailable(label: string): Promise<boolean>;
   getOwner(label: string): Promise<Address | null>;
+  /** Reads an ENS text record off the L2 registry. */
+  readText(label: string, key: string): Promise<string | null>;
+  /** Writes one, authorised by the owner's signature rather than by us. */
+  writeText(input: {
+    label: string;
+    key: string;
+    value: string;
+    expiration: bigint;
+    signer: Address;
+    signature: Hex;
+  }): Promise<{ txHash: Hex }>;
   register(input: {
     label: string;
     owner: Address;

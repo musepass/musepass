@@ -4,18 +4,30 @@ import type { Context } from 'hono';
 import { cors } from 'hono/cors';
 import type { Address, Hex } from 'viem';
 import {
+  CARD_TEXT_KEY,
+  applyVisibility,
   buildEip712Domain,
+  cardContentHash,
+  cardDataUri,
+  cardTextSignaturePayload,
   checkClaimQuota,
   checkLabel,
+  defaultVisibility,
   isMuseNameError,
   labelFromFullName,
+  namehash,
   normalizeLabel,
+  parseCardDataUri,
   registerMessage,
+  validateCard,
+  verifyCardTextSignature,
   verifyRegisterSignature,
   type BilingualText,
   type LabelIssue,
+  type VisibilityMap,
 } from '@musename/core';
-import type { MusenameDeps } from './deps.js';
+import { isAddress } from 'viem';
+import type { ChainReader, MusenameDeps } from './deps.js';
 
 export interface ApiMeta {
   asOf: string;
@@ -263,6 +275,246 @@ export function createApp(deps: MusenameDeps) {
   /* ------------------------------------------------------------------ */
   /* GET /v1/names/{name}                                                */
   /* ------------------------------------------------------------------ */
+
+  /* ------------------------------------------------------------------ */
+  /* PUT /v1/names/{name}/card                                           */
+  /* ------------------------------------------------------------------ */
+  /**
+   * Publish an ERC-8004 card to the name's on-chain text record.
+   *
+   * The owner signs; we sponsor the transaction. Nothing here can publish a
+   * card for a name the signer does not own: the registry checks that itself,
+   * and we check it first so the caller gets a sentence instead of a revert.
+   */
+  app.put('/v1/names/:name/card', async (c) => {
+    const l2Registry = config.chains.l2.l2Registry;
+    if (!l2Registry) {
+      return c.json(
+        {
+          summary: {
+            zh: '服务还没配置好（缺少注册表地址），名片暂时不能发布。',
+            en: 'The service is not configured yet; cards cannot be published.',
+          },
+          errors: [
+            boom('NOT_CONFIGURED', 'l2Registry is missing from config', {
+              zh: '服务还没配置好。',
+              en: 'The service is not configured.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        503,
+      );
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = (await c.req.json()) as Record<string, unknown>;
+    } catch {
+      return c.json(
+        {
+          summary: { zh: '请求格式不对。', en: 'The request body is not valid JSON.' },
+          errors: [
+            boom('BAD_REQUEST', 'invalid JSON body', {
+              zh: '请求格式不对。',
+              en: 'The request body is not valid JSON.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    let label: string;
+    try {
+      label = toLabel(c.req.param('name'), config.brand.rootName);
+    } catch (error) {
+      return c.json(
+        {
+          summary: { zh: '这个名字不合规。', en: 'That name is not valid.' },
+          errors: [
+            boom(
+              isMuseNameError(error) ? error.code : 'INVALID_NAME',
+              error instanceof Error ? error.message : String(error),
+              { zh: '这个名字不合规。', en: 'That name is not valid.' },
+            ),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    const signer = typeof body.signer === 'string' ? body.signer : '';
+    const signature = typeof body.signature === 'string' ? body.signature : '';
+    const expiration = body.expiration;
+    if (!isAddress(signer) || !signature || expiration === undefined) {
+      return c.json(
+        {
+          summary: {
+            zh: '缺少发布所需的信息（钱包地址、签名或有效期）。',
+            en: 'Missing signer, signature or expiration.',
+          },
+          errors: [
+            boom('BAD_REQUEST', 'signer, signature and expiration are required', {
+              zh: '缺少发布所需的信息。',
+              en: 'Missing signer, signature or expiration.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    // Store exactly what the owner signs. Any normalisation here (adding a
+    // timestamp, defaulting visibility) would change the bytes they signed and
+    // make the signature impossible to produce off chain.
+    const validation = validateCard(body.card);
+    if (!validation.ok) {
+      return c.json(
+        {
+          summary: {
+            zh: '这张名片还缺必填内容，补齐后才能发布。',
+            en: 'The card is missing required fields.',
+          },
+          data: { invalid: validation.errors },
+          errors: validation.errors.map((message) => ({ code: 'INVALID_CARD', message })),
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    // The record value is self-contained, so it cannot rot when a pinning
+    // service disappears (ERC-8004 explicitly allows a base64 data URI).
+    const value = cardDataUri(validation.card);
+    const node = namehash(validation.card.name);
+    const payload = cardTextSignaturePayload({
+      registry: l2Registry as `0x${string}`,
+      node,
+      key: CARD_TEXT_KEY,
+      value,
+      expiration: BigInt(expiration as string | number),
+    });
+
+    let signatureValid = false;
+    try {
+      signatureValid = await verifyCardTextSignature({
+        address: signer,
+        payload,
+        signature: signature as `0x${string}`,
+      });
+    } catch (error) {
+      return c.json(
+        {
+          summary: { zh: '签名没法验证，请重新签名。', en: 'The signature could not be checked.' },
+          errors: [
+            boom('INVALID_SIGNATURE', error instanceof Error ? error.message : 'unreadable', {
+              zh: '签名没法验证，请重新签名。',
+              en: 'The signature could not be checked.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        401,
+      );
+    }
+
+    if (!signatureValid) {
+      return c.json(
+        {
+          summary: {
+            zh: '签名和这张名片对不上。注意：要签的是原始哈希，不是加过前缀的哈希。',
+            en: 'The signature does not match this card.',
+          },
+          errors: [
+            boom('INVALID_SIGNATURE', 'signature does not match the card record', {
+              zh: '签名和这张名片对不上。',
+              en: 'The signature does not match this card.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        401,
+      );
+    }
+
+    const owner = await chain.getOwner(label);
+    if (!owner || owner.toLowerCase() !== signer.toLowerCase()) {
+      return c.json(
+        {
+          summary: {
+            zh: '只有名字的主人才能为它发布名片。',
+            en: 'Only the owner of the name can publish a card for it.',
+          },
+          errors: [
+            boom('NOT_OWNER', `signer is not the owner of ${label}`, {
+              zh: '只有名字的主人才能为它发布名片。',
+              en: 'Only the owner of the name can publish a card for it.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        403,
+      );
+    }
+
+    try {
+      const { txHash } = await chain.writeText({
+        label,
+        key: CARD_TEXT_KEY,
+        value,
+        expiration: BigInt(expiration as string | number),
+        signer,
+        signature: signature as `0x${string}`,
+      });
+
+      return c.json(
+        {
+          summary: {
+            zh: `名片已经写进链上了，${label}.${config.brand.rootName} 的任何访问者都能读到。`,
+            en: `The card is on chain; anyone reading ${label}.${config.brand.rootName} can see it.`,
+          },
+          data: {
+            label,
+            fullName: validation.card.name,
+            txHash,
+            contentHash: cardContentHash(validation.card),
+            recordBytes: value.length,
+            visibility: {
+              ...defaultVisibility(),
+              ...((validation.card.musename as { visibility?: Partial<VisibilityMap> } | undefined)
+                ?.visibility ?? {}),
+            },
+            warnings: validation.warnings,
+          },
+          errors: [],
+          meta: meta(true),
+        },
+        201,
+      );
+    } catch (error) {
+      return c.json(
+        {
+          summary: {
+            zh: '写链失败，名片没有被发布，可以再试一次。',
+            en: 'Publishing failed; nothing was written and you can retry.',
+          },
+          errors: [
+            boom('CHAIN_ERROR', error instanceof Error ? error.message : String(error), {
+              zh: '写链失败，名片没有被发布。',
+              en: 'Publishing failed; nothing was written.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        502,
+      );
+    }
+  });
+
   app.get('/v1/names/:name', async (c) => {
     const rawName = c.req.param('name');
 
@@ -286,7 +538,61 @@ export function createApp(deps: MusenameDeps) {
       );
     }
 
-    const [owner, indexed] = await Promise.all([chain.getOwner(label), names.findByNormalized(label)]);
+    let owner: Awaited<ReturnType<ChainReader['getOwner']>>;
+    let indexed: Awaited<ReturnType<MusenameDeps['names']['findByNormalized']>>;
+    try {
+      [owner, indexed] = await Promise.all([
+        chain.getOwner(label),
+        names.findByNormalized(label),
+      ]);
+    } catch (error) {
+      // A name page that cannot reach the chain must say so, not return a 500
+      // that looks like a bug in our own service.
+      return c.json(
+        {
+          summary: {
+            zh: '链上暂时读不到这个名字，请稍后再刷新。',
+            en: 'The chain is not reachable right now; please refresh in a moment.',
+          },
+          errors: [
+            boom('CHAIN_UNAVAILABLE', error instanceof Error ? error.message : String(error), {
+              zh: '链上暂时读不到这个名字。',
+              en: 'The chain is not reachable right now.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        503,
+      );
+    }
+
+    // The card lives on chain, so it is read from there rather than from our
+    // index — the index can lag, the registry cannot lie.
+    let card: unknown = null;
+    if (owner) {
+      try {
+        const record = await chain.readText(label, CARD_TEXT_KEY);
+        const parsed = record ? parseCardDataUri(record) : null;
+        if (parsed) {
+          const visibility = {
+            ...defaultVisibility(),
+            ...((parsed.musename as { visibility?: Partial<VisibilityMap> } | undefined)?.visibility ??
+              {}),
+          };
+          card = {
+            ...applyVisibility(
+              { card: parsed, ensName: `${label}.${config.brand.rootName}`, ownerAddress: owner },
+              visibility,
+              'public',
+            ),
+            contentHash: cardContentHash(parsed),
+          };
+        }
+      } catch {
+        // A missing or unreadable record is not an error: it means no card yet.
+        card = null;
+      }
+    }
 
     if (!owner) {
       return c.json(
@@ -312,8 +618,7 @@ export function createApp(deps: MusenameDeps) {
         label,
         fullName: `${label}.${config.brand.rootName}`,
         owner,
-        // Card and track record arrive in phase 2 and phase 5. Never invent them.
-        card: null,
+        card,
         trackRecord: null,
         index: indexed
           ? {

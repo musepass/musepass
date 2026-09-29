@@ -166,6 +166,16 @@ function applyEnvOverrides(config: MusenameConfig, env: Record<string, string | 
   if (env.MUSENAME_RPC_URL) l2.rpcUrl = env.MUSENAME_RPC_URL;
   if (env.MUSENAME_L1_RESOLVER) l1.durinL1Resolver = env.MUSENAME_L1_RESOLVER;
 
+  // Pointing the network at a testnet should also bring that testnet's
+  // addresses along. Without this, `MUSENAME_L2_CHAIN_ID=84532` would talk to
+  // Base Sepolia while still reading the (empty) mainnet address slots.
+  if (l2.chainId === l2Testnet.chainId) {
+    if (!l2.l2Registry) l2.l2Registry = l2Testnet.l2Registry;
+    if (!l2.registrar) l2.registrar = l2Testnet.registrar;
+    if (!l2.usdc) l2.usdc = l2Testnet.usdc;
+    if (!l2.explorer) l2.explorer = l2Testnet.explorer;
+  }
+
   return { ...config, brand, chains: { l1, l2, l2Testnet } };
 }
 

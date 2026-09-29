@@ -1,4 +1,13 @@
-import { keccak256, toBytes, type Hex } from 'viem';
+import {
+  encodePacked,
+  hashMessage,
+  keccak256,
+  toBytes,
+  verifyMessage,
+  type Address,
+  type Hex,
+  type PublicClient,
+} from 'viem';
 
 export const ERC8004_CARD_TYPE = 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1';
 
@@ -267,4 +276,111 @@ export function canonicalJson(value: unknown): string {
  */
 export function cardContentHash(card: AgentCard): Hex {
   return keccak256(toBytes(canonicalJson(card)));
+}
+
+/* ------------------------------------------------------------------ */
+/* On-chain text record                                                */
+/* ------------------------------------------------------------------ */
+
+/** The ENS text record key the card lives under. Namespaced so it cannot clash. */
+export const CARD_TEXT_KEY = 'musename.card';
+
+/**
+ * A card is stored as a self-contained data URI rather than only as an IPFS
+ * pointer. ERC-8004 explicitly allows this, and it means the record cannot rot
+ * when a pinning service disappears — which matters because the whole pitch is
+ * that a name outlives the platform that issued it.
+ */
+export function cardDataUri(card: AgentCard): string {
+  const json = canonicalJson(card);
+  return `data:application/json;base64,${encodeBase64(json)}`;
+}
+
+export function parseCardDataUri(value: string): AgentCard | null {
+  const prefix = 'data:application/json;base64,';
+  if (!value.startsWith(prefix)) return null;
+  try {
+    const json = decodeBase64(value.slice(prefix.length));
+    return JSON.parse(json) as AgentCard;
+  } catch {
+    return null;
+  }
+}
+
+/** Works in Node and in a browser, so the front end can reuse this later. */
+function encodeBase64(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  if (typeof Buffer !== 'undefined') return Buffer.from(bytes).toString('base64');
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function decodeBase64(value: string): string {
+  if (typeof Buffer !== 'undefined') return Buffer.from(value, 'base64').toString('utf8');
+  const binary = atob(value);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+export interface CardTextSignatureInput {
+  /** The L2 registry, which is also the resolver holding the text record. */
+  registry: Address;
+  node: Hex;
+  key: string;
+  value: string;
+  /** Unix timestamp after which the signature is void. */
+  expiration: bigint | number;
+}
+
+/**
+ * The value a wallet should sign — a plain 32 byte hash, passed to
+ * `personal_sign` (viem: `signMessage({ message: { raw } })`).
+ *
+ * The contract compares against the EIP-191 wrapped form of this hash (see
+ * {@link cardTextSignatureHash}), and `personal_sign` wraps it exactly the same
+ * way. Signing the wrapped hash instead would wrap it twice and every publish
+ * would revert with Unauthorized — which is what happened the first time.
+ */
+export function cardTextSignaturePayload(input: CardTextSignatureInput): Hex {
+  return keccak256(
+    encodePacked(
+      ['address', 'bytes32', 'string', 'string', 'uint256'],
+      [input.registry, input.node, input.key, input.value, BigInt(input.expiration)],
+    ),
+  );
+}
+
+/**
+ * Mirrors the final hash `L2Resolver.setTextWithSignature` compares against:
+ *
+ *   keccak256(abi.encodePacked(address(this), node, key, value, expiration))
+ *     .toEthSignedMessageHash()
+ *
+ * Note this is a personal-sign hash, not EIP-712, so a wallet shows raw bytes
+ * rather than readable fields. That is the contract's choice, not ours.
+ */
+export function cardTextSignatureHash(input: CardTextSignatureInput): Hex {
+  return hashMessage({ raw: cardTextSignaturePayload(input) });
+}
+
+export interface VerifyCardTextSignatureInput {
+  address: Address;
+  /** The value returned by {@link cardTextSignaturePayload}. */
+  payload: Hex;
+  signature: Hex;
+  /** Pass a client to also accept ERC-1271 smart wallets. */
+  client?: PublicClient;
+}
+
+export async function verifyCardTextSignature(
+  input: VerifyCardTextSignatureInput,
+): Promise<boolean> {
+  const parameters = {
+    address: input.address,
+    message: { raw: input.payload },
+    signature: input.signature,
+  };
+  if (input.client) return input.client.verifyMessage(parameters);
+  return verifyMessage(parameters);
 }
