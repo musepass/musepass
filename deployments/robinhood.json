@@ -76,7 +76,7 @@
   ],
   "l1Resolver": {
     "chain": "ethereum mainnet (chainId 1)",
-    "status": "✅ 已部署（2026-09-29）。剩下两笔登记交易，只有根名字主人能签。",
+    "status": "✅ 已上线（2026-09-29）。名字在真实主网上能解析了。",
     "address": "0x9Ea7a8896a68717E587bC1EE17b6b0b80eeb443",
     "deployTx": "0xa7911098244ea330923bd540ae3c3ffb18bd5c331ac74f6c2b97f72fbe0bcf0d",
     "gasUsed": 1842206,
@@ -101,12 +101,23 @@
     "gatewayAllowList": [
       "0x9ea7a8896a68717e587bc1ee17b6b0b80eeeb443",
       "0x6f18ae097a9898ba7f1d4bc4f4a0b771e9ef7e72"
-    ]
+    ],
+    "liveOnMainnet": true,
+    "setL2RegistryTx": "0x9c92b0198c01918b7b04cd175135d9a6b7a8e6a2723ab92a3349326fd0ec2465",
+    "setResolverTx": "0x10b852ab70bfe8d9c66a039e13678b2c5a91d9e35a50fe1d942d96ce3c41a766",
+    "signedBy": "0x022Ce19a356bc18c1977F6816Fdf05fAF22985b7",
+    "verifiedResolution": {
+      "resolverOfRoot": "0x9eA7A8896a68717e587BC1EE17B6b0B80EEeb443",
+      "l2Registry_entry": "4663 / 0x0ca717398428BCAe7faE24E656E8444EcD9ba5A5",
+      "getEnsAddress_xiaoming": "0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d",
+      "getEnsAddress_aguang": null,
+      "howToRepeat": "node -e \"require('viem/ens').getEnsAddress(createPublicClient({chain:mainnet,transport:http('https://ethereum-rpc.publicnode.com')}),{name:'xiaoming.musename.eth'})\""
+    }
   },
   "notYetDone": [
-    "L1 解析器已部署，但两笔登记交易还没签（setL2Registry 与 setResolver，只有名字主人能签）",
-    "根名字解析器未切换，所以子名字目前在真实钱包里还解析不到",
-    "客户端菜单路径未人工实测（无 Claude/Grok/Muse 账号）",
-    "四个钱包的人工兼容性验证与截图（需要人在真机上操作）"
+    "四钱包人工验证（现在可以做了：解析已在主网生效）",
+    "客户端菜单路径人工实测（无 Claude/Grok/Muse 账号）",
+    "www / 通配 DNS 记录与 support@ 的 MX（只有域名账号持有人能加）",
+    "告警接入任何监控系统（指标与阈值已就绪）"
   ]
 }
