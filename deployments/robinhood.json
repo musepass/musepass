@@ -6,11 +6,14 @@
   },
   "note": "Durin 此前未在此链部署。字节码取自 Sourcify 验证过的 Base 部署，并在链上核对 runtime 哈希一致后部署。",
   "universalSigValidator": {
-    "address": "0xac93b7eb0fa44abf776a8f0fadce1773cf8aae04",
-    "verified": true,
-    "source": "从 ens-contracts 源码编译（Sourcify 各链均无验证副本）",
-    "functionalTest": "全新 EOA 对原始哈希签名 → isValidSig = true；签名与所声称的签名者不符 → false；签名者地址有合约代码且未实现 ERC-1271 → revert（符合设计）",
-    "noteEarlierFailure": "我第一次测出 revert 是因为选了一个在该链上有代码的地址（0x7099… codesize=23），验证器正确走了 ERC-1271 路径。不是合约的问题。"
+    "requiredAddress": "0x164af34fAF9879394370C7f09064127C043A35E9",
+    "requiredAddressIsHardcoded": true,
+    "note": "Durin 的 L2Registry/L2Resolver 把验证器地址写成了源码常量，不是构造参数。所以只有部署在那个确切地址上才有用。",
+    "deployedAt": "0xac93b7eb0fa44abf776a8f0fadce1773cf8aae04",
+    "deployedAtIsUsable": false,
+    "verified": false,
+    "howToFix": "必须用确定性部署（CREATE2）复现那个地址，不能用普通部署。那个地址在多条链上一致，说明原部署用了确定性部署器（Nick's factory 或 ERC-2470 singleton factory），需要用同样的工厂 + 同样的 salt + 同样的字节码在 Robinhood Chain 上重放。",
+    "impact": "在换成正确地址之前，该链上的 setTextWithSignature（名片发布）不可用。注册流程不受影响。"
   },
   "durinRegistryFactory": "0xa5f14c5a5b60ba47dad51dfeaf3b978a393a8766",
   "durinRegistryImplementation": {
@@ -43,5 +46,9 @@
     "根名字解析器未切换，所以子名字目前仍解析不到",
     "客户端菜单路径未人工实测（无 Claude/Grok/Muse 账号）",
     "名片版本索引未做"
-  ]
+  ],
+  "cardPublishOnChain": {
+    "attempted": true,
+    "result": "revert —— 已定位原因：注册表调的是硬编码地址 0x164af34f…，那里在本链上没有合约"
+  }
 }
