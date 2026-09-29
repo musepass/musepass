@@ -37,6 +37,11 @@ export interface MusenameCardExtension {
   updatedAt?: string;
   trackRecordEndpoint?: string;
   ensName?: string;
+  /**
+   * Who may see what. It lives inside the card on purpose: the owner signs the
+   * card, so anything stored outside it would not be covered by the signature.
+   */
+  visibility?: VisibilityMap;
 }
 
 export interface AgentCard {

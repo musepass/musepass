@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { CardEditor } from '@/components/CardEditor';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { ApiError, fetchConfig, fetchName, type NameData } from '@/lib/api';
@@ -191,6 +191,14 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
               </div>
             )}
           </div>
+
+          <CardEditor
+            config={config}
+            label={decoded}
+            fullName={data.fullName}
+            ownerAddress={data.owner ?? ''}
+            published={data.card}
+          />
 
           <Link className="btn" href="/">
             回首页

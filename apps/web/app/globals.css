@@ -357,6 +357,55 @@ a {
   border-color: var(--ink);
 }
 
+.chip-active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--white);
+}
+
+/* ---------------------------------------------------------------- forms */
+
+.field {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 16px;
+  outline: none;
+}
+
+.field:focus {
+  border-color: var(--ink);
+}
+
+textarea.field {
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.visibility-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .field-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* ------------------------------------------------------------- card mock */
 
 .card-wrap {

@@ -1,3 +1,4 @@
+import { REGISTER_TYPES as CORE_REGISTER_TYPES } from '@musename/core/browser';
 import { createWalletClient, custom, getAddress, type Address, type Hex } from 'viem';
 
 export interface Eip1193Provider {
@@ -115,14 +116,8 @@ export async function ensureChain(chainId: number): Promise<void> {
   }
 }
 
-/** Mirrors packages/core REGISTER_TYPES and MuseNameRegistrar.Register. */
-export const REGISTER_TYPES = {
-  Register: [
-    { name: 'label', type: 'string' },
-    { name: 'owner', type: 'address' },
-    { name: 'deadline', type: 'uint256' },
-  ],
-} as const;
+/** The same struct packages/core signs and MuseNameRegistrar verifies. */
+export const REGISTER_TYPES = CORE_REGISTER_TYPES;
 
 export interface RegisterTypedData {
   domain: {
@@ -150,6 +145,26 @@ export async function signRegister(
       primaryType: typedData.primaryType,
       message: typedData.message,
     });
+  } catch (error) {
+    if ((error as { code?: number }).code === 4001) {
+      throw new WalletError('REJECTED', '你取消了签名。');
+    }
+    throw new WalletError('SIGN_FAILED', '签名没有完成，可以再试一次。');
+  }
+}
+
+/**
+ * Signs the raw 32 byte hash the registry's `setTextWithSignature` compares
+ * against, via personal_sign.
+ *
+ * Do NOT hand it the already EIP-191 wrapped hash: personal_sign wraps what it
+ * is given, so a wrapped input ends up wrapped twice and every publish reverts
+ * with Unauthorized. That mistake cost a real testnet transaction to find.
+ */
+export async function signCardPayload(account: Address, payload: Hex): Promise<Hex> {
+  const client = createWalletClient({ account, transport: custom(getProvider() as never) });
+  try {
+    return await client.signMessage({ account, message: { raw: payload } });
   } catch (error) {
     if ((error as { code?: number }).code === 4001) {
       throw new WalletError('REJECTED', '你取消了签名。');

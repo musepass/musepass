@@ -7,6 +7,10 @@
  * actually consulted.
  */
 
+/**
+ * Client for the MuseName API, shared by server components and client
+ * components. The API is the only place the front end gets chain state from.
+ */
 export interface ApiSummary {
   zh: string;
   en: string;
@@ -272,6 +276,31 @@ export function submitClaim(payload: ClaimPayload, options?: RequestOptions) {
   return request<ClaimData>(
     '/v1/names/claim',
     { method: 'POST', body: JSON.stringify(payload) },
+    options,
+  );
+}
+
+export interface PublishCardPayload {
+  card: unknown;
+  expiration: number;
+  signer: string;
+  signature: string;
+}
+
+export interface PublishCardData {
+  label: string;
+  fullName: string;
+  txHash: `0x${string}`;
+  contentHash: `0x${string}`;
+  recordBytes: number;
+  visibility: Record<string, string>;
+  warnings: string[];
+}
+
+export function publishCard(name: string, payload: PublishCardPayload, options?: RequestOptions) {
+  return request<PublishCardData>(
+    `/v1/names/${encodeURIComponent(name)}/card`,
+    { method: 'PUT', body: JSON.stringify(payload) },
     options,
   );
 }
