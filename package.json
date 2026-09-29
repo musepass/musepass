@@ -15,6 +15,7 @@
     "health": "node scripts/health-report.mjs",
     "install:all": "pnpm install",
     "l1:resolver": "node scripts/l1-resolver.mjs",
+    "package:review": "node scripts/package-review.mjs",
     "review:package": "node scripts/build-review-package.mjs",
     "test": "pnpm build && pnpm -r --if-present test",
     "test:contracts": "cd contracts && forge test -vv",
