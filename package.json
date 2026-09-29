@@ -2,7 +2,7 @@
   "name": "musename",
   "version": "0.1.0",
   "private": true,
-  "description": "MuseName — ENS names, ERC-8004 cards and verifiable track records for personal AI",
+  "description": "MuseName \u2014 ENS names, ERC-8004 cards and verifiable track records for personal AI",
   "engines": {
     "node": ">=20"
   },
@@ -22,6 +22,7 @@
     "clean": "pnpm -r --if-present clean"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "ethers": "6.17.0"
   }
 }
