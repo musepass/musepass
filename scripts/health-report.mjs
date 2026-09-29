@@ -13,7 +13,7 @@
  * shell access to the host. If a check cannot be made from the outside, it is
  * not in here pretending to be one.
  */
-import { readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { connect as tlsConnect } from 'node:tls';
@@ -130,6 +130,7 @@ for (const host of ['musename.xyz', 'gw.musename.xyz']) {
     'function l2Registry(bytes32) view returns (uint64, address)',
   ]);
   const node = namehash('musename.eth');
+  let resolved = false;
   try {
     const resolver = await client.readContract({ address: ens, abi, functionName: 'resolver', args: [node] });
     record('root resolver is ours', resolver.toLowerCase() === RESOLVER.toLowerCase(), resolver);
@@ -144,10 +145,28 @@ for (const host of ['musename.xyz', 'gw.musename.xyz']) {
       Number(chainId) === chains.l2.chainId && registry.toLowerCase() === chains.l2.l2Registry.toLowerCase(),
       `${chainId} ${registry}`,
     );
-    const address = await getEnsAddress(client, { name: NAME });
-    record('name resolves', address?.toLowerCase() === EXPECTED_ADDRESS.toLowerCase(), address ?? 'null');
+    // A public mainnet node occasionally takes longer than the timeout while it
+    // walks the CCIP-Read round trip. On a 5-minute cadence that would report a
+    // failure for nothing, so one retry is allowed — and the detail says so,
+    // which keeps a genuinely slow path visible instead of silently green.
+    let address;
+    let retried = false;
+    try {
+      address = await getEnsAddress(client, { name: NAME });
+    } catch {
+      retried = true;
+      address = await getEnsAddress(client, { name: NAME });
+    }
+    record(
+      'name resolves',
+      address?.toLowerCase() === EXPECTED_ADDRESS.toLowerCase(),
+      retried ? `${address ?? 'null'} (slow: second attempt)` : address ?? 'null',
+    );
+    resolved = true;
   } catch (error) {
-    record('resolution path', false, (error.shortMessage ?? error.message ?? '').split('\n')[0].slice(0, 60));
+    if (!resolved) {
+      record('resolution path', false, (error.shortMessage ?? error.message ?? '').split('\n')[0].slice(0, 60));
+    }
   }
 }
 
@@ -185,17 +204,59 @@ for (const [label, rpc, chain] of [
 
 const failures = checks.filter((check) => !check.ok && check.hard);
 
-// If a webhook is configured, that is where a failing report goes. Without one
-// the exit code and the journal entry are all there is — which is why the
-// runbook says to wire one up.
+/**
+ * Run every five minutes without becoming noise.
+ *
+ * `--state-file <path>` remembers the previous verdict, so the report announces
+ * only *changes*: a service goes down, or comes back. That is what makes a
+ * 5-minute cadence useful instead of 288 journal lines a day, and it is also
+ * what a webhook wants — one message per incident, not one per check.
+ */
+const stateIndex = process.argv.indexOf('--state-file');
+const statePath = stateIndex === -1 ? null : process.argv[stateIndex + 1];
+const verdict = failures.length === 0 ? 'ok' : `failing:${failures.map((check) => check.name).join(',')}`;
+let previous = null;
+if (statePath) {
+  try {
+    previous = JSON.parse(readFileSync(statePath, 'utf8'));
+  } catch {
+    previous = null;
+  }
+}
+const changed = statePath !== null && previous?.verdict !== verdict;
+if (statePath) {
+  try {
+    mkdirSync(dirname(statePath), { recursive: true });
+    writeFileSync(
+      statePath,
+      `${JSON.stringify({ verdict, checkedAt: new Date().toISOString(), previous: previous?.verdict ?? null }, null, 2)}\n`,
+    );
+  } catch (error) {
+    console.log(`could not write the state file: ${String(error.message ?? error).slice(0, 60)}`);
+  }
+  console.log(
+    changed
+      ? `state changed: ${previous?.verdict ?? '(first run)'} -> ${verdict}`
+      : `state unchanged: ${verdict}`,
+  );
+}
+
+// If a webhook is configured, that is where a failing report goes — and now only
+// when the verdict changes, so a long outage sends one message, and the recovery
+// sends another. Without a webhook the exit code and the journal entry are all
+// there is, which is why the runbook says to wire one up.
 const webhook = process.env.MUSENAME_ALERT_WEBHOOK;
-if (webhook && failures.length > 0) {
+const shouldAlert = failures.length > 0 ? (statePath ? changed : true) : statePath !== null && changed && previous?.verdict?.startsWith('failing');
+if (webhook && shouldAlert) {
   try {
     await fetch(webhook, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        text: `MuseName health: ${failures.length} failing — ${failures.map((check) => check.name).join(', ')}`,
+        text:
+          failures.length > 0
+            ? `MuseName health: ${failures.length} failing — ${failures.map((check) => check.name).join(', ')}`
+            : `MuseName health: recovered (was ${previous?.verdict})`,
         checks,
       }),
     });
