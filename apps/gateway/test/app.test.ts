@@ -122,7 +122,24 @@ describe('GET /:sender/:data', () => {
   it('rejects a call that is not a stuffed resolve call', async () => {
     const { app } = build();
     const response = await app.request(`/${SENDER}/0xdeadbeef`);
-    expect(response.status).toBeGreaterThanOrEqual(400);
+    const body = (await response.json()) as { code: string; message: string };
+    expect(response.status).toBe(400);
+    expect(body.code).toBe('BAD_CALLDATA');
+    // The body must not echo library internals: this endpoint is public and
+    // anything it says is read by whoever is probing it.
+    expect(body.message).not.toContain('viem');
+    expect(body.message).not.toContain('ABI');
+  });
+
+  it('answers an unexpected internal failure without leaking the reason', async () => {
+    const { app } = build({
+      fail: new Error('rpc https://user:secret@rpc.example.com rejected the call'),
+    });
+    const response = await app.request(`/${SENDER}/${stuffed}`);
+    const body = (await response.json()) as { code: string; message: string };
+    expect(response.status).toBe(500);
+    expect(body.code).toBe('INTERNAL');
+    expect(body.message).toBe('internal error');
   });
 });
 

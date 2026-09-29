@@ -26,5 +26,27 @@ not writing core contracts. We deploy our own *instance* because the gateway URL
 and signer are baked in at construction, and using someone else's instance means
 depending on someone else's gateway and signing key (decision D11).
 
-To verify a deployment made from this file, compare the runtime code hash of the
-new address against the hash above: identical bytes mean the same implementation.
+### Verifying a new deployment
+
+The runtime code is **not** identical on every chain: the constructor looks up
+`namewrapper.eth` live and stores it as an `immutable`, which is baked into the
+runtime bytes. On Sepolia the hash above matches the reference instance; on
+mainnet a deployment of this exact bytecode hashes to something else, and that
+is correct rather than suspicious.
+
+So compare these instead, which is what `scripts/l1-resolver.mjs` does:
+
+1. the deployed code has the expected size (7411 bytes on chains whose ENS
+   answers as Sepolia's does, 7412 where the NameWrapper address pushes one
+   extra byte),
+2. `url()`, `signer()` and `owner()` report exactly the values that were passed
+   to the constructor,
+3. `nameWrapper()` equals whatever ENS resolves `namewrapper.eth` to on that
+   chain — which can only be true if the code is this contract,
+4. deploying the same bytecode twice produces byte-identical runtime code.
+
+Picking the resolver's address: deployments here use CREATE2 through the
+well-known deployment proxy (`0x4e59b44847b379578588920cA78FbF26c0B4956C`) with a
+zero salt, so the address is fixed by the init code alone and is known before
+anyone pays for anything. The init code is this file plus
+`abi.encode(string url, address signer, address owner)`.

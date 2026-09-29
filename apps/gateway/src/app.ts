@@ -77,7 +77,19 @@ export function createGatewayApp(options: GatewayOptions) {
         throw new GatewayError('BAD_DATA', 'data is not hex', 400);
       }
 
-      const call = decodeStuffedCall(rawData as Hex);
+      let call;
+      try {
+        call = decodeStuffedCall(rawData as Hex);
+      } catch {
+        // Anything that is not the resolver's own call shape is a client
+        // mistake, not our failure. Say so without echoing viem's internals
+        // back to whoever asked.
+        throw new GatewayError(
+          'BAD_CALLDATA',
+          'data is not a MuseName resolver call (expected stuffedResolveCall)',
+          400,
+        );
+      }
       labels.chain = call.targetChainId.toString();
 
       const result = await l2.read({
@@ -107,13 +119,15 @@ export function createGatewayApp(options: GatewayOptions) {
       return c.json({ data: encodeGatewayResponse({ result, expires, signature }) });
     } catch (error) {
       if (error instanceof GatewayError) return fail(error);
-      return fail(
-        new GatewayError(
-          'INTERNAL',
-          error instanceof Error ? error.message : String(error),
-          500,
-        ),
-      );
+      // Keep the detail in the log, not in the response: a stack trace or an
+      // RPC URL in a public body is a gift to whoever is probing us.
+      log({
+        level: 'error',
+        code: 'INTERNAL',
+        sender: rawSender,
+        detail: error instanceof Error ? error.message : String(error),
+      });
+      return fail(new GatewayError('INTERNAL', 'internal error', 500));
     }
   });
 
