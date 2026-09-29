@@ -218,7 +218,8 @@ describe('PUT /v1/names/{name}/card', () => {
   });
 
   it('reports a clear 503 when no registry is configured', async () => {
-    const config = loadConfig({ configDir: CONFIG_DIR, env: {} });
+    const base = testConfig();
+    const config = { ...base, chains: { ...base.chains, l2: { ...base.chains.l2, l2Registry: '' } } };
     const { app } = buildApp(fakeChain(), config);
     const response = await app.request('/v1/names/aguang/card', {
       method: 'PUT',

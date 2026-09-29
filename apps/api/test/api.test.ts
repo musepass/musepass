@@ -102,6 +102,19 @@ async function signClaim(label: string, config: MusenameConfig, deadlineSeconds:
   return { signature, message };
 }
 
+
+/** The service is "unconfigured" when the addresses are blank, not when the
+ *  config file is missing them — the real config now carries them. */
+function withoutAddresses(config: MusenameConfig): MusenameConfig {
+  return {
+    ...config,
+    chains: {
+      ...config.chains,
+      l2: { ...config.chains.l2, l2Registry: '', registrar: '' },
+    },
+  };
+}
+
 const futureSeconds = Math.floor(FIXED_NOW.getTime() / 1000) + 600;
 const pastSeconds = Math.floor(FIXED_NOW.getTime() / 1000) - 600;
 
@@ -124,7 +137,7 @@ describe('GET /v1/config', () => {
     expect(body.data.productName).toBe('MuseName');
     expect(body.data.rootName).toBe('musename.eth');
     expect(body.data.siteUrl).toBe('https://musename.xyz');
-    expect(body.data.chain.chainId).toBe(8453);
+    expect(body.data.chain.chainId).toBe(4663);
     expect(body.data.registrar).toBe(REGISTRAR);
     expect(body.data.legalDisclaimer.zh).toContain('Meta');
   });
@@ -472,8 +485,7 @@ describe('POST /v1/names/claim', () => {
   });
 
   it('reports a clear 503 while the registrar is unconfigured', async () => {
-    const config = loadConfig({ configDir: CONFIG_DIR, env: {} });
-    const { app } = buildApp({ config });
+    const { app } = buildApp({ config: withoutAddresses(testConfig()) });
     const response = await app.request('/v1/names/claim', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
