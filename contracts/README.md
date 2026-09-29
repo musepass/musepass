@@ -14,13 +14,30 @@
 ## 目录
 
 ```
-src/MuseNameRegistrar.sol        唯一的自写合约（无资金，需审计后才能承接付费档）
+src/MuseNameRegistrar.sol        发行合约（无资金，需审计后才能承接付费档）
+src/MuseNameRecordRegistry.sol   记录注册表：只增不改、无资金、无升级（2026-09-29 新增，未部署）
+src/lib/RecordDigest.sol         记录摘要的唯一链上定义，与 packages/core 逐字节一致
 src/interfaces/IL2Registry.sol   Durin 接口的 vendored 子集（不跟随上游漂移）
+src/interfaces/INameOwner.sol    记录注册表只需要的那个函数：owner(bytes32)
 script/DeployMuseNameRegistrar.s.sol   生产部署脚本
 script/DeployLocalStack.s.sol          本地全栈（含本地 mock 注册表）
 script/mocks/LocalL2Registry.sol       仅本地使用，禁止部署
-test/MuseNameRegistrar.t.sol           33 个测试（其中 10 个是 2026-09-29 新增的名字形状检查）
+test/MuseNameRegistrar.t.sol     33 个测试（含名字形状检查）
+test/MuseNameRecordRegistry.t.sol 24 个测试（记录、争议、批次、管理权限、不能做的事）
+test/RecordDigest.t.sol          3 个测试，与 TypeScript 实现钉同一个摘要值
 ```
+
+### 记录注册表（两个自写合约里的第二个）
+
+规格见 [docs/record-format.md](../docs/record-format.md)。要点：
+
+- **只增不改**：没有 update / delete / 升级钩子 / delegatecall / selfdestruct，纠错靠追加，争议靠追加。
+- **无资金**：无 `receive`、无 `fallback`、任何函数都非 payable；测试断言发 ETH 会 revert 且余额恒为 0。
+- **归属在写入时绑定**：`ownerAtIssue` 由合约从名字注册表读取，验证方不能自己声称。
+- **验证方名单由 admin 管理，admin 必须换成多签**，名单稳定后 `renounceAdmin()` 永久冻结。
+- **未部署、未审计**：`config/claims-gates.json` 的 `recordContract` 开关仍是 false，
+  所以任何"永久不变"式的说法还不许出现在对外文案里（`pnpm claims:check` 会挡住）。
+  部署需要部署者私钥与 gas（只有项目方有）。
 
 ## 测试
 
@@ -28,7 +45,12 @@ test/MuseNameRegistrar.t.sol           33 个测试（其中 10 个是 2026-09-2
 forge test -vv
 ```
 
-覆盖：创建归属、地址记录、签名来源错误、标签/受益人篡改、过期、可塑性签名（s 翻转）、保留名单（含批量取消保留）、最小长度、重复注册、非中继者调用、管理员函数权限、ENS namehash 一致性、EIP-712 domain 一致性。
+共 65 个测试。发行合约部分覆盖：创建归属、地址记录、签名来源错误、标签/受益人篡改、过期、
+可塑性签名（s 翻转）、保留名单（含批量取消保留）、最小长度、重复注册、非中继者调用、
+管理员函数权限、名字形状（大写/点/标点/零宽/双向/首尾连字符）、ENS namehash 与 EIP-712 domain 一致性。
+记录注册表部分覆盖：追加与事件、三种判定分开计数、非验证方拒绝、未注册名字拒绝、越界判定值拒绝、
+重复主张拒绝、争议（任何人可提、指向判定、不能针对争议）、批次锚定、admin 权限与永久冻结、
+不可变性、以及"合约不能收钱"。
 
 ## 生产部署流程
 

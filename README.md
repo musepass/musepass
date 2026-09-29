@@ -31,7 +31,7 @@
 
 ```bash
 pnpm install                 # 一键安装
-pnpm check                   # 类型检查 + 单元测试 + 合约测试 + 对外文案检查（2026-09-29 实测 429 单元 + 38 合约）
+pnpm check                   # 类型检查 + 单元测试 + 合约测试 + 对外文案检查（2026-09-29 实测 435 单元 + 65 合约）
 pnpm verify:local            # 起本地链 + API + MCP + 网页，跑通整条链路
 pnpm l1:resolver             # 主网解析器状态（只读）
 pnpm verify:vectors          # 用 ERC-8412 草案自带的 23 个一致性向量跑我们的验证器
@@ -73,7 +73,7 @@ pnpm --filter @musename/web dev        # http://localhost:3000
 config/             品牌名、价格、限额、保留名单（全部配置化，代码零硬编码）
 packages/core/      归一化、易混淆检测、保留名单、价格、namehash、名片、签名校验
 packages/verify/    履历离线验证脚本（阶段 5）
-contracts/          Foundry 工程：一个无资金的发行合约 + 部署脚本 + 33 个测试
+contracts/          Foundry 工程：发行合约 + 记录注册表（只增不改、无资金）+ 部署脚本 + 65 个测试
 apps/web/           网页：首页、领取页、确认页、名字主页（Next.js）
 apps/api/           查询 API + 注册后端 + 注册请求（已完成）
 apps/mcp/           MCP 服务：5 个工具（已完成）
