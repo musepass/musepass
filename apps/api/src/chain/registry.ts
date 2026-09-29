@@ -4,6 +4,7 @@ import {
   http,
   namehash,
   type Address,
+  type Chain,
   type Hex,
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
@@ -101,6 +102,38 @@ export interface ChainReaderOptions {
 }
 
 /**
+ * Which chain the clients should believe they are on.
+ *
+ * This used to fall back to Base Sepolia for any chain id it did not recognise,
+ * and that is a bug you cannot see in the tests: reads keep working, because an
+ * `eth_call` carries no chain id, while every write comes back from the node as
+ * "Missing or invalid parameters" because the client stamped the wrong chain id
+ * onto the transaction. On the live service that meant registration and card
+ * publishing were quietly impossible.
+ *
+ * A chain viem ships is used as is; anything else is built from config, which is
+ * where the chain id, name and RPC already live.
+ */
+export function resolveChainDefinition(
+  config: MusenameConfig,
+  rpcUrlOverride?: string,
+): Chain {
+  const { chainId, name, rpcUrl, explorer } = config.chains.l2;
+  const known = [base, baseSepolia, foundry].find((candidate) => candidate.id === chainId);
+  if (known) return known;
+
+  const url = rpcUrlOverride ?? rpcUrl ?? 'http://localhost:8545';
+  return {
+    id: chainId,
+    name: name || `chain-${chainId}`,
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+    rpcUrls: { default: { http: [url] } },
+    ...(explorer ? { blockExplorers: { default: { name, url: explorer } } } : {}),
+    testnet: false,
+  } as Chain;
+}
+
+/**
  * The only module that knows about viem. Clients are created here rather than
  * passed in, so viem's generic client types never cross a module boundary (that
  * is a reliable source of "two unrelated types with the same name" errors).
@@ -111,14 +144,7 @@ export function createChainReader(options: ChainReaderOptions): ChainReader {
   const l2Registry = config.chains.l2.l2Registry as Address | undefined;
   const baseNode = namehash(config.brand.rootName);
 
-  const chainDefinition =
-    config.chains.l2.chainId === base.id
-      ? base
-      : config.chains.l2.chainId === baseSepolia.id
-        ? baseSepolia
-        : config.chains.l2.chainId === foundry.id
-          ? foundry
-          : baseSepolia;
+  const chainDefinition = resolveChainDefinition(config, options.rpcUrl);
   const rpcUrl = options.rpcUrl ?? config.chains.l2.rpcUrl ?? chainDefinition.rpcUrls.default.http[0];
   const transport = http(rpcUrl);
   const publicClient = createPublicClient({ chain: chainDefinition, transport });

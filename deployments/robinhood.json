@@ -119,5 +119,16 @@
     "客户端菜单路径人工实测（无 Claude/Grok/Muse 账号）",
     "www / 通配 DNS 记录与 support@ 的 MX（只有域名账号持有人能加）",
     "告警接入任何监控系统（指标与阈值已就绪）"
-  ]
+  ],
+  "issuerKey": {
+    "address": "0xC2bf5fdA20fEA5317DdE510aDb483961c5ABc864",
+    "role": "relayer on the registrar only; funded with pocket change for gas",
+    "why": "线上 API 需要提交代付注册交易。没有把管理员密钥（0x66F499e8…）放到服务器上，因为它同时是注册表 admin，能加自己为 registrar 从而改写任意名字的记录（见 config/claims-gates.json 的 nameImmutability）。",
+    "provisionedBy": "node scripts/provision-issuer.mjs --apply",
+    "setRelayerTx": "0x3bb9dcc506be4ed2bceb317dbf1c9befacd5aa51ced133ca11eeaf411530b307",
+    "fundingTx": "0x6511074dea82471b26d34d0c4244ce0543d2e00062c2915de2c826acc5d9a4d1",
+    "fundingEth": 0.0005,
+    "privateKey": ".secrets/issuer.txt (gitignored)",
+    "serverEnv": "MUSENAME_ISSUER_KEY in /srv/musename-api/api.env"
+  }
 }
