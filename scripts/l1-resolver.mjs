@@ -463,11 +463,13 @@ if (!deployed) {
 if (deployed && !(pointed && registered)) {
   console.log('');
   console.log(`Two transactions are left, and only the root name owner (${rootOwner})`);
-  console.log('can sign them. apps/web /setup does both with two buttons; by hand:');
+  console.log('can sign them — apps/web /setup does both with two buttons.');
   console.log('');
-  console.log(`  1. setResolver      to ${ENS_REGISTRY}`);
-  console.log(`     data ${setResolverCalldata}`);
-  console.log(`  2. setL2Registry    to ${resolverAddress}`);
+  console.log('The order matters. Registering the data location first keeps the root');
+  console.log('name resolving if anything goes wrong halfway; going the other way takes');
+  console.log(`musename.eth itself offline until it is put back.`);
+  console.log('');
+  console.log(`  1. setL2Registry    to ${resolverAddress}`);
   console.log(
     `     data ${encodeFunctionData({
       abi: RESOLVER_ABI,
@@ -475,6 +477,8 @@ if (deployed && !(pointed && registered)) {
       args: [rootNode, l2ChainId, l2Registry],
     })}`,
   );
+  console.log(`  2. setResolver      to ${ENS_REGISTRY}`);
+  console.log(`     data ${setResolverCalldata}`);
   console.log('');
   console.log(`  If the root owner deploys the resolver themselves, the address is`);
   console.log(`  ${rootOwnerVariantAddress} instead of the one above.`);

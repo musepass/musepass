@@ -63,17 +63,26 @@
   },
   "l1Resolver": {
     "chain": "ethereum mainnet (chainId 1)",
-    "status": "未部署。缺主网 gas，另外两笔只有根名字主人能签。",
-    "deterministicAddress": "0x9Ea7a8896a68717E587bC1EE17b6b0b80eeb443",
+    "status": "✅ 已部署（2026-09-29）。剩下两笔登记交易，只有根名字主人能签。",
+    "address": "0x9Ea7a8896a68717E587bC1EE17b6b0b80eeb443",
+    "deployTx": "0xa7911098244ea330923bd540ae3c3ffb18bd5c331ac74f6c2b97f72fbe0bcf0d",
+    "gasUsed": 1842206,
+    "deployedCodeBytes": 7411,
+    "deployVerifiedOnChain": {
+      "url": "https://gw.musename.xyz/{sender}/{data}",
+      "signer": "0x47f471f726Ee612cc769Bc0b03F5482fA2ae1f1e",
+      "owner": "0x66F499e8F0A92e44A0F9c59a305E73a12b5684e7",
+      "nameWrapper": "0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401",
+      "checks": "6/8 — 缺的两条是还没签的 setL2Registry 与 setResolver"
+    },
     "deterministicAddressIfRootOwnerDeploys": "0x6F18ae097A9898bA7f1d4bC4F4a0B771E9ef7E72",
     "whyDeterministic": "CREATE2 走 Nick's factory + 全零 salt，地址只取决于 init code（网关 URL、网关签名者、解析器 owner），谁付款都一样。",
     "command": "node scripts/l1-resolver.mjs --send",
-    "measuredGas": 1836714,
-    "measuredCostEthOnAFork": 0.002241,
+    "measuredCostEthMainnet": 0.000766,
     "provenOnAFork": "node scripts/l1-resolver.mjs --fork-proof → 11/11，含 getEnsAddress('xiaoming.musename.eth') 真解析到 0x603b8B1f…",
     "ownerOnlySteps": [
-      "setResolver(musename.eth, 我们的解析器) —— 只有名字主人能签",
-      "setL2Registry(node, 4663, 0x0ca717398428bcae7fae24e656e8444ecd9ba5a5) —— Durin 源码里要求 msg.sender == ens.owner(node)，同样只有名字主人能签"
+      "先 setL2Registry(node, 4663, 0x0ca717398428bcae7fae24e656e8444ecd9ba5a5) —— Durin 源码要求 msg.sender == ens.owner(node)",
+      "后 setResolver(musename.eth, 0x9Ea7a889…) —— 只有名字主人能签；顺序反了会让 musename.eth 自己解析不了"
     ],
     "uiPath": "https://gw.musename.xyz/setup — 两个按钮，不用手抄 calldata",
     "gatewayAllowList": [
@@ -82,7 +91,7 @@
     ]
   },
   "notYetDone": [
-    "L1 解析器未部署到以太坊主网 —— 需要约 0.0022 ETH gas，第二笔必须名字主人签名（工具和页面都已就绪）",
+    "L1 解析器已部署，但两笔登记交易还没签（setL2Registry 与 setResolver，只有名字主人能签）",
     "根名字解析器未切换，所以子名字目前在真实钱包里还解析不到",
     "客户端菜单路径未人工实测（无 Claude/Grok/Muse 账号）",
     "四个钱包的人工兼容性验证与截图（需要人在真机上操作）"
