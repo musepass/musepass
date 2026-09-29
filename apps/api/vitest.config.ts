@@ -12,5 +12,12 @@ export default defineConfig({
   },
   test: {
     include: ['test/**/*.test.ts'],
+    // PGlite runs a real Postgres in WebAssembly, which is CPU heavy. Running
+    // these files in parallel with each other, and alongside the other packages
+    // in the monorepo, made the slower ones time out. Serial costs a few
+    // seconds and removes a flaky failure.
+    pool: 'forks',
+    poolOptions: { forks: { singleFork: true } },
+    testTimeout: 30_000,
   },
 });
