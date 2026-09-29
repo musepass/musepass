@@ -22,7 +22,7 @@ describe('loadConfig', () => {
     const registry = '0x1111111111111111111111111111111111111111';
     const config = loadConfig({
       configDir: CONFIG_DIR,
-      env: { MUSENAME_L2_REGISTRY: registry, BASE_RPC_URL: 'https://example.invalid' },
+      env: { MUSENAME_L2_REGISTRY: registry, ROBINHOOD_RPC_URL: 'https://example.invalid' },
     });
     expect(config.chains.l2.l2Registry).toBe(registry);
     expect(config.chains.l2.rpcUrl).toBe('https://example.invalid');
@@ -30,8 +30,9 @@ describe('loadConfig', () => {
 
   it('derives the ENSIP-11 coin type from the configured chain id', () => {
     const config = testConfig();
-    expect(ensip11CoinType(config.chains.l2.chainId)).toBe(2147492101n);
-    expect(ensip11CoinType(config.chains.l2Testnet.chainId)).toBe(2147568180n);
+    // Robinhood Chain mainnet and testnet, per config/chains.json.
+    expect(ensip11CoinType(config.chains.l2.chainId)).toBe(2147488311n);
+    expect(ensip11CoinType(config.chains.l2Testnet.chainId)).toBe(2147530278n);
   });
 
   it('fails loudly on a missing config directory', () => {
