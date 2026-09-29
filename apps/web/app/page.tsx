@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CardMock } from '@/components/CardMock';
+import { CopyPrompt } from '@/components/CopyPrompt';
 import { HeroSection } from '@/components/HeroSection';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -199,6 +200,21 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* ----------------------------------------------------- prompt */}
+        <section className="section" id="prompt">
+          <h2 className="h2" style={{ maxWidth: '18em' }}>
+            不用记网址：把这段话粘给你的 AI。
+          </h2>
+          <p className="body-2" style={{ maxWidth: '46em' }}>
+            支持 Muse、ChatGPT、Claude、Cursor 这类能连 MCP 或发 HTTP 请求的 AI。
+            黏上去之后它会自己去读 <span className="mono">/ask.txt</span> 里的完整规则，
+            查名字、发起注册，然后把确认链接交给你 —— 领名字这一步永远要你本人签名。
+          </p>
+          <div className="panel" style={{ marginTop: 18 }}>
+            <CopyPrompt askTxtUrl={`${config.siteUrl.replace(/\/$/, '')}/ask.txt`} />
+          </div>
+        </section>
+
         {/* -------------------------------------------------------- faq */}
         <section className="faq" id="faq">
           {[
@@ -212,7 +228,7 @@ export default async function HomePage() {
             ],
             [
               '履历能造假吗？',
-              '只有带证据、按事前登记的标准判定通过的记录才进履历。每条都附有签名收据和链上记录，任何人都能自己核实。',
+              '履历现在是设计阶段：记录合约写完并通过测试，但还没部署，所以还没有真实记录。上线后，只有带证据、按开工前登记的标准判定的记录才进履历，判定分「通过 / 失败 / 无法证明」三种，任何人都能离线复核。',
             ],
             ['和 Meta 有关系吗？', config.legalDisclaimer.zh.replace('MuseName', config.productName).replace('MuseName', config.productName)],
           ].map(([question, answer]) => (

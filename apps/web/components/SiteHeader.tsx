@@ -25,6 +25,7 @@ export function SiteHeader({
       <nav className="nav" aria-label="主导航">
         <Link href="/#how">怎么注册</Link>
         <Link href="/#record">履历</Link>
+        <Link href="/#prompt">粘给 AI</Link>
         <Link href="/#pricing">价格</Link>
         <Link href="/#faq">常见问题</Link>
         <WalletButton expectedChainId={expectedChainId ?? config.chain.chainId} />
