@@ -4,6 +4,7 @@ import { PrimaryNameCard } from '@/components/PrimaryNameCard';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { ApiError, fetchConfig, fetchName, type NameData } from '@/lib/api';
+import { buildProfileJsonLd, serializeJsonLd } from '@/lib/profileJsonLd';
 
 export async function generateMetadata({ params }: { params: Promise<{ label: string }> }) {
   const { label } = await params;
@@ -72,9 +73,13 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
   }
 
   const explorer = config.chain.explorer;
+  // Structured data for crawlers and other machines. It is built from the same
+  // published card the page renders, so nothing private can leak into it.
+  const jsonLd = serializeJsonLd(buildProfileJsonLd(data, config));
 
   return (
     <div className="page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
       <div className="container">
         <SiteHeader config={config} />
         <main className="narrow">

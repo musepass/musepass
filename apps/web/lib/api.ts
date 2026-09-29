@@ -161,9 +161,12 @@ export const FALLBACK_CONFIG: PublicConfig = {
     en: 'MuseName is an independent project, not affiliated with Meta.',
   },
   exampleLabel: 'xiaoming',
-  chain: { name: 'base', chainId: 8453, explorer: 'https://basescan.org' },
-  registrar: null,
-  l2Registry: null,
+  // The product moved to Robinhood Chain on 2026-09-29; a stale fallback would
+  // send an integrator to the wrong explorer whenever the API is unreachable.
+  // `apps/web/test/wellKnown.test.ts` compares these against config/chains.json.
+  chain: { name: 'robinhood', chainId: 4663, explorer: 'https://robinhoodchain.blockscout.com' },
+  registrar: '0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1',
+  l2Registry: '0x0ca717398428bcae7fae24e656e8444ecd9ba5a5',
   usdc: null,
   pricing: {
     currency: 'USDC',
