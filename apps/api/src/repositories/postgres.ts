@@ -117,6 +117,22 @@ export function createPostgresRepos(sql: Sql): {
       );
       return toRegistry(rows[0]);
     },
+
+    async listAll() {
+      const { rows } = await sql.query<NameRow>('select * from names order by registered_at');
+      return rows.map(toRegistry);
+    },
+
+    async updateOwner(normalized, ownerAddress) {
+      const { rows } = await sql.query<NameRow>(
+        `update names
+            set owner_address = $2, status = 'active'
+          where normalized = $1
+          returning *`,
+        [normalized, ownerAddress],
+      );
+      return rows[0] ? toRegistry(rows[0]) : null;
+    },
   };
 
   const sponsorship: SponsorshipRepo = {

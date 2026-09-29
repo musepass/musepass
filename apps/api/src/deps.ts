@@ -22,6 +22,10 @@ export interface NamesRepo {
   findByNormalized(normalized: string): Promise<Registry | null>;
   listByOwner(owner: Address): Promise<Registry[]>;
   insert(record: NewRegistry): Promise<Registry>;
+  /** Every indexed row. Used by the reconciliation job. */
+  listAll(): Promise<Registry[]>;
+  /** Used by reconciliation: the chain says the owner changed. */
+  updateOwner(normalized: string, ownerAddress: Address): Promise<Registry | null>;
 }
 
 export interface SponsorshipEntry {

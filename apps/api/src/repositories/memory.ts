@@ -45,6 +45,16 @@ export function createMemoryRepos(): {
       byNormalized.set(stored.normalized, stored);
       return stored;
     },
+    async listAll() {
+      return [...byNormalized.values()];
+    },
+    async updateOwner(normalized, ownerAddress) {
+      const existing = byNormalized.get(normalized);
+      if (!existing) return null;
+      const updated: Registry = { ...existing, ownerAddress, status: 'active' };
+      byNormalized.set(normalized, updated);
+      return updated;
+    },
   };
 
   const sponsorship: SponsorshipRepo = {
