@@ -1,10 +1,27 @@
 {
-  "chain": { "name": "robinhood", "chainId": 4663, "explorer": "https://robinhoodchain.blockscout.com" },
+  "chain": {
+    "name": "robinhood",
+    "chainId": 4663,
+    "explorer": "https://robinhoodchain.blockscout.com"
+  },
   "note": "Durin 此前未在此链部署。字节码取自 Sourcify 验证过的 Base 部署，并在链上核对 runtime 哈希一致后部署。",
-  "universalSigValidator": { "address": "0xac93b7eb0fa44abf776a8f0fadce1773cf8aae04", "verified": false, "note": "从 ens-contracts 源码编译部署；功能测试未通过，未验证" },
+  "universalSigValidator": {
+    "address": "0xac93b7eb0fa44abf776a8f0fadce1773cf8aae04",
+    "verified": true,
+    "source": "从 ens-contracts 源码编译（Sourcify 各链均无验证副本）",
+    "functionalTest": "全新 EOA 对原始哈希签名 → isValidSig = true；签名与所声称的签名者不符 → false；签名者地址有合约代码且未实现 ERC-1271 → revert（符合设计）",
+    "noteEarlierFailure": "我第一次测出 revert 是因为选了一个在该链上有代码的地址（0x7099… codesize=23），验证器正确走了 ERC-1271 路径。不是合约的问题。"
+  },
   "durinRegistryFactory": "0xa5f14c5a5b60ba47dad51dfeaf3b978a393a8766",
-  "durinRegistryImplementation": { "address": "0x94871e1d891a80a63bee5df5857efedd0e3a9510", "runtimeHash": "0xad817ca54b01ba6259e321a3c56a39b4265651070b52c969f88cddd1f0f0b497", "matchesBaseDeployment": true },
-  "l2Registry": { "address": "0x0ca717398428bcae7fae24e656e8444ecd9ba5a5", "baseNodeMatchesNamehash": true },
+  "durinRegistryImplementation": {
+    "address": "0x94871e1d891a80a63bee5df5857efedd0e3a9510",
+    "runtimeHash": "0xad817ca54b01ba6259e321a3c56a39b4265651070b52c969f88cddd1f0f0b497",
+    "matchesBaseDeployment": true
+  },
+  "l2Registry": {
+    "address": "0x0ca717398428bcae7fae24e656e8444ecd9ba5a5",
+    "baseNodeMatchesNamehash": true
+  },
   "registrar": "0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1",
   "admin": "0x66F499e8F0A92e44A0F9c59a305E73a12b5684e7",
   "verifiedOnChain": {
@@ -22,8 +39,9 @@
     "sponsoredBy": "0x66F499e8F0A92e44A0F9c59a305E73a12b5684e7"
   },
   "notYetDone": [
-    "UniversalSigValidator 功能未验证（verify: false）",
-    "L1 解析器未部署到以太坊主网 —— 卡在主网 gas",
-    "根名字解析器未切换，所以子名字目前仍解析不到"
+    "L1 解析器未部署到以太坊主网 —— 卡在主网 gas（我的四个地址主网余额均为 0）",
+    "根名字解析器未切换，所以子名字目前仍解析不到",
+    "客户端菜单路径未人工实测（无 Claude/Grok/Muse 账号）",
+    "名片版本索引未做"
   ]
 }
