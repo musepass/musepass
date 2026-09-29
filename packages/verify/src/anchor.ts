@@ -48,13 +48,15 @@ export function decodeAnchorPayload(data: Hex): AnchorPayload | null {
 }
 
 /** A record is either a 32-byte digest or a document that hashes to one. */
-export interface AnchorRecord {
-  digest?: Hex;
-  [key: string]: unknown;
-}
+export type AnchorRecord = Record<string, unknown>;
 
 export function leafOf(record: AnchorRecord): Hex {
-  return record.digest ?? (documentDigest(record) as Hex);
+  const digest = record.digest;
+  // A caller may hand us a digest directly, or the document it came from. Check
+  // rather than trust, so a malformed `digest` field cannot silently become a
+  // leaf that no proof will ever match.
+  if (typeof digest === 'string' && /^0x[0-9a-fA-F]{64}$/.test(digest)) return digest as Hex;
+  return documentDigest(record) as Hex;
 }
 
 export function batchRoot(records: AnchorRecord[]): Hex {
