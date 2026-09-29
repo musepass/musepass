@@ -43,6 +43,35 @@ export interface SponsorshipRepo {
   record(entry: SponsorshipEntry): Promise<void>;
 }
 
+/**
+ * Card version history.
+ *
+ * The chain keeps every version too — Durin's resolver writes text records into
+ * versioned storage — but this index is what lets us show the history without
+ * walking chain state. It only knows what was published through this API; a
+ * record written directly to the registry will not appear here.
+ */
+export interface CardVersion {
+  id: number;
+  nameId: number;
+  version: number;
+  contentHash: string;
+  visibility: Record<string, string>;
+  ipfsCid: string | null;
+  createdAt: Date;
+}
+
+export interface CardsRepo {
+  addVersion(input: {
+    nameId: number;
+    contentHash: string;
+    visibility: Record<string, string>;
+    ipfsCid?: string | null;
+    createdAt?: Date;
+  }): Promise<CardVersion>;
+  listVersions(nameId: number): Promise<CardVersion[]>;
+}
+
 export interface ChainReader {
   /** Registrar's own view: min length, on-chain reserved mirror and ownership. */
   isLabelAvailable(label: string): Promise<boolean>;
@@ -100,6 +129,7 @@ export interface MusenameDeps {
   chain: ChainReader;
   names: NamesRepo;
   requests: RegistrationRequestRepo;
+  cards: CardsRepo;
   sponsorship: SponsorshipRepo;
   /** Injectable so tests are not time dependent. */
   clock: () => Date;

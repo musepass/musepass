@@ -1,5 +1,7 @@
 import type { Address } from 'viem';
 import type {
+  CardVersion,
+  CardsRepo,
   NamesRepo,
   NewRegistry,
   RegistrationRequest,
@@ -20,10 +22,12 @@ export function createMemoryRepos(): {
   names: NamesRepo;
   sponsorship: SponsorshipRepo;
   requests: RegistrationRequestRepo;
+  cards: CardsRepo;
 } {
   const byNormalized = new Map<string, Registry>();
   const sponsorships: Array<SponsorshipEntry & { sponsoredAt: Date }> = [];
   const registrationRequests = new Map<string, RegistrationRequest>();
+  const cardVersions: CardVersion[] = [];
   let nextId = 1;
 
   const names: NamesRepo = {
@@ -107,5 +111,28 @@ export function createMemoryRepos(): {
     },
   };
 
-  return { names, sponsorship, requests };
+  const cards: CardsRepo = {
+    async addVersion(input) {
+      const existing = cardVersions.filter((row) => row.nameId === input.nameId);
+      const version = existing.length === 0 ? 1 : Math.max(...existing.map((row) => row.version)) + 1;
+      const stored: CardVersion = {
+        id: cardVersions.length + 1,
+        nameId: input.nameId,
+        version,
+        contentHash: input.contentHash,
+        visibility: input.visibility,
+        ipfsCid: input.ipfsCid ?? null,
+        createdAt: input.createdAt ?? new Date(),
+      };
+      cardVersions.push(stored);
+      return stored;
+    },
+    async listVersions(nameId) {
+      return cardVersions
+        .filter((row) => row.nameId === nameId)
+        .sort((a, b) => b.version - a.version);
+    },
+  };
+
+  return { names, sponsorship, requests, cards };
 }

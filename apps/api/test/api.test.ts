@@ -75,6 +75,7 @@ function buildApp(overrides: Partial<MusenameDeps> = {}, config = testConfig()) 
     chain: fakeChain(),
     names: repos.names,
     requests: repos.requests,
+    cards: repos.cards,
     sponsorship: repos.sponsorship,
     clock: () => FIXED_NOW,
     ...overrides,

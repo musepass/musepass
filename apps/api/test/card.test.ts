@@ -105,6 +105,7 @@ function buildApp(chain: FakeChain = fakeChain(), config = testConfig()) {
     chain,
     names: repos.names,
     requests: repos.requests,
+      cards: repos.cards,
     sponsorship: repos.sponsorship,
     clock: () => FIXED_NOW,
   };
@@ -215,6 +216,69 @@ describe('PUT /v1/names/{name}/card', () => {
 
     expect(response.status).toBe(400);
     expect(body.data.invalid).toContain('description is required');
+  });
+
+  it('lists published versions, newest first', async () => {
+    const { app, deps } = buildApp();
+    const indexedName = await deps.names.insert({
+      label: 'aguang',
+      fullName: 'aguang.musename.eth',
+      normalized: 'aguang',
+      ownerAddress: owner.address,
+      tier: 'free',
+      status: 'active',
+      registeredVia: 'web',
+      agentHost: null,
+      txHash: null,
+    });
+
+    const first = validCard('aguang', deps.config, { description: 'public' });
+    const firstSignature = await signCard(first as never, owner, deps.config);
+    await app.request('/v1/names/aguang/card', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        card: first,
+        expiration: Number(EXPIRATION),
+        signer: owner.address,
+        signature: firstSignature.signature,
+      }),
+    });
+
+    const second = validCard('aguang', deps.config, { description: 'public' });
+    second.description = '改过的简介';
+    const secondSignature = await signCard(second as never, owner, deps.config);
+    await app.request('/v1/names/aguang/card', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        card: second,
+        expiration: Number(EXPIRATION),
+        signer: owner.address,
+        signature: secondSignature.signature,
+      }),
+    });
+
+    const response = await app.request('/v1/names/aguang/card/versions');
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.versions).toHaveLength(2);
+    expect(body.data.versions[0].version).toBe(2);
+    expect(body.data.versions[1].version).toBe(1);
+    expect(body.data.versions[0].contentHash).toBe(cardContentHash(second as never));
+    expect(body.data.versions[0].contentHash).not.toBe(body.data.versions[1].contentHash);
+    expect(body.data.versions[0].visibility.description).toBe('public');
+    void indexedName;
+  });
+
+  it('says so when the name is not in our index', async () => {
+    const { app } = buildApp();
+    const response = await app.request('/v1/names/unindexed/card/versions');
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.data.indexed).toBe(false);
+    expect(body.summary.zh).toContain('不在我们的索引里');
   });
 
   it('reports a clear 503 when no registry is configured', async () => {

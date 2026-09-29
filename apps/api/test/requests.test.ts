@@ -65,6 +65,7 @@ function buildApp(overrides: Partial<MusenameDeps> = {}) {
     chain: fakeChain(),
     names: repos.names,
     requests: repos.requests,
+      cards: repos.cards,
     sponsorship: repos.sponsorship,
     clock: () => now,
     ...overrides,

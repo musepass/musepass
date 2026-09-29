@@ -61,7 +61,7 @@ function boom(
 }
 
 export function createApp(deps: MusenameDeps) {
-  const { config, reservedIndex, chain, names, requests, sponsorship, clock } = deps;
+  const { config, reservedIndex, chain, names, requests, cards, sponsorship, clock } = deps;
   const app = new Hono();
   const buckets = new Map<string, RateBucket>();
 
@@ -284,6 +284,73 @@ export function createApp(deps: MusenameDeps) {
   /* PUT /v1/names/{name}/card                                           */
   /* ------------------------------------------------------------------ */
   /**
+   * Card version history. The chain holds every version — the resolver writes
+   * text records into versioned storage — but reading that back is awkward, so
+   * this lists what was published through us. It says so when the name is not
+   * in the index rather than implying there is no history.
+   */
+  app.get('/v1/names/:name/card/versions', async (c) => {
+    let label: string;
+    try {
+      label = toLabel(c.req.param('name'), config.brand.rootName);
+    } catch (error) {
+      return c.json(
+        {
+          summary: { zh: '这个名字不合规。', en: 'That name is not valid.' },
+          errors: [
+            boom(
+              isMuseNameError(error) ? error.code : 'INVALID_NAME',
+              error instanceof Error ? error.message : String(error),
+              { zh: '这个名字不合规。', en: 'That name is not valid.' },
+            ),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    const indexed = await names.findByNormalized(label);
+    if (!indexed) {
+      return c.json({
+        summary: {
+          zh: `${label} 不在我们的索引里，所以查不到历史——只有通过我们 API 发布过的名片才有记录。链上可能仍有版本，需要用事件索引才能读到。`,
+          en: `${label} is not in our index, so there is no history here. Records published directly to the registry are not visible to us.`,
+        },
+        data: { label, versions: [], indexed: false },
+        errors: [],
+        meta: meta(true),
+      });
+    }
+
+    const versions = await cards.listVersions(indexed.id);
+    return c.json({
+      summary:
+        versions.length === 0
+          ? { zh: `${label} 还没有发布过名片。`, en: `${label} has no published card yet.` }
+          : {
+              zh: `${label} 的名片改过 ${versions.length} 次，最新一版指纹 ${versions[0].contentHash.slice(0, 10)}…。`,
+              en: `${label} has ${versions.length} published card versions.`,
+            },
+      data: {
+        label,
+        indexed: true,
+        versions: versions.map((version) => ({
+          version: version.version,
+          contentHash: version.contentHash,
+          visibility: version.visibility,
+          publishedAt: version.createdAt.toISOString(),
+        })),
+        noteZh: '链上也保留着每一版（解析器的文本记录是版本化的）；这里列的是通过我们发布的那部分。',
+        noteEn:
+          'The chain keeps every version too; this lists the ones published through this API.',
+      },
+      errors: [],
+      meta: meta(true),
+    });
+  });
+
+  /**
    * Publish an ERC-8004 card to the name's on-chain text record.
    *
    * The owner signs; we sponsor the transaction. Nothing here can publish a
@@ -474,6 +541,21 @@ export function createApp(deps: MusenameDeps) {
         signer,
         signature: signature as `0x${string}`,
       });
+
+      // Record the version we just published. If the name predates the index
+      // there is nothing to attach it to, which is why this is best effort.
+      const indexed = await names.findByNormalized(label);
+      if (indexed) {
+        await cards.addVersion({
+          nameId: indexed.id,
+          contentHash: cardContentHash(validation.card),
+          visibility: {
+            ...defaultVisibility(),
+            ...((validation.card.musename as { visibility?: Partial<VisibilityMap> } | undefined)
+              ?.visibility ?? {}),
+          },
+        });
+      }
 
       return c.json(
         {

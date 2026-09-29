@@ -1,5 +1,7 @@
 import type { Address, Hex } from 'viem';
 import type {
+  CardVersion,
+  CardsRepo,
   NamesRepo,
   NewRegistry,
   RegistrationRequest,
@@ -77,6 +79,7 @@ export function createPostgresRepos(sql: Sql): {
   names: NamesRepo;
   sponsorship: SponsorshipRepo;
   requests: RegistrationRequestRepo;
+  cards: CardsRepo;
 } {
   const names: NamesRepo = {
     async findByNormalized(normalized) {
@@ -238,5 +241,67 @@ export function createPostgresRepos(sql: Sql): {
     },
   };
 
-  return { names, sponsorship, requests };
+  const cards: CardsRepo = {
+    async addVersion(input) {
+      // version is computed in SQL so two concurrent publishes cannot both
+      // claim the same number.
+      const { rows } = await sql.query<{
+        id: string;
+        name_id: string;
+        version: number;
+        content_hash: string;
+        visibility: Record<string, string>;
+        ipfs_cid: string | null;
+        created_at: Date | string;
+      }>(
+        `insert into cards (name_id, version, content_hash, visibility, ipfs_cid, created_at)
+         values (
+           $1,
+           coalesce((select max(version) from cards where name_id = $1), 0) + 1,
+           $2, $3, $4, coalesce($5, now())
+         )
+         returning *`,
+        [
+          input.nameId,
+          input.contentHash,
+          JSON.stringify(input.visibility),
+          input.ipfsCid ?? null,
+          input.createdAt ?? null,
+        ],
+      );
+      const row = rows[0];
+      return {
+        id: Number(row.id),
+        nameId: Number(row.name_id),
+        version: Number(row.version),
+        contentHash: row.content_hash,
+        visibility: row.visibility,
+        ipfsCid: row.ipfs_cid,
+        createdAt: new Date(row.created_at),
+      } satisfies CardVersion;
+    },
+
+    async listVersions(nameId) {
+      const { rows } = await sql.query<{
+        id: string;
+        name_id: string;
+        version: number;
+        content_hash: string;
+        visibility: Record<string, string>;
+        ipfs_cid: string | null;
+        created_at: Date | string;
+      }>('select * from cards where name_id = $1 order by version desc', [nameId]);
+      return rows.map((row) => ({
+        id: Number(row.id),
+        nameId: Number(row.name_id),
+        version: Number(row.version),
+        contentHash: row.content_hash,
+        visibility: row.visibility,
+        ipfsCid: row.ipfs_cid,
+        createdAt: new Date(row.created_at),
+      }));
+    },
+  };
+
+  return { names, sponsorship, requests, cards };
 }
