@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { ApiError, checkAvailability, fetchConfig, FALLBACK_CONFIG, submitClaim } from '../lib/api';
+import { afterEach, describe, expect, it } from 'vitest';
+import { ApiError, apiBaseUrl, checkAvailability, fetchConfig, FALLBACK_CONFIG, submitClaim } from '../lib/api';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -101,5 +101,29 @@ describe('api client', () => {
     });
     expect(config.productName).toBe('VeriName');
     expect(config.rootName).toBe('veriname.eth');
+  });
+});
+
+/**
+ * Where the site sends its requests. The first version baked an absolute
+ * gateway hostname into the browser bundle, so when that DNS record briefly
+ * disappeared the pages still loaded while every button failed.
+ */
+describe('apiBaseUrl', () => {
+  const original = process.env.MUSENAME_API_URL;
+  afterEach(() => {
+    if (original === undefined) delete process.env.MUSENAME_API_URL;
+    else process.env.MUSENAME_API_URL = original;
+    delete (globalThis as { window?: unknown }).window;
+  });
+
+  it('uses the origin the page was served from, in the browser', () => {
+    (globalThis as { window?: unknown }).window = {};
+    expect(apiBaseUrl()).toBe('');
+  });
+
+  it('talks to the API directly from the server', () => {
+    process.env.MUSENAME_API_URL = 'http://127.0.0.1:8801/';
+    expect(apiBaseUrl()).toBe('http://127.0.0.1:8801');
   });
 });

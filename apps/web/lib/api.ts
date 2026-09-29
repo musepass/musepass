@@ -194,12 +194,22 @@ export class ApiError extends Error {
 }
 
 export function apiBaseUrl(): string {
-  // NEXT_PUBLIC_* is inlined for the browser; MUSENAME_API_URL is read at
-  // runtime on the server, so one build can be pointed at any environment.
-  const base =
-    process.env.NEXT_PUBLIC_API_URL ??
-    process.env.MUSENAME_API_URL ??
-    'http://localhost:3001';
+  // In the browser: same origin, always. The site and the API are served from
+  // one host (`/v1/` is a path, not a domain), so a relative URL works wherever
+  // the page was loaded from. That is not a detail — the first version baked in
+  // `https://gw.musename.xyz` at build time, and when that DNS record briefly
+  // disappeared, every button on the site stopped working while the site itself
+  // still loaded, which is the most confusing possible failure.
+  //
+  // On the server: MUSENAME_API_URL, because a server component talking to
+  // localhost should not take a round trip through the public hostname.
+  // NEXT_PUBLIC_API_URL is still honoured if somebody sets it on purpose, for a
+  // deployment that really does split the two.
+  if (typeof window !== 'undefined') {
+    const override = process.env.NEXT_PUBLIC_API_URL;
+    return override ? override.replace(/\/$/, '') : '';
+  }
+  const base = process.env.MUSENAME_API_URL ?? 'http://localhost:3001';
   return base.replace(/\/$/, '');
 }
 
