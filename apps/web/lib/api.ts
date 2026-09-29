@@ -271,6 +271,27 @@ export function fetchName(name: string, options?: RequestOptions) {
   return request<NameData>(`/v1/names/${encodeURIComponent(name)}`, {}, options);
 }
 
+export interface MetricsData {
+  chain: {
+    names: number | null;
+    firstRegisteredBlock: number | null;
+    owners: number;
+    error: string | null;
+    howToCheck: string;
+  };
+  index: { kind: 'memory' | 'postgres'; names: number; owners: number; warning?: string };
+  namesWithCard: number;
+  byTier: Record<string, number>;
+  byChannel: Record<string, number>;
+  byStatus: Record<string, number>;
+  firstRegisteredAt: string | null;
+  notMeasured: Array<{ id: string; metric: string; why: string }>;
+}
+
+export function fetchMetrics(options?: RequestOptions) {
+  return request<MetricsData>('/v1/metrics', {}, options);
+}
+
 export function fetchRequest(id: string, options?: RequestOptions) {
   return request<RequestData>(`/v1/requests/${encodeURIComponent(id)}`, {}, options);
 }

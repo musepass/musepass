@@ -280,18 +280,22 @@ export function createApp(deps: MusenameDeps) {
           /** Anything a token story would want and this service cannot prove yet. */
           notMeasured: [
             {
+              id: 'queries_by_others',
               metric: 'queries by anyone other than us',
               why: 'we do not count API or MCP calls by caller yet, and self-tests would inflate it',
             },
             {
+              id: 'records',
               metric: 'records and their verdicts',
               why: 'the record registry is written and tested but not deployed, so there is nothing to read',
             },
             {
+              id: 'external_verifier_records',
               metric: 'records issued by an outside verifier',
               why: 'the only verifier today is our own engine; calling that independent would be false',
             },
             {
+              id: 'unique_users',
               metric: 'unique users',
               why: 'a name is a wallet address, and one person can hold many; counting them as people would be a guess',
             },

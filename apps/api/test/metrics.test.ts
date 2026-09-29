@@ -74,7 +74,7 @@ async function readMetrics(app: ReturnType<typeof build>['app']) {
       firstRegisteredAt: string | null;
       chain: { names: number | null; firstRegisteredBlock: number | null; owners: number; error: string | null };
       index: { kind: string; names: number; owners: number; warning?: string };
-      notMeasured: Array<{ metric: string; why: string }>;
+      notMeasured: Array<{ id: string; metric: string; why: string }>;
     };
   };
 }
@@ -136,10 +136,10 @@ describe('GET /v1/metrics', () => {
   it('publishes what it cannot measure instead of leaving it out', async () => {
     const { app } = build();
     const { data } = await readMetrics(app);
+    const ids = data.notMeasured.map((entry) => entry.id);
+    expect(ids).toEqual(['queries_by_others', 'records', 'external_verifier_records', 'unique_users']);
     const metrics = data.notMeasured.map((entry) => entry.metric);
     expect(metrics).toContain('queries by anyone other than us');
-    expect(metrics).toContain('records and their verdicts');
-    expect(metrics).toContain('records issued by an outside verifier');
     for (const entry of data.notMeasured) expect(entry.why.length).toBeGreaterThan(20);
   });
 
