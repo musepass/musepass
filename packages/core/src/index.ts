@@ -8,3 +8,5 @@ export * from './namehash.js';
 export * from './card.js';
 export * from './signature.js';
 export * from './policy.js';
+export * from './claims.js';
+export * from './hygiene.js';

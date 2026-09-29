@@ -1,0 +1,31 @@
+{
+  "$comment": "Read from the chain, not from our database. Compare sha256(names.json) with the published hash. See docs/trust-model.md.",
+  "generatedAt": "2026-09-29T12:35:51.978Z",
+  "chainId": 4663,
+  "rpc": "https://rpc.mainnet.chain.robinhood.com",
+  "scan": {
+    "lastBlock": 75660603,
+    "chunkBlocks": 1000000,
+    "chunksScanned": 4,
+    "emptyChunksAtStop": 3,
+    "earliestEventBlock": 75366746,
+    "howToRead": "Events were read newest-first in chunks. The scan stopped after this many consecutive chunks with no events, so a name minted before that point would be missed — and the count is printed instead of assumed."
+  },
+  "registry": "0x0ca717398428BCAe7faE24E656E8444EcD9ba5A5",
+  "registrar": "0x093919fD8a200a1a2cBC0E5F7ade88b4dD557Ab1",
+  "coverage": "Names minted through this registrar. A name created by a different registrar would not appear; security-power-inventory.mjs is what watches for one.",
+  "count": 1,
+  "names": [
+    {
+      "name": "xiaoming.musename.eth",
+      "label": "xiaoming",
+      "node": "0xa08d91256f4f2bd2a356f4d19506f8b1b186ad7e0bea7c41bcf3fb5b3f15b5e8",
+      "ownerAtMint": "0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d",
+      "ownerNow": "0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d",
+      "mintedInBlock": 75366746,
+      "mintTx": "0x98b8fc906d1e106d0e95d1798c3196ac9875c43bfb26c8785111e663c6f47812",
+      "hasCard": false,
+      "cardBytes": 0
+    }
+  ]
+}

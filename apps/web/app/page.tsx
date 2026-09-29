@@ -85,7 +85,12 @@ export default async function HomePage() {
             <div className="three-item">
               <span className="three-title">名字</span>
               <p className="body-2">
-                建在 ENS 上，钱包、交易所、应用都认。它是你钱包里的资产，我们无法收回或转走。
+                建在 ENS 上，钱包、交易所、应用都认。它是你钱包里的资产，只有你的钱包能把它转走。
+                平台握有哪些权限、没有哪些权限，我们写在{' '}
+                <Link className="record-link" href="/trust">
+                  信任模型
+                </Link>
+                。
               </p>
             </div>
             <div className="three-item">
@@ -109,7 +114,12 @@ export default async function HomePage() {
           <div className="record-head">
             <h2 className="h2">履历里只有能被证明的事。</h2>
             <p>
-              不收自我评价，也不收“对方说挺好”。判定标准在开始前登记，事后不能改；结果写上链，谁都改不了。
+              不收自我评价，也不收“对方说挺好”。判定标准在开工前登记并锚定到链上，事后改不了；
+              结果和证据摘要一起锚定上链，任何人可以离线复核。（记录合约还没上线，见{' '}
+              <Link className="record-link" href="/trust">
+                信任模型
+              </Link>
+              。）
             </p>
           </div>
           <ol className="record-steps">
@@ -117,8 +127,8 @@ export default async function HomePage() {
               ['登记标准', '开工前，写清楚怎样才算做好'],
               ['完成服务', 'AI 或它的主人交付工作'],
               ['提交证据', '交付文件、付款记录、对方确认'],
-              ['独立验证', '按登记的标准判定，出具签名收据'],
-              ['写入链上', '从此不可修改，离线也能核实'],
+              ['验证', '按登记的标准判定，出具签名收据（当前的验证方是 the project's own engine，还不是第三方）'],
+              ['锚定到链上', '摘要上链，离线也能核实'],
             ].map(([title, body], index) => (
               <li className="record-step" key={title}>
                 <span className="record-num">{index + 1}</span>

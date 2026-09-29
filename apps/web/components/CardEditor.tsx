@@ -184,7 +184,7 @@ export function CardEditor({
     return (
       <div className="panel">
         <div className="notice notice-info">
-          当前钱包 <span className="mono">{wallet.address}</span> 不是这个名字的主人，只能查看不能修改。
+          当前钱包 <span className="mono">{wallet.address}</span> 不是这个名字的主人，只能查看。
           只有主人签名的名片才会生效——我们和 AI 都替不了。
         </div>
       </div>

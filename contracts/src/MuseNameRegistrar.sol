@@ -34,6 +34,7 @@ contract MuseNameRegistrar {
     error ZeroAddress();
     error LabelTooShort();
     error LabelTooLong();
+    error LabelInvalidCharacter(uint256 index, bytes1 character);
     error LabelReserved(bytes32 labelHash);
     error NameUnavailable(bytes32 node);
     error SignatureExpired();
@@ -127,6 +128,7 @@ contract MuseNameRegistrar {
         bytes memory labelBytes = bytes(label);
         if (labelBytes.length < minLabelBytes) return false;
         if (labelBytes.length > MAX_LABEL_BYTES) return false;
+        if (_firstInvalidByte(labelBytes) != type(uint256).max) return false;
         if (reservedLabels[keccak256(labelBytes)]) return false;
         return registry.owner(registry.makeNode(baseNode, label)) == address(0);
     }
@@ -150,6 +152,10 @@ contract MuseNameRegistrar {
         bytes memory labelBytes = bytes(label);
         if (labelBytes.length < minLabelBytes) revert LabelTooShort();
         if (labelBytes.length > MAX_LABEL_BYTES) revert LabelTooLong();
+        uint256 invalidIndex = _firstInvalidByte(labelBytes);
+        if (invalidIndex != type(uint256).max) {
+            revert LabelInvalidCharacter(invalidIndex, labelBytes[invalidIndex]);
+        }
 
         bytes32 labelHash = keccak256(labelBytes);
         if (reservedLabels[labelHash]) revert LabelReserved(labelHash);
@@ -209,6 +215,74 @@ contract MuseNameRegistrar {
     /*//////////////////////////////////////////////////////////////
                             EIP-712 HELPERS
     //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice The last line of defence for the shape of a label.
+     *
+     * An outside review (2026-09-29) pointed out that the character set was
+     * only enforced in the API, so a stolen issuing key could bypass it and mint
+     * labels the product would never show: uppercase ASCII, embedded dots, and
+     * invisible characters. This checks the cases that matter and can be checked
+     * on chain without a Unicode table:
+     *
+     *   - ASCII must be lowercase a-z, digit 0-9, or hyphen. Everything else —
+     *     uppercase, dot, slash, colon, at-sign, control bytes, underscore — is
+     *     refused.
+     *   - A hyphen may not be the first or last byte (config/limits.json
+     *     `disallowEdgeHyphen`, and an edge hyphen reads as a spoof).
+     *   - Zero-width and bidirectional control characters are refused: they are
+     *     how two different names are made to look identical.
+     *
+     * Deliberately *not* here: full ENSIP-15 normalization, mixed-script and
+     * confusable detection. Those need Unicode tables and stay in
+     * `packages/core` (`normalizeLabel`, `checkScriptMixing`); this function
+     * only closes the hole that a bypass of that layer would open.
+     *
+     * @return index `type(uint256).max` when the label is acceptable.
+     */
+    function _firstInvalidByte(bytes memory labelBytes) private pure returns (uint256 index) {
+        uint256 length = labelBytes.length;
+        for (uint256 i = 0; i < length; ++i) {
+            bytes1 character = labelBytes[i];
+            uint8 value = uint8(character);
+            if (value < 0x80) {
+                bool allowed = (value >= 0x61 && value <= 0x7a) ||
+                    (value >= 0x30 && value <= 0x39) ||
+                    value == 0x2d;
+                if (!allowed) return i;
+                if (value == 0x2d && (i == 0 || i == length - 1)) return i;
+                continue;
+            }
+            if (_isInvisibleSequence(labelBytes, i)) return i;
+        }
+        return type(uint256).max;
+    }
+
+    /// @dev Zero-width joiners, soft hyphen, bidi overrides and the BOM, by
+    ///      their UTF-8 prefix. Matching the prefix is enough: the whole
+    ///      sequence is refused either way.
+    function _isInvisibleSequence(
+        bytes memory labelBytes,
+        uint256 i
+    ) private pure returns (bool) {
+        bytes1 first = labelBytes[i];
+        if (first == 0xC2 && i + 1 < labelBytes.length && labelBytes[i + 1] == 0xAD) return true;
+        if (first == 0xEF && i + 2 < labelBytes.length) {
+            return labelBytes[i + 1] == 0xBB && labelBytes[i + 2] == 0xBF;
+        }
+        if (first != 0xE2 || i + 2 >= labelBytes.length) return false;
+        bytes1 second = labelBytes[i + 1];
+        bytes1 third = labelBytes[i + 2];
+        if (second == 0x80) {
+            // U+200B..U+200F and U+202A..U+202E
+            return (third >= 0x8B && third <= 0x8F) || (third >= 0xAA && third <= 0xAE);
+        }
+        if (second == 0x81) {
+            // U+2060..U+2069: word joiner and the bidi isolates
+            return third >= 0xA0 && third <= 0xA9;
+        }
+        return false;
+    }
 
     function domainSeparator() public view returns (bytes32) {
         return

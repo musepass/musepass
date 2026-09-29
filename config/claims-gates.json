@@ -1,0 +1,31 @@
+{
+  "$comment": "对外文案的开关。每一条是「这句话什么时候才允许出现在公开材料里」。allowed 从 false 改成 true 时必须写 evidence（链上事实或实测结果），否则加载就报错。见 docs/plans/roadmap-response-2026-09-29.md。",
+  "updated": "2026-09-29",
+  "note": "由 scripts/check-public-claims.mjs 读取；npm run claims:check 会因此失败或通过。",
+  "gates": {
+    "nameImmutability": {
+      "allowed": false,
+      "blockedBecause": "2026-09-29 链上实测：注册表 owner 是运营热钱包 0x66F499e8…，且它可以调用 addRegistrar 把自己加成 registrar（不 revert），registrar 能改写任意名字的地址与文本记录。管理权限没转走之前，「平台不能修改名字」不成立。",
+      "howToOpen": "把注册表 admin、发行合约 owner、解析器 owner 转给硬件钱包或多签，然后把转出的交易哈希写进 evidence。",
+      "updated": "2026-09-29"
+    },
+    "recordContract": {
+      "allowed": false,
+      "blockedBecause": "记录合约还不存在。现在链上只有一笔把默克尔根写进 calldata 的零金额自转账，没有事件、没有只增不改的合约，别人改不了/删不掉这句话无从谈起。",
+      "howToOpen": "部署只增不改的记录合约（外部审计后再上线），并把合约地址与部署交易哈希写进 evidence。",
+      "updated": "2026-09-29"
+    },
+    "externalVerifier": {
+      "allowed": false,
+      "blockedBecause": "目前唯一的验证方是我们自己的 the project's own engine 引擎，属于同一团队。自己验证自己不能叫独立验证。",
+      "howToOpen": "至少一个不在我们团队内的验证方按同一格式出具一次判定，把记录 ID 与验证方地址写进 evidence。",
+      "updated": "2026-09-29"
+    },
+    "externalAudit": {
+      "allowed": false,
+      "blockedBecause": "自写的 MuseNameRegistrar 合约没有做过任何外部审计。",
+      "howToOpen": "外部审计完成并出具报告，把报告链接与审计范围写进 evidence。",
+      "updated": "2026-09-29"
+    }
+  }
+}

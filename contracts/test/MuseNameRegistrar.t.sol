@@ -154,6 +154,101 @@ contract MuseNameRegistrarTest is Test {
     }
 
     /*//////////////////////////////////////////////////////////////
+                          LABEL SHAPE ON CHAIN
+    //////////////////////////////////////////////////////////////*/
+
+    /// The API normalises, but a stolen issuing key talks to the contract
+    /// directly. These are the shapes it must still refuse.
+    function test_Register_RevertsForUppercaseAscii() public {
+        bytes memory signature = _sign(BENEFICIARY_PK, "Aguang", beneficiary, deadline);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 0, bytes1("A"))
+        );
+        registrar.register("Aguang", beneficiary, deadline, signature);
+    }
+
+    function test_Register_RevertsForAnEmbeddedDot() public {
+        bytes memory signature = _sign(BENEFICIARY_PK, "a.b", beneficiary, deadline);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 1, bytes1("."))
+        );
+        registrar.register("a.b", beneficiary, deadline, signature);
+    }
+
+    function test_Register_RevertsForNonAsciiPunctuation() public {
+        bytes memory signature = _sign(BENEFICIARY_PK, "a_b", beneficiary, deadline);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 1, bytes1("_"))
+        );
+        registrar.register("a_b", beneficiary, deadline, signature);
+    }
+
+    function test_Register_RevertsForAZeroWidthJoiner() public {
+        // U+200D zero-width joiner: two visually identical labels.
+        bytes memory signature = _sign(BENEFICIARY_PK, unicode"a\u200Db", beneficiary, deadline);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 1, bytes1(0xE2))
+        );
+        registrar.register(unicode"a\u200Db", beneficiary, deadline, signature);
+    }
+
+    function test_Register_RevertsForABidiOverride() public {
+        // U+202E right-to-left override, the classic filename-spoofing byte.
+        bytes memory signature = _sign(BENEFICIARY_PK, unicode"a\u202Eb", beneficiary, deadline);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 1, bytes1(0xE2))
+        );
+        registrar.register(unicode"a\u202Eb", beneficiary, deadline, signature);
+    }
+
+    function test_Register_RevertsForALeadingHyphen() public {
+        bytes memory signature = _sign(BENEFICIARY_PK, "-aguang", beneficiary, deadline);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 0, bytes1("-"))
+        );
+        registrar.register("-aguang", beneficiary, deadline, signature);
+    }
+
+    function test_Register_RevertsForATrailingHyphen() public {
+        bytes memory signature = _sign(BENEFICIARY_PK, "aguang-", beneficiary, deadline);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 6, bytes1("-"))
+        );
+        registrar.register("aguang-", beneficiary, deadline, signature);
+    }
+
+    /// Chinese labels are a supported product feature, so the on-chain check
+    /// must not touch non-ASCII letters. Mixed-script detection is the API's job.
+    function test_Register_StillAllowsChineseLabels() public {
+        string memory label = unicode"阿光摄影";
+        bytes memory signature = _sign(BENEFICIARY_PK, label, beneficiary, deadline);
+
+        bytes32 node = registrar.register(label, beneficiary, deadline, signature);
+        assertEq(registry.owner(node), beneficiary);
+    }
+
+    function test_Register_AllowsAnInteriorHyphen() public {
+        bytes memory signature = _sign(BENEFICIARY_PK, "a-guang", beneficiary, deadline);
+
+        bytes32 node = registrar.register("a-guang", beneficiary, deadline, signature);
+        assertEq(registry.owner(node), beneficiary);
+    }
+
+    function test_IsAvailable_SaysNoToAnInvalidShape() public {
+        assertFalse(registrar.isAvailable("Aguang"));
+        assertFalse(registrar.isAvailable("a.b"));
+        assertFalse(registrar.isAvailable("-aguang"));
+        assertTrue(registrar.isAvailable("a-guang"));
+    }
+
+    /*//////////////////////////////////////////////////////////////
                             SIGNATURE RULES
     //////////////////////////////////////////////////////////////*/
 

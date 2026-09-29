@@ -31,12 +31,16 @@
 
 ```bash
 pnpm install                 # 一键安装
-pnpm check                   # 类型检查 + 单元测试 + 合约测试（421 个）
+pnpm check                   # 类型检查 + 单元测试 + 合约测试 + 对外文案检查（2026-09-29 实测 419 单元 + 38 合约）
 pnpm verify:local            # 起本地链 + API + MCP + 网页，跑通整条链路
 pnpm l1:resolver             # 主网解析器状态（只读）
 pnpm verify:vectors          # 用 ERC-8412 草案自带的 23 个一致性向量跑我们的验证器
 pnpm wallet:compat           # 17 项钱包兼容性检查（viem + ethers × 4 个 RPC + ERC-3668 全轮）
 pnpm health                  # 线上 15 项健康检查（外部视角）
+pnpm claims:check            # 对外文案是否说了链上不成立的话（会失败的那种检查）
+pnpm hygiene --history       # 私网地址 / 机器名 / 本机密钥是否进了仓库（含全部历史）
+pnpm snapshot:names          # 从链上导出全部名字 + sha256，用于「昨天的名单」可核对
+pnpm power:inventory         # 热钱包有没有被加成 registrar（是就退出码 1）
 pnpm review:package          # 生成评审用合集 docs/review/all-in-one.md
 ```
 
@@ -44,7 +48,7 @@ pnpm review:package          # 生成评审用合集 docs/review/all-in-one.md
 
 - 链下算出的 EIP-712 摘要与链上 `hashRegister()` **逐字节一致**
 - 名字归属于**签名者本人**，代付 gas 的平台地址不是 owner
-- 平台地址**不是** registrar，因此无法修改任何已发放的名字
+- 平台地址不是 registrar（只说明它今天不在名单里；它同时是注册表 admin，可以把自己加进去 —— 见 [信任模型](docs/trust-model.md)）
 - 链上地址记录按 ENSIP-11 与 mainnet coinType 各写一条
 - 接着启动 API 与 MCP：AI 客户端通过 streamable HTTP 列出并调用 5 个工具，拿到一条待主人确认的注册链接
 - 最后启动网页：首页、领取页、名字主页、开发者页都能渲染，品牌与价格来自 API 配置
@@ -69,7 +73,7 @@ pnpm --filter @musename/web dev        # http://localhost:3000
 config/             品牌名、价格、限额、保留名单（全部配置化，代码零硬编码）
 packages/core/      归一化、易混淆检测、保留名单、价格、namehash、名片、签名校验
 packages/verify/    履历离线验证脚本（阶段 5）
-contracts/          Foundry 工程：一个无资金的政策合约 + 部署脚本 + 23 个测试
+contracts/          Foundry 工程：一个无资金的发行合约 + 部署脚本 + 33 个测试
 apps/web/           网页：首页、领取页、确认页、名字主页（Next.js）
 apps/api/           查询 API + 注册后端 + 注册请求（已完成）
 apps/mcp/           MCP 服务：5 个工具（已完成）
@@ -95,8 +99,13 @@ TODO.md             后续所有阶段的工作清单
 
 ### 资产归属
 
-- 名字的所有权在用户钱包里。注册表没有 burn、没有管理员转移，**平台无法收回**。
-- 平台能做的只有两件：代付 gas、按规则发放。
+- 名字的所有权在用户钱包里。注册表没有 burn、没有管理员转移，平台没有直接收回名字的接口。
+- 但**注册表 admin 是运营热钱包**：2026-09-29 链上实测，它可以调用 `addRegistrar`
+  把自己加进名单（不 revert），而 registrar 能改写任意名字的地址与文本记录。
+  这条权限没有转走（项目方决定先做检测而不是迁移），检测脚本是
+  `node scripts/security-power-inventory.mjs --watch`。完整说明见
+  [docs/trust-model.md](docs/trust-model.md)。
+- 平台今天能做的：代付 gas、按规则发放、在权限被滥用时被看门人发现。
 - 根名字由硬件钱包或多签持有，**服务端不持有该私钥**。
 
 ### 长度与合规
