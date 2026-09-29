@@ -1,5 +1,30 @@
-import { createPublicClient, http, type Address, type Chain, type Hex } from 'viem';
+import { createPublicClient, defineChain, http, type Address, type Chain, type Hex } from 'viem';
 import { base, baseSepolia, foundry } from 'viem/chains';
+
+/**
+ * Robinhood Chain: an Arbitrum L2 on Ethereum, ETH as the gas token.
+ * viem has no definition for it yet, so it is declared here. The id and RPC are
+ * from the chain's own docs; change them here and nowhere else.
+ */
+export const robinhoodChain = defineChain({
+  id: 4663,
+  name: 'Robinhood Chain',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: { default: { http: ['https://rpc.mainnet.chain.robinhood.com'] } },
+  blockExplorers: { default: { name: 'Robinhood Chain Explorer', url: 'https://robinhoodchain.blockscout.com' } },
+});
+
+/** Same chain, testnet. Its own id, so the gateway can serve both. */
+export const robinhoodTestnet = defineChain({
+  id: 46630,
+  name: 'Robinhood Chain Testnet',
+  testnet: true,
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: { default: { http: ['https://rpc.testnet.chain.robinhood.com'] } },
+  blockExplorers: {
+    default: { name: 'Robinhood Chain Testnet Explorer', url: 'https://explorer.testnet.chain.robinhood.com' },
+  },
+});
 
 export class GatewayError extends Error {
   readonly code: string;
@@ -16,6 +41,8 @@ const KNOWN_CHAINS: Record<number, Chain> = {
   [base.id]: base,
   [baseSepolia.id]: baseSepolia,
   [foundry.id]: foundry,
+  [robinhoodChain.id]: robinhoodChain,
+  [robinhoodTestnet.id]: robinhoodTestnet,
 };
 
 export interface L2ReadRequest {

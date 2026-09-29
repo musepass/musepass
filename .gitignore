@@ -25,3 +25,4 @@ data/*.sqlite
 .gateway.log
 .gateway.pid
 contracts/.sepolia-keys
+.secrets/

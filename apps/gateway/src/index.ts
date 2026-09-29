@@ -34,6 +34,8 @@ const rpcUrls: Record<number, string> = {};
 if (process.env.MUSENAME_RPC_URL) rpcUrls[config.chains.l2.chainId] = process.env.MUSENAME_RPC_URL;
 if (process.env.BASE_RPC_URL) rpcUrls[8453] = process.env.BASE_RPC_URL;
 if (process.env.BASE_SEPOLIA_RPC_URL) rpcUrls[84532] = process.env.BASE_SEPOLIA_RPC_URL;
+if (process.env.ROBINHOOD_RPC_URL) rpcUrls[4663] = process.env.ROBINHOOD_RPC_URL;
+if (process.env.ROBINHOOD_TESTNET_RPC_URL) rpcUrls[46630] = process.env.ROBINHOOD_TESTNET_RPC_URL;
 if (process.env.MUSENAME_LOCAL_RPC_URL) rpcUrls[31337] = process.env.MUSENAME_LOCAL_RPC_URL;
 
 const signer = signerFromEnv(signerKey);
