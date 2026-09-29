@@ -1,3 +1,4 @@
+export * from './anchor.js';
 export * from './criteria.js';
 export * from './jcs.js';
 export * from './merkle.js';

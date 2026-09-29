@@ -1,0 +1,11 @@
+[
+  {
+    "chainId": 4663,
+    "tx": "0xad4c4d9749329274a62f7b4a2744ab66c4cec62822c7e6f6ad3630ebd00429eb",
+    "root": "0x6ffe99c0512eb5033c6ad03e96fa696766bf930ea4389260c13302266d4df17b",
+    "count": 2,
+    "anchoredAt": 1790661167,
+    "records": "deployments/receipts-genesis.json",
+    "block": 75420865
+  }
+]

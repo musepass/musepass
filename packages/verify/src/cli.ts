@@ -5,6 +5,7 @@
  *   musename-verify case.json
  *   musename-verify --chain c.json --criteria k.json --bundle b.json --attestation a.json
  *   musename-verify --vectors <dir>        # run a whole conformance set
+ *   musename-verify --anchor-data 0x…  --records batch.json   # check an anchor
  *
  * Exit code 0 when the recorded verdict stands, 1 when it is refuted. Unchecked
  * rules are printed but do not fail the run: they mean "this verifier cannot
@@ -13,6 +14,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { verifyAnchor, type AnchorRecord } from './anchor.js';
 import { verifyPackage, type VerificationInput } from './verify.js';
 
 function read(path: string): unknown {
@@ -35,6 +37,18 @@ function asInput(value: unknown): VerificationInput {
 }
 
 async function main(): Promise<number> {
+  const anchorData = argOf('anchor-data');
+  if (anchorData) {
+    // Check a batch against an anchor somebody else published: paste the input
+    // data of the anchoring transaction plus the records, see if they match.
+    const recordsPath = argOf('records');
+    if (!recordsPath) throw new Error('--anchor-data needs --records <file>');
+    const records = read(recordsPath) as AnchorRecord[];
+    const anchored = verifyAnchor({ data: anchorData as `0x${string}`, records });
+    console.log(JSON.stringify(anchored, null, 2));
+    return anchored.ok ? 0 : 1;
+  }
+
   const vectors = argOf('vectors');
   if (vectors) {
     const files = readdirSync(vectors).filter((name) => name.endsWith('.json') && name !== 'manifest.json');

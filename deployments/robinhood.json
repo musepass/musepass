@@ -61,6 +61,19 @@
     "recordBytes": 669,
     "checks": "6/6 — node scripts/card-publish-e2e.mjs --rpc https://rpc.mainnet.chain.robinhood.com --registry 0x0ca71739… --label xiaoming"
   },
+  "receiptAnchors": [
+    {
+      "batch": "genesis",
+      "records": "deployments/receipts-genesis.json",
+      "count": 2,
+      "root": "0x6ffe99c0512eb5033c6ad03e96fa696766bf930ea4389260c13302266d4df17b",
+      "tx": "0xad4c4d9749329274a62f7b4a2744ab66c4cec62822c7e6f6ad3630ebd00429eb",
+      "anchoredAt": 1790661167,
+      "gasUsed": 25898,
+      "howToVerify": "node packages/verify/dist/cli.js --anchor-data <tx input data> --records deployments/receipts-genesis.json",
+      "note": "零金额、发给自己的交易，把默克尔根写进 calldata（tag ‖ root ‖ count ‖ anchoredAt）。不新增任何合约；验证不需要我们的服务器。第一笔只是这两件已经发生的事（领取 + 发名片），不是假数据：脚本读回交易并比对后再记录。"
+    }
+  ],
   "l1Resolver": {
     "chain": "ethereum mainnet (chainId 1)",
     "status": "✅ 已部署（2026-09-29）。剩下两笔登记交易，只有根名字主人能签。",

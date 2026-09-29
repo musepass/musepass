@@ -76,9 +76,26 @@ node packages/verify/dist/cli.js --chain chain.json --criteria criteria.json \
 - 反向域名的自定义判定规则只报 `unchecked`；
 - 这套代码假设调用者拿到的是「链上那条记录」，链上状态从哪来由上层负责。
 
+## 锚定已经跑过一次（真链）
+
+```bash
+node scripts/anchor-receipts.mjs --records deployments/receipts-genesis.json --send
+```
+
+第一笔在 Robinhood Chain 上：交易 `0xad4c4d97…`，25,898 gas，零金额、发给自己的交易，
+calldata 里是 `keccak256("musename.receipts.v1") ‖ root ‖ count ‖ anchoredAt`。
+不新增合约。任何人都能用链上数据独立验证：
+
+```bash
+musename-verify --anchor-data <该交易的 input data> --records deployments/receipts-genesis.json
+```
+
+genesis 批次只装了两件**已经发生**的事：`xiaoming.musename.eth` 的领取交易和名片发布交易。
+不是演示数据，脚本发完会读回交易比对，不一致就报错。
+
 ## 下一步（阶段 5 其余部分）
 
-- 每日批量：把一天的履历摘要聚成默克尔根，锚定到 **Robinhood Chain**（用户的链选择，原计划是 Base）；
-- 接收据根的服务端任务与对账；
+- 把「每天一次」做成定时任务，并加一条「今天没锚定」的告警（现在只有手动脚本）；
+- 链上的 `preregister` / `attest` 注册表（草案自带参考实现未审计，规则 1 不允许直接当核心合约用）；
 - the project's own engine 的验证引擎适配器；
 - 认证月费的订阅与到期处理。
