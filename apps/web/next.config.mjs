@@ -4,6 +4,9 @@ import { fileURLToPath } from 'node:url';
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Self-hosted: produce a server bundle with only the dependencies actually
+  // traced in, so the deploy is a tarball rather than a node_modules copy.
+  output: 'standalone',
   // The monorepo root also has a pnpm-workspace.yaml higher up the tree; pin the
   // root explicitly so Turbopack does not have to guess.
   turbopack: { root: fileURLToPath(new URL('../../', import.meta.url)) },

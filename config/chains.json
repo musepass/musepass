@@ -1,5 +1,5 @@
 {
-  "$comment": "Rule 6: every address, chain id and coin type lives here, not in code. Phase 1 fills l2Registry/registrar after deployment.",
+  "$comment": "链的选择：Robinhood Chain（Arbitrum L2，ETH 做 gas）。Base 不再使用；这里保留的 Base 地址是历史记录。2026-09-29 起全部在 Robinhood Chain。",
   "l1": {
     "name": "mainnet",
     "chainId": 1,
@@ -7,23 +7,32 @@
     "durinL1Resolver": "0x8A968aB9eb8C084FBC44c531058Fc9ef945c3D61"
   },
   "l2": {
-    "name": "base",
-    "chainId": 8453,
-    "rpcEnv": "BASE_RPC_URL",
-    "explorer": "https://basescan.org",
-    "durinRegistryFactory": "0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d",
-    "l2Registry": "",
-    "registrar": "",
-    "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+    "name": "robinhood",
+    "chainId": 4663,
+    "rpcEnv": "ROBINHOOD_RPC_URL",
+    "rpcDefault": "https://rpc.mainnet.chain.robinhood.com",
+    "explorer": "https://robinhoodchain.blockscout.com",
+    "durinRegistryFactory": "0xa5f14c5a5b60ba47dad51dfeaf3b978a393a8766",
+    "durinRegistryImplementation": "0x94871e1d891a80a63bee5df5857efedd0e3a9510",
+    "l2Registry": "0x0ca717398428bcae7fae24e656e8444ecd9ba5a5",
+    "registrar": "0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1",
+    "usdc": "",
+    "stablecoinNote": "这条链的主稳定币是 USDG（Paxos），不是 USDC；阶段 5 收款前需确认地址"
   },
   "l2Testnet": {
-    "name": "base-sepolia",
+    "name": "robinhood-testnet",
+    "chainId": 46630,
+    "rpcEnv": "ROBINHOOD_TESTNET_RPC_URL",
+    "rpcDefault": "https://rpc.testnet.chain.robinhood.com",
+    "explorer": "https://explorer.testnet.chain.robinhood.com",
+    "l2Registry": "",
+    "registrar": "",
+    "usdc": ""
+  },
+  "legacyBaseSepolia": {
+    "note": "已废弃。Base Sepolia 上那套（注册表 + 发行合约 + 6 个测试名字）在切链后作废。",
     "chainId": 84532,
-    "rpcEnv": "BASE_SEPOLIA_RPC_URL",
-    "explorer": "https://sepolia.basescan.org",
-    "durinRegistryFactory": "0xDddddDdDDD8Aa1f237b4fa0669cb46892346d22d",
     "l2Registry": "0xdb0e02b4e3509d72c660241f4069b3a477815eb9",
-    "registrar": "0x2cd84dea0e7a662b1f2963be3e9add61011a3da5",
-    "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+    "registrar": "0x2cd84dea0e7a662b1f2963be3e9add61011a3da5"
   }
 }
