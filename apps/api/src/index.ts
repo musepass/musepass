@@ -1,5 +1,4 @@
 import { serve } from '@hono/node-server';
-import { Pool } from 'pg';
 import { buildReservedIndex, loadConfig } from '@musename/core';
 
 import { createApp } from './app.js';
@@ -23,6 +22,9 @@ let names: NamesRepo;
 let requests: RegistrationRequestRepo;
 let sponsorship: SponsorshipRepo;
 if (process.env.DATABASE_URL) {
+  // Imported only when it is actually used, so a deployment that runs without
+  // Postgres does not need the driver installed at all.
+  const { Pool } = await import('pg');
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const sql: Sql = {
     async query<R>(text: string, params?: unknown[]) {
