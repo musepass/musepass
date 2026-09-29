@@ -77,7 +77,7 @@
   "l1Resolver": {
     "chain": "ethereum mainnet (chainId 1)",
     "status": "✅ 已上线（2026-09-29）。名字在真实主网上能解析了。",
-    "address": "0x9Ea7a8896a68717E587bC1EE17b6b0b80eeb443",
+    "address": "0x9ea7a8896a68717e587bc1ee17b6b0b80eeeb443",
     "deployTx": "0xa7911098244ea330923bd540ae3c3ffb18bd5c331ac74f6c2b97f72fbe0bcf0d",
     "gasUsed": 1842206,
     "deployedCodeBytes": 7411,
