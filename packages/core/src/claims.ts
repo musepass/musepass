@@ -115,6 +115,26 @@ export const CLAIM_RULES: ClaimRule[] = [
     patterns: [/已(?:通过)?(?:外部)?审计/, /审计(?:已)?完成/, /audited\s+by/i],
   },
   {
+    id: 'standard-formal-claim',
+    asserts: 'a draft we submitted is a formal, approved standard',
+    gate: 'standardMerged',
+    patterns: [
+      /(正式|已合并|已经合并|已通过)的?\s*ERC-?\d{3,5}/,
+      /ERC-?\d{3,5}\s*(?:已|已经)?(?:正式发布|合并|生效|通过)/,
+      /(?:proposed|authored)[^.]{0,20}(?:formal|merged)\s+ERC/i,
+    ],
+  },
+  {
+    id: 'registration-live',
+    asserts: 'registering a name through us works right now',
+    gate: 'sponsorKey',
+    patterns: [
+      /注册(?:已|已经)(?:可用|上线|能用)/,
+      /一句话注册(?:已|已经)?(?:可用|上线|做好)/,
+      /registrations?\s+(?:is|are)\s+(?:live|working)/i,
+    ],
+  },
+  {
     id: 'credit-score',
     asserts: 'we score creditworthiness (a regulated activity we are not in)',
     gate: null,
@@ -332,6 +352,7 @@ export const PUBLISHING_SURFACES = [
   'contracts/README.md',
   'docs/integration.md',
   'docs/status.md',
+  'docs/pitch.md',
 ] as const;
 
 export const PUBLISHING_DIRECTORIES = ['launch-kit', 'apps/web/app', 'apps/web/components'] as const;

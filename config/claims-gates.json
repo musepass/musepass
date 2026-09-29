@@ -26,6 +26,18 @@
       "blockedBecause": "自写的 MuseNameRegistrar 合约没有做过任何外部审计。",
       "howToOpen": "外部审计完成并出具报告，把报告链接与审计范围写进 evidence。",
       "updated": "2026-09-29"
+    },
+    "standardMerged": {
+      "allowed": false,
+      "blockedBecause": "我们在 ethereum/ERCs 提交的 PR #2002（Preregistered Acceptance Criteria，作者 richard7463）仍是 open 状态，尚未合并；https://eips.ethereum.org/EIPS/eip-8412 现在返回 404。所以只能说「提交了草案」或「开放中的 PR」，不能说正式 ERC。",
+      "howToOpen": "PR 合并进 ethereum/ERCs 并拿到最终编号后，把 PR 链接与合并日期写进 evidence。",
+      "updated": "2026-09-29"
+    },
+    "sponsorKey": {
+      "allowed": false,
+      "blockedBecause": "线上 API 没有 MUSENAME_ISSUER_KEY：2026-09-29 实测 POST /v1/names/claim 返回 502 issuer wallet is not configured，不会创建名字。因此「一句话注册已经可用」不成立。",
+      "howToOpen": "把发行密钥接进 api.env 并成功发放一个真实名字，把交易哈希写进 evidence。",
+      "updated": "2026-09-29"
     }
   }
 }

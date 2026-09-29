@@ -31,7 +31,7 @@
 
 ```bash
 pnpm install                 # 一键安装
-pnpm check                   # 类型检查 + 单元测试 + 合约测试 + 对外文案检查（2026-09-29 实测 447 单元 + 65 合约）
+pnpm check                   # 类型检查 + 单元测试 + 合约测试 + 对外文案检查（2026-09-29 实测 460 单元 + 65 合约）
 pnpm verify:local            # 起本地链 + API + MCP + 网页，跑通整条链路
 pnpm l1:resolver             # 主网解析器状态（只读）
 pnpm verify:vectors          # 用 ERC-8412 草案自带的 23 个一致性向量跑我们的验证器
