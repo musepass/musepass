@@ -1,0 +1,33 @@
+{
+  "source": "ethereum/ERCs#2002 assets/erc-8412/vectors/offchain",
+  "commit": "ff9fbc7e2de497d3dec2595a90b262aecd576f5d",
+  "licence": "CC0",
+  "spec": "docs/reference/erc-8412-ff9fbc7.md",
+  "fetchedAt": "2026-09-29T05:47:37.488Z",
+  "count": 23,
+  "files": {
+    "o1-evidence-predates-criteria.json": "b96ec0e491d5caca0e2d1035d01119114874d521f5c34cd9a3ce98065a9d6d31",
+    "o1-item-binds-other-id.json": "100f1554b14e53295fb3654a96814d5e45bbbe4acba7d3980b7976ecce726afb",
+    "o2-met-without-evidence.json": "55a3b2ab09287a6fc350f4ff3374dec447992ad9e5d644942824e0343f319ac8",
+    "o2-missing-capture-metadata.json": "bf5530354a8c0b1279213af44c07ff3d486ee0d8609567a785596912acba8509",
+    "o2-wrong-media-type.json": "f95922afbc0db03248a1248da89d5eab2b26e378f7822955d3416ead49b156dc",
+    "o3-waiver-missing.json": "61cc74b76961c68f9026bfd1abdcfea887e72f1bbbebc03f505939c6e07dbe77",
+    "o3-waiver-reason-edited.json": "a055fb9e5c12dc6da806c5357bdd2e39b7f6b06cd678b68125e0a4505087f259",
+    "o3-waiver-signed-by-verifier.json": "ab0e8919f7217dd8583356e724fcf12c5d6d2c9bdf4a8262f7a125a89d3009ee",
+    "o4-at-least-k.json": "f8143871f1dac29eaac93ba0b5de193c2d14cff6431cdabc65867822dcdcef20",
+    "o4-false-fail.json": "f1935dba67031737179cdbbd36ce66d548da5cc8e7aa09d139a04127da90d21b",
+    "o4-indeterminate-when-satisfied.json": "ff885ea0eef5b12242cc6a862b74682ba610b306637cad244d7f91a5766e69de",
+    "o4-undecided-not-unmet.json": "69f1520466c456eb6e8a0b59cb421ead86e70a997c0faf197c862daa4218ef24",
+    "o5-attestation-document-disagrees.json": "cab9f87abb16c4c05085432d5ace9415bdf0414db6c3c1a682f7e8770fbd2e80",
+    "o5-criteria-edited-after-registration.json": "b9677a3599ccb98ac713c61863f7e331d3bf3a93693be57992b484e85880f38b",
+    "o5-flags-disagree-with-document.json": "52ffadaf8eb44e16c25996a3d0224fbbadf19c7495934219219dbad19432d471",
+    "o5-verifier-not-allowed.json": "ac01df4ecad27e2f52219c8d650e4426dc40b0c96e978279ecd5c98e8491bdeb",
+    "valid-custom-rule.json": "3b954dd33f5391b7f8e1b1837d3234be1b807b6f7e65e424acd7fa718c3b5f54",
+    "valid-indeterminate.json": "46f450ae2b92514a761e24e740a5750a1dcf64ac87f2f115813e640761960073",
+    "valid-not-satisfied.json": "351a92ecfd47a19b7adb57aee8399e3806eaeb1a09ad5575cbdcf01efe0aebc7",
+    "valid-satisfied.json": "3100cc9cd833482287aef6ec65b5e54f231af837205fe263bcd3d954e652012e",
+    "w-free-text-decision-rule.json": "97788781cc8e29faa3d2d8b0b09f8d26bb81ca7572930d2b935c084f8925c651",
+    "w-missing-required-constraint.json": "cc8e01c1b07c3d0c78c80a4c633360f18d5fbd5f26db22808051763276fbab71",
+    "w-waivable-without-authority.json": "40f3525119109fe9514afa3985ff673a2b2122a7244857734a9b969f09226454"
+  }
+}
