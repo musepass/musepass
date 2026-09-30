@@ -30,6 +30,14 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..');
 const file = resolve(repoRoot, 'config/invitations.json');
 
+// A rule that refuses a label is normal operation, not a crash: print the
+// sentence and stop. Without this the operator sees a stack trace where the
+// message "one and two character names are held by the project" should be.
+process.on('uncaughtException', (error) => {
+  console.error(`error: ${error.message}`);
+  process.exit(2);
+});
+
 const args = process.argv.slice(2);
 const command = args[0] ?? 'list';
 const has = (flag) => args.includes(flag);
