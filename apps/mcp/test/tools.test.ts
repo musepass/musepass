@@ -10,6 +10,7 @@ import {
   getStatus,
   render,
   requestName,
+  submitRegistration,
   type MusenameApi,
   type ToolResult,
 } from '../src/tools.js';
@@ -55,6 +56,25 @@ function fakeApi(overrides: Partial<MusenameApi> = {}): MusenameApi {
         owner: '0xabc',
         card: null,
         trackRecord: null,
+      });
+    },
+    async claimName({ label, owner }) {
+      return ok({ zh: `${label} 已经注册。`, en: `${label} is registered.` }, {
+        label,
+        fullName: `${label}.musepass.eth`,
+        owner,
+        node: `0x${'11'.repeat(32)}`,
+        txHash: `0x${'22'.repeat(32)}`,
+        tier: 'free',
+        alreadyRegistered: false,
+      });
+    },
+    async publishCard({ label, signer }) {
+      return ok({ zh: '名片已发布。', en: 'The card is published.' }, {
+        label,
+        fullName: `${label}.musepass.eth`,
+        txHash: `0x${'33'.repeat(32)}`,
+        signer,
       });
     },
     ...overrides,
@@ -144,6 +164,23 @@ describe('request_name', () => {
     const result = await requestName(api, { name: 'aguang', ownerAddress: '0xabc' }, config);
     expect(result.errors[0].code).toBe('NO_CONFIRM_URL');
     expect(result.summary.zh).not.toContain('undefined');
+  });
+});
+
+describe('submit_registration', () => {
+  it('sends the owner to the site this deployment is actually on', async () => {
+    // An agent with its own wallet finishes here, and the only human step left is
+    // publishing the card — so this URL is the difference between the owner
+    // landing on the product and landing on a domain that moved.
+    const result = await submitRegistration(
+      fakeApi(),
+      { label: 'abcde', owner: '0xabc', deadline: 1, signature: '0xsig' },
+      config,
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.data.nextStepEn).toContain(`${config.brand.siteUrl}/name/abcde`);
+    expect(result.data.nextStepEn).not.toContain('musename.xyz');
   });
 });
 

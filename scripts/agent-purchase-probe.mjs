@@ -31,7 +31,7 @@ function arg(name, fallback) {
   return index === -1 ? fallback : process.argv[index + 1];
 }
 
-const mcpUrl = arg('mcp', 'https://musename.xyz/mcp');
+const mcpUrl = arg('mcp', 'https://musepass.xyz/mcp');
 const label = arg('label', `agent${randomBytes(3).toString('hex')}`);
 const chains = JSON.parse(readFileSync(resolve(repoRoot, 'config/chains.json'), 'utf8'));
 

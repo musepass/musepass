@@ -6,6 +6,32 @@ changelog that cannot be checked is marketing.
 
 ## 2026-09-30
 
+- **The root name resolves.** `musepass.eth` points at our resolver and the
+  resolver knows the names live on Robinhood Chain, so names under it resolve in
+  any wallet that speaks ENS. Root pointed at the resolver, tx `0xc423ffff…`;
+  `scripts/l1-resolver.mjs` reads the resolver back and reports 8/8, a real
+  mainnet ENS client returns addresses for five names, and the wallet
+  compatibility probe passes 17/17 (viem and ethers across four RPCs, ENSIP-10,
+  and the full ERC-3668 round trip with the gateway signature checked).
+- **The product is on its own domain.** `musepass.xyz` serves the site, the API,
+  the MCP endpoint and the signer over HTTPS; `musename.xyz` keeps answering
+  because names minted under the earlier root and every link already handed out
+  point at it, and `gw.musename.xyz` cannot move at all without redeploying the
+  resolver.
+- **A third party's agent registered itself and published its card.** An agent
+  running in someone else's workspace read `/ask.txt`, listed the MCP tools over
+  HTTP, signed the registration from its own wallet (`prepare_registration` →
+  EIP-712 → `submit_registration`), then signed and published its ERC-8004 card:
+  `abcde.musepass.eth` → `0xC320C50C…`, register tx `0xd8916b64…`, card tx
+  `0xa804185a…`. No human signed anything and the platform paid the gas.
+  Reproduced with our own probe: `agentprobe.musepass.eth` → `0xc754b8e8…`,
+  register tx `0x846ce3da…`, card tx `0xfc2015dd…`.
+- **The MCP's "next step" no longer points at the old domain.** Every
+  `submit_registration` answer ended with "publish it at
+  https://musename.xyz/name/…" because that URL was a literal in the tool rather
+  than the configured site. It comes from `config/brand.json` now, and a test
+  fails if it ever names a domain the deployment does not use. Found by the
+  third-party agent run above, which quoted the wrong URL back at its owner.
 - **An agent with no key can complete the whole flow.** Two new MCP tools
   (`prepare_card`, `submit_card`) finish what `prepare_registration` and
   `submit_registration` started, and `apps/signer` gives an agent a wallet without

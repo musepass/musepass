@@ -128,7 +128,7 @@ export function createServer(api: MusenameApi, config: MusenameConfig): McpServe
       },
     },
     async ({ label, owner, deadline, signature }) =>
-      text(render(await submitRegistration(api, { label, owner, deadline, signature }))),
+      text(render(await submitRegistration(api, { label, owner, deadline, signature }, config))),
   );
 
   server.registerTool(

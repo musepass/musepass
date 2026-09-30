@@ -382,6 +382,7 @@ export function prepareRegistration(
 export async function submitRegistration(
   api: MusenameApi,
   input: { label: string; owner: string; deadline: number; signature: string },
+  config: MusenameConfig,
 ): Promise<ToolResult> {
   if (!input.label?.trim() || !input.owner?.trim() || !input.signature?.trim()) {
     return {
@@ -411,12 +412,10 @@ export async function submitRegistration(
       ...(result.data as object),
       txHash,
       nextStep: 'card',
-      nextStepEn: `The name exists now. Next: draft its card, and have the owner publish it at ${SITE_URL}/name/${input.label.trim()}.`,
+      nextStepEn: `The name exists now. Next: draft its card, and have the owner publish it at ${config.brand.siteUrl}/name/${input.label.trim()}.`,
     },
   };
 }
-
-const SITE_URL = 'https://musename.xyz';
 
 /**
  * `prepare_card`: the payload an agent signs to publish its own card.
