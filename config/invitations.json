@@ -1,0 +1,24 @@
+{
+  "$comment": "D17: invited wallets and X accounts may claim a 3–4 character name for free. Nothing here is an NFT and nothing here is transferable — the invitation is a row in this file plus a signature from the wallet that claims it. One entry = one name. Nothing reads this file yet; it is the shape the claim policy will read, written down before the code so the fields do not get invented twice.",
+  "campaign": "first-500",
+  "opens": null,
+  "closes": null,
+  "rules": {
+    "freeLabelUnits": { "min": 3, "max": 4 },
+    "onePerWallet": true,
+    "reservedByProject": { "min": 1, "max": 2 }
+  },
+  "invitations": [
+    {
+      "$example": "one row per invitation; delete before use",
+      "wallet": "0x0000000000000000000000000000000000000000",
+      "xHandle": "example",
+      "label": "",
+      "issuedBy": "",
+      "issuedAt": "",
+      "claimedAt": null,
+      "claimedLabel": null,
+      "txHash": null
+    }
+  ]
+}
