@@ -4,6 +4,7 @@ export * from './normalize.js';
 export * from './confusables.js';
 export * from './reserved.js';
 export * from './pricing.js';
+export * from './invitations.js';
 export * from './namehash.js';
 export * from './card.js';
 export * from './signature.js';
