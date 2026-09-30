@@ -30,6 +30,10 @@ const configDir = process.env.MUSENAME_CONFIG_DIR ?? resolve(repoRoot, 'config')
 const anchorsFile =
   process.env.MUSENAME_ANCHORS_FILE ?? resolve(repoRoot, 'deployments/receipt-anchors.json');
 const chains = JSON.parse(readFileSync(resolve(configDir, 'chains.json'), 'utf8'));
+// The canonical site is whatever config says it is. Hardcoding it here meant a
+// domain change left the monitor watching the domain the product used to be on,
+// which reports "all good" while the new one is broken.
+const brand = JSON.parse(readFileSync(resolve(configDir, 'brand.json'), 'utf8'));
 
 const NAME = 'xiaoming.musepass.eth';
 const EXPECTED_ADDRESS = '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d';
@@ -71,8 +75,10 @@ function tlsDaysLeft(host) {
   });
 }
 
+// The gateway host is not config: it is baked into the L1 resolver's constructor
+// arguments and cannot move without redeploying the resolver.
 const GATEWAY = 'https://gw.musename.xyz';
-const SITE = 'https://musename.xyz';
+const SITE = String(brand.siteUrl).replace(/\/$/, '');
 
 // 1. The public surfaces answer.
 for (const [label, url] of [
@@ -116,7 +122,7 @@ for (const [label, url] of [
 }
 
 // 4. Certificates are not about to expire.
-for (const host of ['musename.xyz', 'gw.musename.xyz']) {
+for (const host of [new URL(SITE).host, 'gw.musename.xyz']) {
   const days = await tlsDaysLeft(host);
   record(`tls ${host}`, days !== null && days > 21, days === null ? 'could not read' : `${days} days left`, days !== null && days < 0);
 }

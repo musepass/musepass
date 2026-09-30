@@ -2,7 +2,7 @@
   "name": "musename",
   "version": "0.1.0",
   "private": true,
-  "description": "MusePass \u2014 ENS names, ERC-8004 cards and verifiable track records for personal AI",
+  "description": "MusePass — ENS names, ERC-8004 cards and verifiable track records for personal AI",
   "engines": {
     "node": ">=20"
   },
@@ -28,7 +28,9 @@
     "verify:resolution": "anvil --fork-url ${ETH_SEPOLIA_RPC:-https://ethereum-sepolia-rpc.publicnode.com} --port 8565 --silent --balance 1000 & FORK=$!; sleep 8; MUSENAME_E2E_OWNER_KEY=${MUSENAME_E2E_OWNER_KEY:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80} MUSENAME_E2E_GATEWAY_KEY=${MUSENAME_E2E_GATEWAY_KEY:-0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d} MUSENAME_EXPECTED_OWNER=${MUSENAME_EXPECTED_OWNER:-0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d} node scripts/resolution-e2e.mjs --rpc http://127.0.0.1:8565 --l2-registry ${MUSENAME_L2_REGISTRY:-0xdb0e02b4e3509d72c660241f4069b3a477815eb9}; STATUS=$?; kill $FORK 2>/dev/null; exit $STATUS",
     "verify:vectors": "node packages/verify/dist/cli.js --vectors packages/verify/test/fixtures/erc8412",
     "wallet:compat": "node scripts/wallet-compat.mjs",
-    "web:english": "node scripts/check-web-english.mjs"
+    "web:english": "node scripts/check-web-english.mjs",
+    "deploy:web": "./scripts/deploy-web.sh",
+    "domain:cutover": "./scripts/cutover-domain.sh"
   },
   "devDependencies": {
     "typescript": "5.9.3",
