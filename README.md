@@ -1,5 +1,10 @@
 # MuseName
 
+[![CI](https://github.com/musename/musename/actions/workflows/ci.yml/badge.svg)](https://github.com/musename/musename/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
+[![Site](https://img.shields.io/badge/site-musename.xyz-black.svg)](https://musename.xyz)
+[![Offline verifier](https://img.shields.io/badge/verifier-offline%20%2F%20ERC--8412-black.svg)](packages/verify/README.md)
+
 给每个个人 AI 一个可以带着走的名字、一张公开名片和一份可验证的履历。
 
 名字建在 ENS 上（自有根名字下的子名字，ERC-721），名片按 ERC-8004 生成，履历由 the project's own engine 验证引擎出具可独立核实的收据。**我们不重新发明域名系统，我们做名字背后的信誉。**
@@ -152,3 +157,25 @@ TODO.md             后续所有阶段的工作清单
 ## 免责声明
 
 MuseName 是独立项目，与 Meta 及其任何产品无关。
+
+## Security
+
+报告安全问题请走 GitHub 的私密通道（**Security → Report a vulnerability**），见 [SECURITY.md](SECURITY.md)。
+那里也列出了我们**已知的弱点**（注册表管理员是热钱包、单机部署、网关签名者等）——重复报告这些不算发现，
+因为它们本来就写在 [信任模型页](https://musename.xyz/trust) 上。
+
+## Contributing
+
+见 [CONTRIBUTING.md](CONTRIBUTING.md)。三条硬规则：**不编造数据**、`pnpm claims:check` 必须通过
+（每句对外话都对应一个能力开关，开开关要附证据）、**网页必须全英文**（构建会拦）。核心合约不自写——
+注册表、解析器、验证器都是 Durin 的原版字节码，唯一自写的是无资金、无升级入口的发行合约。
+
+## License
+
+代码 MIT（见 [LICENSE](LICENSE)）。其中 vendored 的第三方部分保持各自许可：
+Durin 的字节码（MIT）、ERC-8412 草案正文与一致性向量（CC0）、forge-std（MIT）——
+逐条列在 [NOTICE](NOTICE)。
+
+## 变更记录
+
+[CHANGELOG.md](CHANGELOG.md) —— 每条重要变化都附上能核对的交易哈希或端点，而不是"已完成"三个字。

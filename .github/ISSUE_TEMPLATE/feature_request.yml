@@ -1,0 +1,25 @@
+name: Feature request
+description: Something that should exist does not
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem, not the solution
+      description: What are you trying to do that you cannot do today?
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What you do instead today
+      description: The workaround matters, because it tells us how much this costs you.
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Project rules that constrain this
+      options:
+        - label: This does not require the platform to move or spend someone's assets without their signature
+          required: true
+        - label: This can be verified without trusting the platform, or you have said why it cannot
+          required: true

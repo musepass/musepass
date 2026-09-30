@@ -1,0 +1,31 @@
+name: Bug report
+description: Something that should work does not
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security problems do not belong here — see SECURITY.md.
+        If this is about a name not resolving, include the name and the address you expected.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: endpoint
+    attributes:
+      label: Where
+      description: A URL, an MCP tool name, a contract call, or a transaction hash.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Commands you ran and their output, logs, screenshots. Not your interpretation — the raw result.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Commit hash if you have it, plus node/pnpm or wallet and network.

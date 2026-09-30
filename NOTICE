@@ -1,0 +1,39 @@
+MuseName
+========
+
+This project is MIT licensed (see LICENSE). It builds on, vendors or depends on
+the following, and their terms apply to those parts.
+
+Vendored or copied into this repository
+---------------------------------------
+
+Durin (https://github.com/ensdomains/durin) — MIT.
+  contracts/lib/durin-L1Resolver.deployable.txt is the creation bytecode of
+  Durin's L1Resolver with its constructor arguments stripped, so MuseName can
+  deploy its own instance. Provenance and the verification steps are in
+  contracts/lib/README.md. L2Registry, the registry factory and the signature
+  validator used on chain are Durin's own deployments, byte-for-byte.
+
+ERC-8412 draft and its conformance vectors — CC0.
+  docs/reference/erc-8412-*.md is the specification text as published in
+  ethereum/ERCs#2002, and packages/verify/test/fixtures/erc8412/ holds that
+  project's own off-chain test vectors, fetched by
+  scripts/fetch-erc8412-vectors.mjs with the commit and per-file hashes recorded
+  in the manifest beside them.
+
+forge-std (https://github.com/foundry-rs/forge-std) — MIT, under contracts/lib.
+
+Dependencies (not vendored; installed from npm)
+-----------------------------------------------
+
+viem, hono, @hono/node-server, zod, next, react, @modelcontextprotocol/sdk,
+@adraffy/ens-normalize, ethers (development only, for compatibility tests),
+vitest, typescript, foundry tooling.
+
+Each keeps its own licence, listed in its package metadata.
+
+What this notice is for
+-----------------------
+So that anyone reading this repository can tell which parts are ours, which are
+somebody else's, and on what terms — the same reason the deployment records list
+every address and transaction instead of asking for trust.
