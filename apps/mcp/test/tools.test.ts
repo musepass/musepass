@@ -95,8 +95,14 @@ describe('request_name', () => {
     expect(result.data.confirmUrl).toContain('/confirm/');
     expect(result.data.requiresOwnerConfirmation).toBe(true);
     expect(result.data.status).toBe('pending');
-    expect(result.summary.zh).toContain('交给主人');
-    expect(result.summary.zh).toContain(String(result.data.confirmUrl));
+    // The instruction belongs in the summary the model reads; the URL belongs in
+    // the structured data, so it is quoted from one place instead of two.
+    // The instruction belongs in the summary the model reads (including where
+    // the link is); the URL itself lives in the structured data, so it is quoted
+    // from one place instead of two.
+    expect(result.summary.zh).toContain('data.confirmUrl');
+    expect(result.summary.zh).not.toContain(String(result.data.confirmUrl));
+    expect(result.data.confirmUrl).toContain('/confirm/');
   });
 
   it('never claims the name was registered', async () => {

@@ -61,7 +61,7 @@ export function createServer(api: MusenameApi, config: MusenameConfig): McpServe
         requestId: z.string().describe('The requestId returned by request_name.'),
       },
     },
-    async ({ requestId }) => text(render(await getStatus(api, { requestId }))),
+    async ({ requestId }) => text(render(await getStatus(api, { requestId }, config))),
   );
 
   server.registerTool(

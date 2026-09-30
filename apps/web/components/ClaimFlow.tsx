@@ -199,6 +199,13 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         <p className="body-2" style={{ fontSize: 15 }}>
           The name is in your wallet. Even if we shut down, it stays and keeps working.
         </p>
+        {mode === 'confirm' ? (
+          <CopyForAgent
+            text={`${result.fullName} is registered to ${result.owner}${
+              result.txHash ? ` (tx ${result.txHash})` : ''
+            }.`}
+          />
+        ) : null}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <a className="btn btn-primary" href={`/name/${encodeURIComponent(result.label)}`}>
             Add its card
@@ -227,14 +234,22 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="panel">
         <h2 className="h2" style={{ fontSize: 28 }}>
-          {mode === 'confirm' ? 'One confirmation and it is done.' : 'Claim a name'}
+          {mode === 'confirm' ? 'Confirm the name your AI asked for' : 'Claim a name'}
         </h2>
 
         {mode === 'confirm' && request ? (
           <div className="notice notice-info">
-            This request came from <b>{request.requestedByHost ?? 'an AI'}</b>, for{' '}
-            <span className="mono">{request.requestedFor}</span>.{' '}
-            {request.expiresAt ? 'The link expires; if it does, ask the AI to start again.' : ''}
+            <b>{request.requestedByHost ?? 'Your AI'}</b> started a registration for{' '}
+            <span className="mono">{request.requestedFor}</span>. Nothing exists yet — one signature from
+            you and it does.
+            {request.expiresAt ? (
+              <>
+                {' '}
+                This link works until{' '}
+                <span className="mono">{new Date(request.expiresAt).toISOString().slice(0, 16).replace('T', ' ')} UTC</span>
+                ; after that, ask your AI to start again.
+              </>
+            ) : null}
           </div>
         ) : null}
 
@@ -319,6 +334,33 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
           ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** The line an owner pastes back into the chat, so the agent knows it worked. */
+function CopyForAgent({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="panel" style={{ background: 'var(--surface, #f7f5f0)' }}>
+      <p className="body-2" style={{ margin: 0, fontSize: 14 }}>
+        Your AI cannot see this page. Paste this back to it so it can move on:
+      </p>
+      <pre className="mono mono-break" style={{ margin: '8px 0', fontSize: 13 }}>{text}</pre>
+      <button
+        type="button"
+        className="btn btn-sm"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+          } catch {
+            setCopied(false);
+          }
+        }}
+      >
+        {copied ? 'Copied' : 'Copy for your AI'}
+      </button>
     </div>
   );
 }

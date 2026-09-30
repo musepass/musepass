@@ -125,18 +125,25 @@ export async function requestName(
     };
   }
 
+  // The link already appears in the API's summary. Appending it again made the
+  // text say "give this link to the owner" twice with the same URL, which is
+  // exactly the kind of noise an agent quotes back wrong. The URL stays in the
+  // summary once, and again in `data` where a client can read it structurally.
   return {
     summary: {
-      zh: `${result.summary.zh} 请把这条链接交给主人：${result.data.confirmUrl}`,
-      en: `${result.summary.en} Give this link to the owner: ${result.data.confirmUrl}`,
+      // Only what the API summary leaves out: where the link is, and that it must
+      // be passed on unchanged. Repeating the expiry just gives a model two
+      // slightly different sentences to choose from.
+      zh: `${result.summary.zh}（链接在 data.confirmUrl，原样发给主人。）`,
+      en: `${result.summary.en} (The link is in data.confirmUrl — send it to your owner verbatim.)`,
     },
     data: {
       ...result.data,
       status: 'pending',
       requiresOwnerConfirmation: true,
       rootName: config.brand.rootName,
-      nextStepZh: '主人打开链接、连接钱包并签名后，名字才会真正发放。',
-      nextStepEn: 'The name is only issued after the owner opens the link and signs.',
+      nextStepZh: '主人打开链接、连接钱包并签名之前，这个名字还不存在。',
+      nextStepEn: 'Until your owner opens that link, connects a wallet and signs, nothing exists yet.',
     },
     errors: [],
   };
@@ -148,6 +155,7 @@ export async function requestName(
 export async function getStatus(
   api: MusenameApi,
   input: { requestId: string },
+  config: MusenameConfig,
 ): Promise<ToolResult> {
   if (!input.requestId?.trim()) {
     return {
@@ -156,7 +164,43 @@ export async function getStatus(
       errors: [{ code: 'BAD_INPUT', message: 'requestId is required' }],
     };
   }
-  return api.getRequest(input.requestId.trim());
+
+  const result = await api.getRequest(input.requestId.trim());
+  const status = (result.data as { status?: string; fullName?: string; label?: string }).status;
+  const fullName =
+    (result.data as { fullName?: string }).fullName ??
+    ((result.data as { label?: string }).label
+      ? `${(result.data as { label?: string }).label}.${config.brand.rootName}`
+      : undefined);
+
+  // An agent that has to guess what to do next will do the wrong thing, or ask
+  // its owner twice. So the status answer carries the next step, and — once the
+  // name exists — the owner, read back from the chain rather than assumed.
+  if (status === 'confirmed' && fullName) {
+    const profile = await api.getProfile(fullName).catch(() => null);
+    const owner = (profile?.data as { owner?: string } | undefined)?.owner ?? null;
+    return {
+      ...result,
+      summary: {
+        zh: `${fullName} 已经注册好了${owner ? `，归 ${owner}` : ''}。下一步是名片：让主人打开 ${config.brand.siteUrl}/name/${fullName.split('.')[0]} 填好并签名。`,
+        en: `${fullName} is registered${owner ? ` to ${owner}` : ''}. Next step is the card: have your owner open ${config.brand.siteUrl}/name/${fullName.split('.')[0]} to fill it in and sign it.`,
+      },
+      data: { ...(result.data as object), owner, nextStep: 'card' },
+    };
+  }
+
+  if (status === 'pending') {
+    return {
+      ...result,
+      summary: {
+        zh: '主人还没确认。把确认链接给他，并告诉他链接 15 分钟内有效；在此之前不要说名字已经注册。',
+        en: 'The owner has not confirmed yet. Hand them the confirmation link (good for 15 minutes) and do not say the name is registered until they do.',
+      },
+      data: { ...(result.data as object), nextStep: 'wait-for-owner' },
+    };
+  }
+
+  return result;
 }
 
 /**
