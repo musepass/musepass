@@ -33,7 +33,7 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
     return (
       <div className="page">
         <div className="container">
-          <SiteHeader config={config} />
+          <SiteHeader config={config} expectedChainIds={[config.chain.chainId, 1]} />
           <main className="narrow">
             <h1 className="h2">{decoded}</h1>
             <div className="notice notice-warn">

@@ -17,7 +17,7 @@ export default async function SetupPage() {
   return (
     <div className="page">
       <div className="container">
-        <SiteHeader config={config} expectedChainId={1} />
+        <SiteHeader config={config} expectedChainIds={[1]} />
         <main className="narrow">
           <SetupFlow config={config} />
         </main>

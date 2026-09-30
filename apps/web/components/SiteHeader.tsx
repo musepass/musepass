@@ -5,16 +5,16 @@ import { WalletButton } from './WalletButton';
 
 export function SiteHeader({
   config,
-  expectedChainId,
+  expectedChainIds,
 }: {
   config: PublicConfig;
   /**
-   * Which network the wallet should be on for this page. The site's own flows
-   * run on the L2 that holds the names; the one-time setup page runs on
-   * Ethereum mainnet, because that is where ENS lives. Defaulting to the L2
-   * would tell a correctly connected owner that their network is wrong.
+   * Which networks this page can be used from. Most of the site runs on the L2
+   * that holds the names; the one-time setup page runs on Ethereum mainnet, and
+   * the name page needs both — the card lives on the L2, the primary name on
+   * mainnet. Anything else is a genuine mistake and gets a warning.
    */
-  expectedChainId?: number;
+  expectedChainIds?: number[];
 }) {
   return (
     <header className="header">
@@ -28,7 +28,7 @@ export function SiteHeader({
         <Link href="/#prompt">Paste into your AI</Link>
         <Link href="/#pricing">Pricing</Link>
         <Link href="/#faq">FAQ</Link>
-        <WalletButton expectedChainId={expectedChainId ?? config.chain.chainId} />
+        <WalletButton expectedChainIds={expectedChainIds ?? [config.chain.chainId]} />
       </nav>
     </header>
   );

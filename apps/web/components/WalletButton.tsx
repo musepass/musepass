@@ -3,9 +3,12 @@
 import { useWallet } from './WalletProvider';
 import { shortAddress } from '@/lib/wallet';
 
-export function WalletButton({ expectedChainId }: { expectedChainId: number }) {
+export function WalletButton({ expectedChainIds }: { expectedChainIds: number[] }) {
   const { address, chainId, connecting, error, connectWallet, disconnect, clearError } = useWallet();
-  const wrongChain = Boolean(address) && chainId !== expectedChainId;
+  // A page may be usable from more than one network: the name page edits the card
+  // on the L2 and sets the primary name on mainnet. Only warn when the wallet is
+  // on neither.
+  const wrongChain = Boolean(address) && chainId !== null && !expectedChainIds.includes(chainId);
 
   if (address) {
     return (
