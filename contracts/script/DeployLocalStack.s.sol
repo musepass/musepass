@@ -32,7 +32,12 @@ contract DeployLocalStack is Script {
         );
         address admin = vm.addr(deployerKey);
 
-        bytes32 baseNode = keccak256(abi.encodePacked(ETH_NODE, keccak256(bytes("musename"))));
+        // The root label has to match config/brand.json, because the end to end
+        // script derives the node from that file. It was hardcoded to the old
+        // root, so after the rename the registrar minted names under a base node
+        // nobody looked up and the local wiring looked broken.
+        string memory rootLabel = vm.envOr("MUSENAME_LOCAL_ROOT_LABEL", string("musepass"));
+        bytes32 baseNode = keccak256(abi.encodePacked(ETH_NODE, keccak256(bytes(rootLabel))));
 
         vm.startBroadcast(deployerKey);
         LocalL2Registry registry = new LocalL2Registry(baseNode);

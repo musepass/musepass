@@ -22,6 +22,9 @@ RPC="http://127.0.0.1:${ANVIL_PORT}"
 DEV_ADDRESS="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 DEV_KEY="0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 LABEL="${1:-aguang}"
+# The local registry is deployed for the root this project actually uses, so a
+# rename cannot leave the two halves of this check pointing at different nodes.
+ROOT_LABEL="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["rootName"].split(".")[0])' "$ROOT_DIR/config/brand.json")"
 # The claim in step 1 mints LABEL, so the MCP smoke in step 3 asks for a
 # different one — otherwise it would be testing the "already taken" path.
 SMOKE_LABEL="${LABEL}x"
@@ -58,6 +61,7 @@ cast chain-id --rpc-url "$RPC" >/dev/null
 echo "==> deploying the local stack"
 (
   cd "$ROOT_DIR/contracts"
+  MUSENAME_LOCAL_ROOT_LABEL="$ROOT_LABEL" \
   MUSENAME_LOCAL_KEY="$DEV_KEY" \
     forge script script/DeployLocalStack.s.sol --rpc-url "$RPC" --broadcast 2>&1 \
     | grep -vE "WARN|^$" >/dev/null
@@ -179,19 +183,21 @@ def get(path):
         return response.status, response.read().decode("utf-8")
 
 
+# The site is English only: check-web-english.mjs fails the build if a CJK
+# character reaches apps/web, so these assertions look for the English copy.
 checks = []
 
 status, html = get("/")
-checks.append(("homepage renders", status == 200 and "给你的 AI" in html))
+checks.append(("homepage renders", status == 200 and "A name for" in html))
 checks.append(("hero search box present", 'id="name-search"' in html))
 checks.append(("brand renders from config", "MusePass" in html))
-checks.append(("Meta disclaimer present", "与 Meta" in html))
+checks.append(("Meta disclaimer present", "not affiliated" in html and "Meta" in html))
 
 status, html = get("/claim?label=" + label)
-checks.append(("claim page renders", status == 200 and "领取一个名字" in html))
+checks.append(("claim page renders", status == 200 and "Claim a name" in html))
 
 status, html = get("/name/" + label)
-checks.append(("name page handles an unregistered name", status == 200 and "还没有被注册" in html))
+checks.append(("name page handles an unregistered name", status == 200 and "has not been registered" in html))
 
 status, html = get("/developers")
 checks.append(("developer page lists the MCP tools", status == 200 and "check_name" in html))
