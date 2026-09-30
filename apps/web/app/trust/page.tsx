@@ -44,6 +44,13 @@ export default async function TrustPage() {
               resolves to the owner&apos;s address), and when its RPC fails the gateway returns an error
               rather than signing an empty answer.
             </li>
+            <li>
+              Exactly one thing is issued today: the name, an ERC-721 that sits in your wallet. The card
+              is an on-chain record, not a token, and the stamps on a passport are not tokens either.
+              There is no second collection, no invitation token and no seat sale. If something claims
+              to be one of those and it is not in{' '}
+              <a href="https://github.com/musepass/musepass">this repository</a>, it is not ours.
+            </li>
           </ul>
 
           <h2 className="h3">2. False today, which is why we do not write it</h2>
