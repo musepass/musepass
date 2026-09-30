@@ -64,7 +64,7 @@ describe('checkLabel — rejections', () => {
     const result = check('abc', { allowPremium: true });
     expect(result.policyOk).toBe(true);
     expect(result.price?.tier).toBe('premium');
-    expect(result.price?.priceUsd).toBe(600);
+    expect(result.price?.priceUsd).toBe(20);
   });
 
   it('keeps a tier closed while its price is still a placeholder', () => {

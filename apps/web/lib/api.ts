@@ -172,7 +172,17 @@ export const FALLBACK_CONFIG: PublicConfig = {
     currency: 'USDC',
     freeMinUnits: 5,
     lengthMetric: 'display-width',
-    premiumTiers: [],
+    // Mirrors config/pricing.json (D15). It cannot be empty: the landing page is
+    // prerendered, and when the API is not reachable at build time the page falls
+    // back to this object — which is how the price ladder rendered as a blank
+    // space on a page that looked fine. `brandSurfaces.test.ts` compares these
+    // against the config file on every test run.
+    premiumTiers: [
+      { id: 'tier-1', minUnits: 1, maxUnits: 1, priceUsd: 500, sellable: false },
+      { id: 'tier-2', minUnits: 2, maxUnits: 2, priceUsd: 100, sellable: false },
+      { id: 'tier-3', minUnits: 3, maxUnits: 3, priceUsd: 20, sellable: false },
+      { id: 'tier-4', minUnits: 4, maxUnits: 4, priceUsd: 5, sellable: false },
+    ],
     certificationMonthlyUsd: 5,
   },
   limits: {

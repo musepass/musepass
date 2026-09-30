@@ -1,15 +1,21 @@
 {
-  "$comment": "Rule 6: prices are configuration. Prices decided 2026-09-29 (docs/decisions.md D6). Premium names are still NOT sellable in phase 1: the claim policy rejects every non-free tier until phase 6 turns it on.",
+  "$comment": "Rule 6: prices are configuration. The length ladder was set 2026-09-30 (docs/decisions.md D15) and replaces the 2026-09-29 numbers in D6. Short names are still NOT sellable: the claim policy rejects every non-free tier until the payment flow exists (`features.premiumPurchase` stays false). The currency is also unsettled — this chain's stablecoin is USDG, not USDC — so nothing here has been charged to anyone.",
   "currency": "USDC",
   "$comment_units": "All length thresholds use limits.lengthMetric (default: display width, so one CJK character counts as two).",
   "freeTier": {
     "minUnits": 5
   },
+  "$comment_ladder": "A name is priced by how few characters it has, because that is what makes it worth remembering. The first name of five characters or more is free — that promise is what the product is built on and it does not change. What costs money is being short, and taking more names than the free one.",
   "premiumTiers": [
-    { "id": "tier-1-2", "minCodePoints": 1, "maxCodePoints": 2, "priceUsd": 1500, "status": "approved" },
-    { "id": "tier-3", "minCodePoints": 3, "maxCodePoints": 3, "priceUsd": 600, "status": "approved" },
-    { "id": "tier-4", "minCodePoints": 4, "maxCodePoints": 4, "priceUsd": 150, "status": "approved" }
+    { "id": "tier-1", "minCodePoints": 1, "maxCodePoints": 1, "priceUsd": 500, "status": "approved" },
+    { "id": "tier-2", "minCodePoints": 2, "maxCodePoints": 2, "priceUsd": 100, "status": "approved" },
+    { "id": "tier-3", "minCodePoints": 3, "maxCodePoints": 3, "priceUsd": 20, "status": "approved" },
+    { "id": "tier-4", "minCodePoints": 4, "maxCodePoints": 4, "priceUsd": 5, "status": "approved" }
   ],
+  "additionalName": {
+    "$comment": "Beyond the one free name per wallet, a longer name is one dollar. Not implemented: the claim policy has no notion of a paid extra name yet, and this key is the design that the payment flow will read.",
+    "priceUsd": 1
+  },
   "certification": {
     "monthlyUsd": 5,
     "status": "approved",

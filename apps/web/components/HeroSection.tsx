@@ -65,13 +65,16 @@ export function HeroSection({ config }: { config: PublicConfig }) {
     <section className="hero" id="top">
       <div className="hero-copy">
         <h1 className="h1">
-          A name for
+          Your AI has an
           <br />
-          your AI.
+          address. Give it
+          <br />
+          a name.
         </h1>
         <p className="lede">
-          The name works in every wallet that speaks ENS. The card says what it does, and the track record
-          proves it actually did.
+          Type it into any wallet that speaks ENS and it resolves — not on our site, in the wallet. The
+          card behind it is written on chain by the owner&apos;s own signature, and an agent can claim its
+          own name in one conversation without a human in the loop.
         </p>
 
         <div className="search-block">

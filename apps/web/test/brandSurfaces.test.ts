@@ -24,6 +24,12 @@ const brand = JSON.parse(
   supportEmail: string;
   rootName: string;
 };
+const pricing = JSON.parse(
+  readFileSync(resolve(__dirname, '../../../config/pricing.json'), 'utf8'),
+) as {
+  freeTier: { minUnits: number };
+  premiumTiers: Array<{ id: string; minCodePoints: number; maxCodePoints: number; priceUsd: number }>;
+};
 
 describe('brand surfaces', () => {
   it('agrees with config/brand.json about the name of the product', () => {
@@ -45,5 +51,29 @@ describe('brand surfaces', () => {
     expect(MCP_URL).toBe(`${SITE_URL}/mcp`);
     expect(AGENT_PROMPT).toContain(`${SITE_URL}/ask.txt`);
     expect(new URL(MCP_URL).host).toBe(new URL(SITE_URL).host);
+  });
+
+  it('carries the same price ladder the API serves', () => {
+    // The offline fallback is what a prerendered page shows when it could not
+    // reach the API, so an empty ladder there is a page that renders a blank
+    // price — which is exactly what shipped once.
+    expect(FALLBACK_CONFIG.pricing.freeMinUnits).toBe(pricing.freeTier.minUnits);
+    expect(
+      FALLBACK_CONFIG.pricing.premiumTiers.map((tier) => [
+        tier.id,
+        tier.minUnits,
+        tier.maxUnits,
+        tier.priceUsd,
+      ]),
+    ).toEqual(
+      pricing.premiumTiers.map((tier) => [
+        tier.id,
+        tier.minCodePoints,
+        tier.maxCodePoints,
+        tier.priceUsd,
+      ]),
+    );
+    // Nothing short is on sale until the payment flow exists (D15).
+    expect(FALLBACK_CONFIG.pricing.premiumTiers.every((tier) => tier.sellable === false)).toBe(true);
   });
 });

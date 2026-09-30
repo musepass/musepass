@@ -30,7 +30,8 @@
     "wallet:compat": "node scripts/wallet-compat.mjs",
     "web:english": "node scripts/check-web-english.mjs",
     "deploy:web": "./scripts/deploy-web.sh",
-    "domain:cutover": "./scripts/cutover-domain.sh"
+    "domain:cutover": "./scripts/cutover-domain.sh",
+    "push:config": "./scripts/push-config.sh"
   },
   "devDependencies": {
     "viem": "2.56.9",

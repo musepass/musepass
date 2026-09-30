@@ -15,16 +15,21 @@ describe('quoteLabel', () => {
     const quote = quoteLabel(4, config.pricing);
     expect(quote.tier).toBe('premium');
     expect(quote.tierId).toBe('tier-4');
-    expect(quote.priceUsd).toBe(150);
+    expect(quote.priceUsd).toBe(5);
   });
 
   it('prices three character names in the three character tier', () => {
     expect(quoteLabel(3, config.pricing).tierId).toBe('tier-3');
+    expect(quoteLabel(3, config.pricing).priceUsd).toBe(20);
   });
 
-  it('prices one and two character names in the shortest tier', () => {
-    expect(quoteLabel(1, config.pricing).tierId).toBe('tier-1-2');
-    expect(quoteLabel(2, config.pricing).tierId).toBe('tier-1-2');
+  it('prices one and two character names in their own tiers', () => {
+    // The ladder is per length now (D15): a one character name is scarcer than
+    // two, and a shared "short" tier could not say so.
+    expect(quoteLabel(1, config.pricing).tierId).toBe('tier-1');
+    expect(quoteLabel(1, config.pricing).priceUsd).toBe(500);
+    expect(quoteLabel(2, config.pricing).tierId).toBe('tier-2');
+    expect(quoteLabel(2, config.pricing).priceUsd).toBe(100);
   });
 
   it('marks decided tiers as active', () => {

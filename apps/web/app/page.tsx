@@ -20,6 +20,70 @@ export default async function HomePage() {
         <SiteHeader config={config} />
         <HeroSection config={config} />
 
+        {/* ------------------------------------------------------- proof
+            Everything in this strip is checkable in one click, and each cell
+            names the transaction that backs it. A product that sells
+            verifiability cannot open with adjectives; it opens with the four
+            things that already work while the visitor is reading. */}
+        <section className="section" id="proof">
+          <h2 className="h2" style={{ maxWidth: '20em' }}>
+            Not a mock-up. Four things work while you read this.
+          </h2>
+          <div className="pricing-grid">
+            <div className="pricing-cell pricing-cell-featured">
+              <span className="pricing-name pricing-name-accent">Resolves in your wallet</span>
+              <span className="pricing-amount mono">peter.{rootName}</span>
+              <span className="pricing-note">
+                Paste that into any wallet or block explorer that speaks ENS and it returns an address.
+                It is not read from our database.{' '}
+                <Link href="/name/peter">Open the name page</Link>.
+              </span>
+            </div>
+            <div className="pricing-cell">
+              <span className="pricing-name">An AI claimed one by itself</span>
+              <span className="pricing-amount mono">abcde</span>
+              <span className="pricing-note">
+                An agent in someone else&apos;s workspace found the endpoint, signed the registration with
+                its own wallet and named itself. No human signed anything; the platform paid the gas.{' '}
+                <a
+                  href="https://robinhoodchain.blockscout.com/tx/0xd8916b6476e18daeab1dce3775eaa3390bb58a8a4339beb9482b0fbede1f7d86"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Transaction
+                </a>
+                .
+              </span>
+            </div>
+            <div className="pricing-cell">
+              <span className="pricing-name">The card is on chain, not on our server</span>
+              <span className="pricing-amount mono">ERC-8004</span>
+              <span className="pricing-note">
+                The owner signs the card and it is written into the name&apos;s own record. Private
+                fields stay private — only the name and the address are public until a switch is turned
+                on.{' '}
+                <a
+                  href="https://robinhoodchain.blockscout.com/tx/0xa804185a6ecf7b0f00884f602600ecba42c7f413e8244b2ed11717ddb02b6316"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Transaction
+                </a>
+                .
+              </span>
+            </div>
+            <div className="pricing-cell">
+              <span className="pricing-name">It keeps working if we disappear</span>
+              <span className="pricing-amount mono">no vendor lock-in</span>
+              <span className="pricing-note">
+                The name is an ERC-721 in your wallet on a public chain, and the resolution path is ENS
+                plus a deployed resolver. Nothing here needs our server to stay up for the name to remain
+                yours.
+              </span>
+            </div>
+          </div>
+        </section>
+
         {/* ------------------------------------------------ how it works */}
         <section className="how" id="how">
           <div className="chat">
@@ -191,10 +255,24 @@ export default async function HomePage() {
               </span>
             </div>
             <div className="pricing-cell">
-              <span className="pricing-name">Premium names</span>
-              <span className="pricing-amount">Priced by length</span>
+              <span className="pricing-name">Short names</span>
+              <span className="pricing-amount">
+                {config.pricing.premiumTiers.length > 0
+                  ? `$${Math.min(...config.pricing.premiumTiers.map((tier) => tier.priceUsd))} – $${Math.max(
+                      ...config.pricing.premiumTiers.map((tier) => tier.priceUsd),
+                    )}`
+                  : 'Priced by length'}
+              </span>
               <span className="pricing-note">
-                Short names of 1–4 characters (a CJK character counts as two).{' '}
+                Priced by length, because that is what makes a name worth remembering:{' '}
+                {[...config.pricing.premiumTiers]
+                  .sort((a, b) => b.minUnits - a.minUnits)
+                  .map(
+                    (tier) =>
+                      `${tier.minUnits}${tier.minUnits === 1 ? ' character' : ' characters'} $${tier.priceUsd}`,
+                  )
+                  .join(' · ')}
+                . A CJK character counts as two.{' '}
                 {config.features.premiumPurchase
                   ? 'Buy one and it is fully yours, transferable.'
                   : 'Not on sale yet — free names are what is open.'}
