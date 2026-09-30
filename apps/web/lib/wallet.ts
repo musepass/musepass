@@ -116,7 +116,7 @@ export async function ensureChain(chainId: number): Promise<void> {
   }
 }
 
-/** The same struct packages/core signs and MuseNameRegistrar verifies. */
+/** The same struct packages/core signs and MusePassRegistrar verifies. */
 export const REGISTER_TYPES = CORE_REGISTER_TYPES;
 
 export interface RegisterTypedData {

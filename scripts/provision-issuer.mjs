@@ -60,7 +60,7 @@ if (existsSync(issuerPath)) {
   if (!issuerKey) throw new Error(`${issuerPath} exists but holds no key`);
 } else if (apply) {
   issuerKey = generatePrivateKey();
-  writeFileSync(issuerPath, `# MuseName API issuer key — relayer on the registrar, nothing else\n${issuerKey}\n`, {
+  writeFileSync(issuerPath, `# MusePass API issuer key — relayer on the registrar, nothing else\n${issuerKey}\n`, {
     mode: 0o600,
   });
   created = true;
@@ -84,7 +84,7 @@ const [owner, isRelayer, issuerBalance, adminBalance] = await Promise.all([
   publicClient.getBalance({ address: admin.address }),
 ]);
 
-console.log('MuseName issuer provisioning');
+console.log('MusePass issuer provisioning');
 console.log(`  registrar      ${registrar}`);
 console.log(`  registrar owner${owner === admin.address ? ' = admin key (we hold it)' : ` = ${owner}`}`);
 console.log(`  issuer key     ${issuer.address}${created ? '  (created just now)' : ''}`);

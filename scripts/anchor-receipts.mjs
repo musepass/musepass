@@ -52,7 +52,7 @@ const chain = {
 };
 const publicClient = createPublicClient({ chain, transport: http(rpcUrl) });
 
-console.log('MuseName receipt anchor');
+console.log('MusePass receipt anchor');
 console.log(`  chain      ${chains.l2.name} (${chains.l2.chainId})`);
 console.log(`  records    ${recordsPath}`);
 console.log(`  count      ${records.length}`);

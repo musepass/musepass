@@ -1,5 +1,5 @@
 import type { PricingConfig } from './config.js';
-import { MuseNameError } from './errors.js';
+import { MusePassError } from './errors.js';
 
 export interface PriceQuote {
   tier: 'free' | 'premium';
@@ -31,7 +31,7 @@ export function quoteLabel(length: number, pricing: PricingConfig): PriceQuote {
   );
 
   if (!tier) {
-    throw new MuseNameError('NOT_FREE_TIER', 'no pricing tier is configured for this name length', {
+    throw new MusePassError('NOT_FREE_TIER', 'no pricing tier is configured for this name length', {
       length,
     });
   }

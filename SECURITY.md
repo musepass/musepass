@@ -18,7 +18,7 @@ In scope:
   scripts
 - the CCIP-Read gateway and its signature scheme
 - the API, the MCP server, and the agent signer (`apps/`)
-- the production endpoints under `musename.xyz` and `gw.musename.xyz`
+- the production endpoints under `musepass.xyz` and `gw.musename.xyz`
 
 Out of scope here (report upstream): viem, Hono, the MCP SDK, Durin's contracts,
 and ENS itself.
@@ -26,7 +26,7 @@ and ENS itself.
 ## What we already know is weak
 
 A report that repeats these is not a finding — it is a known limitation we
-publish on purpose. See <https://musename.xyz/trust>.
+publish on purpose. See <https://musepass.xyz/trust>.
 
 1. **The registry admin is a hot wallet.** It can add itself as a registrar, and
    a registrar can rewrite any name's records. Moving that to a multisig is

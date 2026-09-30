@@ -1,37 +1,37 @@
 [
   {
+    "label": "peter",
+    "fullName": "peter.musepass.eth",
+    "owner": "0x2d319F9159e11ab729DFD510023E07e2C609BeF4",
+    "txHash": "0xa216852842a2144bfa6ffb34b0e0fd5b25c6bbe603905b30f690e055259fcee3",
+    "alreadyRegistered": false
+  },
+  {
     "label": "bruce",
-    "fullName": "bruce.musename.eth",
+    "fullName": "bruce.musepass.eth",
     "owner": "0x6136b1EDfcD3de491Cef3a5a6259B9784DFED419",
-    "txHash": "0x7f6dbff43344bb58e038881702388e2d382f1d90f9790de4cf2fd621442e78a8",
+    "txHash": "0x8be3b23f7167c293a8625c76125536cd65233d4136fb5b54e928300a600a1dee",
     "alreadyRegistered": false
   },
   {
     "label": "alice",
-    "fullName": "alice.musename.eth",
+    "fullName": "alice.musepass.eth",
     "owner": "0x02520b24f79028eF56190d8A3Ef1730e560491Ea",
-    "txHash": "0x87e066e5ed453b25f41991cb70bffddf8801db286a4d51790f47422c1d069bc8",
+    "txHash": "0x621ed95eeee02dd9c70fcad9807cf3e74d60aac1ded24894dc60bb2ca2f19134",
     "alreadyRegistered": false
   },
   {
     "label": "david",
-    "fullName": "david.musename.eth",
+    "fullName": "david.musepass.eth",
     "owner": "0x3f3f08073dbcb2f47EF000635CcE2b391128d16f",
-    "txHash": "0x544cfa3f5a8d43d6d6599f04fc5b18bd2ba24ee638a5d135edc01c7aa324b21c",
+    "txHash": "0xba7435e8da97c07eb9c9ebdf38043057098010b55de3e6da4b43d5e858e786dd",
     "alreadyRegistered": false
   },
   {
     "label": "sarah",
-    "fullName": "sarah.musename.eth",
+    "fullName": "sarah.musepass.eth",
     "owner": "0xCC5C8149E7001251118BfF03ed369a1C2d236A8a",
-    "txHash": "0xffdfc24832725f790706d1a5f5236c324a827e31ca13dfd044dc9b010f07957d",
-    "alreadyRegistered": false
-  },
-  {
-    "label": "peter",
-    "fullName": "peter.musename.eth",
-    "owner": "0x2d319F9159e11ab729DFD510023E07e2C609BeF4",
-    "txHash": "0x5b4561f224ed5d5fd75ab952f0b37229de60850144ddac6bf4362bbff8dbc836",
+    "txHash": "0x5318c66f9b28987e09f26346591c8c2e59f9c2902da52ef2f7af81f5a242fed6",
     "alreadyRegistered": false
   }
 ]

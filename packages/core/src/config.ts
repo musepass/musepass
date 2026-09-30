@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { MuseNameError } from './errors.js';
+import { MusePassError } from './errors.js';
 
 export interface BrandConfig {
   productName: string;
   tagline: { en: string; zh: string };
   siteUrl: string;
   supportEmail: string;
-  /** ENS root name, e.g. `musename.eth`. Comes from config so a rename is a config change only. */
+  /** ENS root name, e.g. `musepass.eth`. Comes from config so a rename is a config change only. */
   rootName: string;
   legalDisclaimer: { en: string; zh: string };
   naming: { subnameSuffix: string; exampleLabel: string };
@@ -111,12 +111,12 @@ export interface LoadConfigOptions {
 
 function readJson<T>(path: string): T {
   if (!existsSync(path)) {
-    throw new MuseNameError('INVALID_CONFIG', `config file not found: ${path}`, { path });
+    throw new MusePassError('INVALID_CONFIG', `config file not found: ${path}`, { path });
   }
   try {
     return JSON.parse(readFileSync(path, 'utf8')) as T;
   } catch (error) {
-    throw new MuseNameError('INVALID_CONFIG', `config file is not valid JSON: ${path}`, {
+    throw new MusePassError('INVALID_CONFIG', `config file is not valid JSON: ${path}`, {
       path,
       cause: error instanceof Error ? error.message : String(error),
     });
@@ -135,7 +135,7 @@ export function findRepoRoot(startDir: string = process.cwd()): string {
     if (parent === current) break;
     current = parent;
   }
-  throw new MuseNameError('INVALID_CONFIG', `could not find repo root from ${startDir}`, { startDir });
+  throw new MusePassError('INVALID_CONFIG', `could not find repo root from ${startDir}`, { startDir });
 }
 
 export function resolveConfigDir(options: LoadConfigOptions = {}): string {
@@ -181,7 +181,7 @@ function applyEnvOverrides(config: MusenameConfig, env: Record<string, string | 
 
 function assertShape(config: MusenameConfig): void {
   const require = (condition: unknown, message: string, details?: Record<string, unknown>) => {
-    if (!condition) throw new MuseNameError('INVALID_CONFIG', message, details ?? {});
+    if (!condition) throw new MusePassError('INVALID_CONFIG', message, details ?? {});
   };
 
   require(config.brand?.productName, 'config/brand.json: productName is required');

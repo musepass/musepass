@@ -152,7 +152,7 @@ const offChainDigest = hashTypedData({
   message,
 });
 
-console.log('MuseName claim');
+console.log('MusePass claim');
 console.log('  chain          ', chainId);
 console.log('  root           ', brand.rootName);
 console.log('  label          ', label);

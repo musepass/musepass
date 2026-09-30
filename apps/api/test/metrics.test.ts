@@ -86,7 +86,7 @@ async function insertName(
 ) {
   const record = await repos.names.insert({
     label,
-    fullName: `${label}.musename.eth`,
+    fullName: `${label}.musepass.eth`,
     normalized: label,
     ownerAddress: OWNER,
     tier: overrides.tier ?? 'free',

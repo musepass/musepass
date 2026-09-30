@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Script, console2} from "forge-std/Script.sol";
 
-import {MuseNameRegistrar} from "../src/MuseNameRegistrar.sol";
+import {MusePassRegistrar} from "../src/MusePassRegistrar.sol";
 import {LocalL2Registry} from "./mocks/LocalL2Registry.sol";
 
 /**
@@ -36,14 +36,14 @@ contract DeployLocalStack is Script {
 
         vm.startBroadcast(deployerKey);
         LocalL2Registry registry = new LocalL2Registry(baseNode);
-        MuseNameRegistrar registrar =
-            new MuseNameRegistrar(address(registry), "MuseName", "1", admin, 3);
+        MusePassRegistrar registrar =
+            new MusePassRegistrar(address(registry), "MusePass", "1", admin, 3);
         registry.addRegistrar(address(registrar));
         registrar.setRelayer(admin, true);
         vm.stopBroadcast();
 
         console2.log("LocalL2Registry", address(registry));
-        console2.log("MuseNameRegistrar", address(registrar));
+        console2.log("MusePassRegistrar", address(registrar));
         console2.log("baseNode");
         console2.logBytes32(baseNode);
 

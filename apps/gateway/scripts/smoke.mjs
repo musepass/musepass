@@ -31,7 +31,7 @@ const resolver = arg('resolver');
 const registry = arg('registry');
 const chainId = BigInt(arg('chain-id', '31337'));
 const label = arg('label', 'aguang');
-const root = arg('root', 'musename.eth');
+const root = arg('root', 'musepass.eth');
 const expect = arg('expect', '');
 
 const STUFFED_ABI = [

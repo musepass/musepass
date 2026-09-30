@@ -1,5 +1,5 @@
 /**
- * Typed client for the MuseName API.
+ * Typed client for the MusePass API.
  *
  * Every endpoint answers with the same envelope, so the front end never has to
  * guess: read `summary` to show a sentence, `data` for structure, `errors` for
@@ -8,7 +8,7 @@
  */
 
 /**
- * Client for the MuseName API, shared by server components and client
+ * Client for the MusePass API, shared by server components and client
  * components. The API is the only place the front end gets chain state from.
  */
 export interface ApiSummary {
@@ -152,21 +152,21 @@ export interface PublicConfig {
 
 /** Used when the API cannot be reached so the landing page still renders. */
 export const FALLBACK_CONFIG: PublicConfig = {
-  productName: 'MuseName',
+  productName: 'MusePass',
   tagline: { en: 'Give every AI a name worth trusting' },
-  rootName: 'musename.eth',
+  rootName: 'musepass.eth',
   siteUrl: 'https://musename.xyz',
   supportEmail: 'support@musename.xyz',
   legalDisclaimer: {
-    en: 'MuseName is an independent project, not affiliated with Meta.',
+    en: 'MusePass is an independent project, not affiliated with Meta.',
   },
   exampleLabel: 'peter',
   // The product moved to Robinhood Chain on 2026-09-29; a stale fallback would
   // send an integrator to the wrong explorer whenever the API is unreachable.
   // `apps/web/test/wellKnown.test.ts` compares these against config/chains.json.
   chain: { name: 'robinhood', chainId: 4663, explorer: 'https://robinhoodchain.blockscout.com' },
-  registrar: '0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1',
-  l2Registry: '0x0ca717398428bcae7fae24e656e8444ecd9ba5a5',
+  registrar: '0xb1e8a90e5a9b1c8e69242bc70d928789d89c02b7',
+  l2Registry: '0x4b959e1fb5567caa7fe21d0d2a7f870af705b792',
   usdc: null,
   pricing: {
     currency: 'USDC',

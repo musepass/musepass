@@ -27,7 +27,7 @@ const validCard: AgentCard = {
     host: 'claude',
     contact: 'aguang@example.com',
     payoutAddress: '0x1111111111111111111111111111111111111111',
-    ensName: 'aguang.musename.eth',
+    ensName: 'aguang.musepass.eth',
   },
 };
 
@@ -98,11 +98,11 @@ describe('visibility', () => {
 
   it('strips everything the owner has not published', () => {
     const redacted = applyVisibility(
-      { card: validCard, ensName: 'aguang.musename.eth', ownerAddress: '0xabc' },
+      { card: validCard, ensName: 'aguang.musepass.eth', ownerAddress: '0xabc' },
       defaultVisibility(),
       'public',
     );
-    expect(redacted).toEqual({ name: 'aguang.musename.eth', address: '0xabc' });
+    expect(redacted).toEqual({ name: 'aguang.musepass.eth', address: '0xabc' });
     expect(redacted.description).toBeUndefined();
     expect(redacted.contact).toBeUndefined();
   });
@@ -110,7 +110,7 @@ describe('visibility', () => {
   it('unlocks fields the owner marked public', () => {
     const visibility = { ...defaultVisibility(), description: 'public' as const, host: 'public' as const };
     const redacted = applyVisibility(
-      { card: validCard, ensName: 'aguang.musename.eth', ownerAddress: '0xabc' },
+      { card: validCard, ensName: 'aguang.musepass.eth', ownerAddress: '0xabc' },
       visibility,
       'public',
     );
@@ -122,12 +122,12 @@ describe('visibility', () => {
   it('gives certified counterparts access to certified-only fields', () => {
     const visibility = { ...defaultVisibility(), contact: 'certified-only' as const };
     const publicView = applyVisibility(
-      { card: validCard, ensName: 'aguang.musename.eth', ownerAddress: '0xabc' },
+      { card: validCard, ensName: 'aguang.musepass.eth', ownerAddress: '0xabc' },
       visibility,
       'public',
     );
     const certifiedView = applyVisibility(
-      { card: validCard, ensName: 'aguang.musename.eth', ownerAddress: '0xabc' },
+      { card: validCard, ensName: 'aguang.musepass.eth', ownerAddress: '0xabc' },
       visibility,
       'certified',
     );
@@ -137,10 +137,10 @@ describe('visibility', () => {
 
   it('still returns the identity when there is no card yet', () => {
     const redacted = applyVisibility(
-      { card: null, ensName: 'aguang.musename.eth', ownerAddress: '0xabc' },
+      { card: null, ensName: 'aguang.musepass.eth', ownerAddress: '0xabc' },
       defaultVisibility(),
     );
-    expect(redacted).toEqual({ name: 'aguang.musename.eth', address: '0xabc' });
+    expect(redacted).toEqual({ name: 'aguang.musepass.eth', address: '0xabc' });
   });
 });
 

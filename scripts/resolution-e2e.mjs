@@ -11,7 +11,7 @@
  *   our Base Sepolia registry, read over the network
  *   our own CCIP-Read gateway
  *
- * Then it asks the resolver for `xiaoming.musename.eth` and expects the address
+ * Then it asks the resolver for `xiaoming.musepass.eth` and expects the address
  * the owner actually registered, which is the thing the whole product promises.
  *
  *   anvil --fork-url $ETH_SEPOLIA_RPC --port 8565
@@ -243,7 +243,7 @@ const record = (name, ok, detail = '') => {
   console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  ${detail}` : ''}`);
 };
 
-console.log('MuseName resolution end to end');
+console.log('MusePass resolution end to end');
 console.log('  fork          ', rpcUrl);
 console.log('  root name     ', rootName);
 console.log('  subname       ', fullName);

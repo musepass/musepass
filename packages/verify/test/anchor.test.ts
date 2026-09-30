@@ -16,8 +16,8 @@ import {
 import { merkleProof, verifyMerkleProof } from '../src/merkle.js';
 
 const records: AnchorRecord[] = [
-  { kind: 'name-claim', name: 'xiaoming.musename.eth', tx: `0x${'11'.repeat(32)}` },
-  { kind: 'card-publish', name: 'xiaoming.musename.eth', tx: `0x${'22'.repeat(32)}` },
+  { kind: 'name-claim', name: 'xiaoming.musepass.eth', tx: `0x${'11'.repeat(32)}` },
+  { kind: 'card-publish', name: 'xiaoming.musepass.eth', tx: `0x${'22'.repeat(32)}` },
   { digest: keccak256(toHex('already hashed')) },
 ];
 

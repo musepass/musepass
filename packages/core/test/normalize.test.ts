@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isMuseNameError } from '../src/errors.js';
+import { isMusePassError } from '../src/errors.js';
 import {
   countCodePoints,
   fullNameFromLabel,
@@ -76,8 +76,8 @@ describe('normalizeLabel — rejected inputs', () => {
       normalizeLabel(input);
       throw new Error('expected normalizeLabel to throw');
     } catch (error) {
-      expect(isMuseNameError(error)).toBe(true);
-      if (isMuseNameError(error)) expect(error.code).toBe(code);
+      expect(isMusePassError(error)).toBe(true);
+      if (isMusePassError(error)) expect(error.code).toBe(code);
     }
   });
 });
@@ -113,9 +113,9 @@ describe('normalizeLabel — properties', () => {
 
 describe('normalizeName and labelFromFullName', () => {
   it('normalizes every label of a dotted name', () => {
-    const name = normalizeName('ＡＧＵＡＮＧ.MuseName.eth');
-    expect(name.normalized).toBe('aguang.musename.eth');
-    expect(name.labels.map((label) => label.normalized)).toEqual(['aguang', 'musename', 'eth']);
+    const name = normalizeName('ＡＧＵＡＮＧ.MusePass.eth');
+    expect(name.normalized).toBe('aguang.musepass.eth');
+    expect(name.labels.map((label) => label.normalized)).toEqual(['aguang', 'musepass', 'eth']);
   });
 
   it('rejects names with an empty label', () => {
@@ -123,19 +123,19 @@ describe('normalizeName and labelFromFullName', () => {
   });
 
   it('extracts the label under the configured root', () => {
-    const label = labelFromFullName('阿光.musename.eth', 'musename.eth');
+    const label = labelFromFullName('阿光.musepass.eth', 'musepass.eth');
     expect(label.normalized).toBe('阿光');
   });
 
   it('rejects names outside the configured root', () => {
-    expect(() => labelFromFullName('aguang.other.eth', 'musename.eth')).toThrow();
+    expect(() => labelFromFullName('aguang.other.eth', 'musepass.eth')).toThrow();
   });
 
   it('rejects nested subnames in phase 1', () => {
-    expect(() => labelFromFullName('a.b.musename.eth', 'musename.eth')).toThrow();
+    expect(() => labelFromFullName('a.b.musepass.eth', 'musepass.eth')).toThrow();
   });
 
   it('builds full names from labels', () => {
-    expect(fullNameFromLabel('aguang', 'musename.eth')).toBe('aguang.musename.eth');
+    expect(fullNameFromLabel('aguang', 'musepass.eth')).toBe('aguang.musepass.eth');
   });
 });

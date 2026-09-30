@@ -6,10 +6,10 @@ import {
   type PublicClient,
   type TypedDataDomain,
 } from 'viem';
-import { MuseNameError } from './errors.js';
+import { MusePassError } from './errors.js';
 
 /**
- * Mirrors `MuseNameRegistrar.Register` in contracts/src/MuseNameRegistrar.sol.
+ * Mirrors `MusePassRegistrar.Register` in contracts/src/MusePassRegistrar.sol.
  * The label and the beneficiary are inside the signed payload, so a captured
  * signature can only ever mint the same name to the same owner.
  */
@@ -42,7 +42,7 @@ export interface BuildDomainInput {
 
 export function buildEip712Domain(input: BuildDomainInput): TypedDataDomain {
   if (!input.verifyingContract || !/^0x[0-9a-fA-F]{40}$/.test(input.verifyingContract)) {
-    throw new MuseNameError('INVALID_CONFIG', 'verifyingContract must be a contract address', {
+    throw new MusePassError('INVALID_CONFIG', 'verifyingContract must be a contract address', {
       verifyingContract: input.verifyingContract,
     });
   }
@@ -120,7 +120,7 @@ export function isExpired(deadline: number | bigint, at: bigint = nowSeconds()):
 
 export function assertNotExpired(deadline: number | bigint, at: bigint = nowSeconds()): void {
   if (isExpired(deadline, at)) {
-    throw new MuseNameError('EXPIRED', 'the signature deadline has passed', { deadline: String(deadline) });
+    throw new MusePassError('EXPIRED', 'the signature deadline has passed', { deadline: String(deadline) });
   }
 }
 

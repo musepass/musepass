@@ -1,6 +1,6 @@
 import type { MusenameConfig } from './config.js';
 import { checkScriptMixing, hasEmoji } from './confusables.js';
-import { isMuseNameError, type MuseNameErrorCode } from './errors.js';
+import { isMusePassError, type MusePassErrorCode } from './errors.js';
 import { fullNameFromLabel, measureLength, normalizeLabel } from './normalize.js';
 import { quoteLabel, type PriceQuote } from './pricing.js';
 import { checkReserved, type ReservedHit, type ReservedIndex } from './reserved.js';
@@ -11,7 +11,7 @@ export interface BilingualText {
 }
 
 export interface LabelIssue {
-  code: MuseNameErrorCode;
+  code: MusePassErrorCode;
   message: string;
   field?: string;
 }
@@ -115,7 +115,7 @@ export function checkLabel(rawLabel: string, options: LabelCheckOptions): LabelC
     bytes = normalized.bytes;
     fullName = fullNameFromLabel(normalized.normalized, config.brand.rootName);
   } catch (error) {
-    const code: MuseNameErrorCode = isMuseNameError(error) ? error.code : 'INVALID_NAME';
+    const code: MusePassErrorCode = isMusePassError(error) ? error.code : 'INVALID_NAME';
     const message = error instanceof Error ? error.message : String(error);
     issues.push({ code, message });
   }

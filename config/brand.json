@@ -1,24 +1,25 @@
 {
-  "productName": "MuseName",
+  "productName": "MusePass",
   "tagline": {
     "en": "Give every AI a name worth trusting",
     "zh": "给每个 AI 一个可信的名字"
   },
   "siteUrl": "https://musename.xyz",
-  "supportEmail": "support@musename.xyz",
-  "rootName": "musename.eth",
+  "supportEmail": "support@musepass.xyz",
+  "rootName": "musepass.eth",
   "legalDisclaimer": {
-    "en": "MuseName is an independent project. It is not affiliated with, endorsed by, or sponsored by Meta Platforms, Inc. or any of its products.",
-    "zh": "MuseName 是独立项目，与 Meta 及其任何产品无关。"
+    "en": "MusePass is an independent project. It is not affiliated with, endorsed by, or sponsored by Meta Platforms, Inc. or any of its products.",
+    "zh": "MusePass 是独立项目，与 Meta 及其任何产品无关。"
   },
   "naming": {
     "subnameSuffix": "eth",
     "exampleLabel": "peter"
   },
   "backupBrand": {
-    "$comment": "Decided 2026-09-29 (docs/decisions.md D7). Renaming is a config-only change; it invalidates outstanding EIP-712 signatures by design.",
-    "productName": "VeriName",
-    "rootName": "veriname.eth",
-    "siteUrl": "https://veriname.xyz"
-  }
+    "$comment": "改名前用的名字。品牌与根名字都是配置驱动，改回来只需要改这里。",
+    "productName": "MusePass",
+    "rootName": "musepass.eth",
+    "siteUrl": "https://musepass.xyz"
+  },
+  "$comment": "品牌与根名字已改名为 MusePass / musepass.eth（2026-09-30）。siteUrl 暂时仍指向 musename.xyz，等 musepass.xyz 的 DNS 生效后改成新域名即可。"
 }

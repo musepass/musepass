@@ -25,7 +25,7 @@ import {
 const ROOT_OWNER = '0x022Ce19a356bc18c1977F6816Fdf05fAF22985b7' as const;
 const OPERATOR = L1_RESOLVER.operator;
 const REGISTRY = '0x0ca717398428bcae7fae24e656e8444ecd9ba5a5' as const;
-const CHAINS = { rootName: 'musename.eth', l2ChainId: 4663, l2Registry: REGISTRY };
+const CHAINS = { rootName: 'musepass.eth', l2ChainId: 4663, l2Registry: REGISTRY };
 
 describe('the bytecode the browser deploys', () => {
   it('is byte for byte the vendored Durin bytecode', () => {
@@ -65,19 +65,19 @@ describe('resolver address', () => {
 describe('calldata', () => {
   it('setResolver encodes the root node and the resolver', () => {
     const resolver = resolverAddressFor(L1_RESOLVER_BYTECODE as `0x${string}`, OPERATOR);
-    const data = setResolverCalldata('musename.eth', resolver);
+    const data = setResolverCalldata('musepass.eth', resolver);
     expect(data.startsWith('0x1896f70a')).toBe(true); // setResolver(bytes32,address)
     const decoded = decodeFunctionData({ abi: ENS_REGISTRY_ABI, data });
     expect(decoded.functionName).toBe('setResolver');
-    expect(decoded.args?.[0]).toBe(namehash('musename.eth'));
+    expect(decoded.args?.[0]).toBe(namehash('musepass.eth'));
     expect((decoded.args?.[1] as string).toLowerCase()).toBe(resolver.toLowerCase());
   });
 
   it('setL2Registry encodes the chain and the registry, in that order', () => {
-    const data = setL2RegistryCalldata('musename.eth', 4663, REGISTRY);
+    const data = setL2RegistryCalldata('musepass.eth', 4663, REGISTRY);
     expect(data.startsWith('0xea6f3698')).toBe(true); // setL2Registry(bytes32,uint64,address)
     const decoded = decodeFunctionData({ abi: RESOLVER_ABI, data });
-    expect(decoded.args?.[0]).toBe(namehash('musename.eth'));
+    expect(decoded.args?.[0]).toBe(namehash('musepass.eth'));
     expect(decoded.args?.[1]).toBe(4663n);
     expect((decoded.args?.[2] as string).toLowerCase()).toBe(REGISTRY.toLowerCase());
   });
@@ -175,7 +175,7 @@ describe('reading the chain', () => {
         resolver: operatorResolver,
       }) as never,
       {
-        rootName: 'musename.eth',
+        rootName: 'musepass.eth',
         connected: ROOT_OWNER,
         bytecode: L1_RESOLVER_BYTECODE as `0x${string}`,
         plannedOwner: ROOT_OWNER,
@@ -199,7 +199,7 @@ describe('reading the chain', () => {
         registry: [8453n, REGISTRY],
       }) as never,
       {
-        rootName: 'musename.eth',
+        rootName: 'musepass.eth',
         connected: ROOT_OWNER,
         bytecode: L1_RESOLVER_BYTECODE as `0x${string}`,
         plannedOwner: ROOT_OWNER,

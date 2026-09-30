@@ -14,16 +14,16 @@
 ## 目录
 
 ```
-src/MuseNameRegistrar.sol        发行合约（无资金，需审计后才能承接付费档）
-src/MuseNameRecordRegistry.sol   记录注册表：只增不改、无资金、无升级（2026-09-29 新增，未部署）
+src/MusePassRegistrar.sol        发行合约（无资金，需审计后才能承接付费档）
+src/MusePassRecordRegistry.sol   记录注册表：只增不改、无资金、无升级（2026-09-29 新增，未部署）
 src/lib/RecordDigest.sol         记录摘要的唯一链上定义，与 packages/core 逐字节一致
 src/interfaces/IL2Registry.sol   Durin 接口的 vendored 子集（不跟随上游漂移）
 src/interfaces/INameOwner.sol    记录注册表只需要的那个函数：owner(bytes32)
-script/DeployMuseNameRegistrar.s.sol   生产部署脚本
+script/DeployMusePassRegistrar.s.sol   生产部署脚本
 script/DeployLocalStack.s.sol          本地全栈（含本地 mock 注册表）
 script/mocks/LocalL2Registry.sol       仅本地使用，禁止部署
-test/MuseNameRegistrar.t.sol     33 个测试（含名字形状检查）
-test/MuseNameRecordRegistry.t.sol 24 个测试（记录、争议、批次、管理权限、不能做的事）
+test/MusePassRegistrar.t.sol     33 个测试（含名字形状检查）
+test/MusePassRecordRegistry.t.sol 24 个测试（记录、争议、批次、管理权限、不能做的事）
 test/RecordDigest.t.sol          3 个测试，与 TypeScript 实现钉同一个摘要值
 ```
 
@@ -57,7 +57,7 @@ forge test -vv
 1. 在 [durin.dev](https://durin.dev) 部署 L2 注册表（Base），记下地址。
 2. 把根名字的 L1 解析器指向 Durin 的 L1Resolver，并调用 `setL2Registry(registry, chainId)`。这一步需要根名字所有者的硬件钱包/多签签名。
 3. 填好 `contracts/.env`（模板见 `.env.example`），其中 `MUSENAME_REGISTRAR_OWNER` 必须是多签，不是部署者。
-4. `forge script script/DeployMuseNameRegistrar.s.sol --rpc-url $BASE_RPC_URL --broadcast`
+4. `forge script script/DeployMusePassRegistrar.s.sol --rpc-url $BASE_RPC_URL --broadcast`
 5. 用注册表管理员调用 `L2Registry.addRegistrar(<registrar 地址>)`。
 6. 用 registrar owner 调用 `setRelayer(<发行账户>, true)`。
 7. 把 `registrar` 地址写回 `config/chains.json` 或环境变量 `MUSENAME_REGISTRAR`。

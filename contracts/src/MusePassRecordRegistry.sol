@@ -5,7 +5,7 @@ import {INameOwner} from "./interfaces/INameOwner.sol";
 import {RecordDigest} from "./lib/RecordDigest.sol";
 
 /**
- * @title MuseNameRecordRegistry
+ * @title MusePassRecordRegistry
  * @notice The append-only record of "what has this name actually done".
  *
  * Design rules, in the order they constrain the code:
@@ -34,7 +34,7 @@ import {RecordDigest} from "./lib/RecordDigest.sol";
  * it. It holds no funds, which lowers the stakes but does not remove them: a
  * false verdict is the product failing.
  */
-contract MuseNameRecordRegistry {
+contract MusePassRecordRegistry {
     /*//////////////////////////////////////////////////////////////
                                  TYPES
     //////////////////////////////////////////////////////////////*/

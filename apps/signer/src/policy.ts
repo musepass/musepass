@@ -7,7 +7,7 @@
  * is narrow on purpose, and it is a pure function so it can be tested without a
  * key, a network or an agent.
  *
- * Two things it will sign: a MuseName registration for the registrar this
+ * Two things it will sign: a MusePass registration for the registrar this
  * deployment is configured with, and a 32-byte card hash. Everything else is
  * refused. The honest limit: a 32-byte hash carries no provenance, so this cannot
  * tell a real card hash from one an attacker built. The blast radius is bounded

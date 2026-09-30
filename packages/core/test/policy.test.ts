@@ -13,7 +13,7 @@ describe('checkLabel — happy path', () => {
     const result = check('aguang');
     expect(result.policyOk).toBe(true);
     expect(result.label).toBe('aguang');
-    expect(result.fullName).toBe('aguang.musename.eth');
+    expect(result.fullName).toBe('aguang.musepass.eth');
     expect(result.price?.tier).toBe('free');
     expect(result.summary.zh).toContain('可以用');
   });
@@ -21,7 +21,7 @@ describe('checkLabel — happy path', () => {
   it('accepts a chinese name', () => {
     const result = check('阿光摄影');
     expect(result.policyOk).toBe(true);
-    expect(result.fullName).toBe('阿光摄影.musename.eth');
+    expect(result.fullName).toBe('阿光摄影.musepass.eth');
   });
 
   it('reports availability only when the chain was consulted', () => {

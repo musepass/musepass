@@ -44,12 +44,12 @@ MUSENAME_SIGNER_MAX_PER_HOUR 默认 60
 MUSENAME_CONFIG_DIR          读取 config/*.json 的目录
 ```
 
-线上：`https://musename.xyz/signer/mcp`，请求头 `Authorization: Bearer <token>`。
+线上：`https://musepass.xyz/signer/mcp`，请求头 `Authorization: Bearer <token>`。
 健康检查 `GET /signer/healthz` 只暴露地址和上限，不暴露密钥。
 
 ## 怎么用（agent 视角）
 
-1. 连两个 MCP 服务：MuseName 主服务 + 这个签名服务
+1. 连两个 MCP 服务：MusePass 主服务 + 这个签名服务
 2. `wallet_address` 拿到地址
 3. `check_name` → `prepare_registration`（ownerAddress 用上一步的地址）
 4. `sign_registration` 签名 → `submit_registration` 提交

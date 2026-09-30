@@ -7,7 +7,7 @@ import { CONFIG_DIR, testConfig } from './helpers.js';
 describe('loadConfig', () => {
   it('loads the real repository config', () => {
     const config = testConfig();
-    expect(config.brand.productName).toBe('MuseName');
+    expect(config.brand.productName).toBe('MusePass');
     expect(config.brand.rootName.endsWith('.eth')).toBe(true);
     expect(config.brand.legalDisclaimer.zh).toContain('Meta');
   });

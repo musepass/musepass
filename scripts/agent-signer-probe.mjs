@@ -2,7 +2,7 @@
 /**
  * Can an agent with no key of its own buy a name and publish a card?
  *
- * Two MCP servers, exactly as a cloud bot would use them: the MuseName server for
+ * Two MCP servers, exactly as a cloud bot would use them: the MusePass server for
  * everything public, and the signer for the two things that need a signature. The
  * probe holds the signer's bearer token and never sees a private key — which is
  * the point, because the alternative is pasting a key into a chat.
@@ -62,7 +62,7 @@ async function callTool(url, name, args, headers = {}) {
     headers,
   );
   const text = result.content[0].text;
-  // The MuseName server answers in prose with a fenced JSON block; the signer
+  // The MusePass server answers in prose with a fenced JSON block; the signer
   // answers in plain JSON because its only reader is a program. Accept both.
   const fenced = text.match(/```json\n([\s\S]*?)\n```/);
   if (fenced) return { text, data: JSON.parse(fenced[1]) };
@@ -84,7 +84,7 @@ const signerHeaders = { authorization: `Bearer ${token}` };
 await mcp(mcpUrl, init('agent-signer-probe'));
 await mcp(signerUrl, init('agent-signer-probe-signer'), signerHeaders);
 
-console.log('MuseName agent + signer probe');
+console.log('MusePass agent + signer probe');
 console.log(`  mcp     ${mcpUrl}`);
 console.log(`  signer  ${signerUrl}`);
 
@@ -92,7 +92,7 @@ console.log(`  signer  ${signerUrl}`);
 const wallet = await callTool(signerUrl, 'wallet_address', {}, signerHeaders);
 const ownerAddress = wallet.data.address;
 console.log(`  wallet  ${ownerAddress}   (from the signer)`);
-console.log(`  name    ${label}.musename.eth`);
+console.log(`  name    ${label}.musepass.eth`);
 
 // 2. Availability, then the exact payload to sign.
 const available = await callTool(mcpUrl, 'check_name', { name: label });
@@ -117,7 +117,7 @@ if (!signed.data.signature) {
   process.exit(1);
 }
 
-// 4. Back to MuseName with the signature.
+// 4. Back to MusePass with the signature.
 const claimed = await callTool(mcpUrl, 'submit_registration', {
   label: prepared.data.label,
   owner: prepared.data.owner,
@@ -158,7 +158,7 @@ console.log(`  card    ${publishedCard.data.txHash ?? 'FAILED'}`);
 
 // 6. What a wallet would see.
 const client = createPublicClient({ chain: mainnet, transport: http('https://ethereum-rpc.publicnode.com') });
-const resolved = await getEnsAddress(client, { name: `${label}.musename.eth` });
+const resolved = await getEnsAddress(client, { name: `${label}.musepass.eth` });
 const ok = resolved?.toLowerCase() === ownerAddress.toLowerCase();
 console.log(`  mainnet ${resolved ?? 'nothing'}`);
 console.log(

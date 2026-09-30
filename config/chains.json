@@ -1,5 +1,5 @@
 {
-  "$comment": "链的选择：Robinhood Chain（Arbitrum L2，ETH 做 gas）。Base 不再使用；这里保留的 Base 地址是历史记录。2026-09-29 起全部在 Robinhood Chain。",
+  "$comment": "链的选择：Robinhood Chain（Arbitrum L2，ETH 做 gas）。根名字是 musepass.eth（2026-09-30 从 musepass.eth 改名，老根名字与已注册名字继续有效）。",
   "l1": {
     "name": "mainnet",
     "chainId": 1,
@@ -14,10 +14,16 @@
     "explorer": "https://robinhoodchain.blockscout.com",
     "durinRegistryFactory": "0xa5f14c5a5b60ba47dad51dfeaf3b978a393a8766",
     "durinRegistryImplementation": "0x94871e1d891a80a63bee5df5857efedd0e3a9510",
-    "l2Registry": "0x0ca717398428bcae7fae24e656e8444ecd9ba5a5",
-    "registrar": "0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1",
+    "l2Registry": "0x4b959e1fb5567caa7fe21d0d2a7f870af705b792",
+    "registrar": "0xb1e8a90e5a9b1c8e69242bc70d928789d89c02b7",
     "usdc": "",
-    "stablecoinNote": "这条链的主稳定币是 USDG（Paxos），不是 USDC；阶段 5 收款前需确认地址"
+    "stablecoinNote": "这条链的主稳定币是 USDG（Paxos），不是 USDC；阶段 5 收款前需确认地址",
+    "previousRoot": {
+      "rootName": "musepass.eth",
+      "l2Registry": "0x0ca717398428bcae7fae24e656e8444ecd9ba5a5",
+      "registrar": "0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1",
+      "note": "改名前的部署。链上仍然有效，已经注册的名字照常解析；不再接收新注册。"
+    }
   },
   "l2Testnet": {
     "name": "robinhood-testnet",

@@ -90,7 +90,7 @@ calldata 里是 `keccak256("musename.receipts.v1") ‖ root ‖ count ‖ anchor
 musename-verify --anchor-data <该交易的 input data> --records deployments/receipts-genesis.json
 ```
 
-genesis 批次只装了两件**已经发生**的事：`xiaoming.musename.eth` 的领取交易和名片发布交易。
+genesis 批次只装了两件**已经发生**的事：`xiaoming.musepass.eth` 的领取交易和名片发布交易。
 不是演示数据，脚本发完会读回交易比对，不一致就报错。
 
 ## 下一步（阶段 5 其余部分）

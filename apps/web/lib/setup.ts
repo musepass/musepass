@@ -32,7 +32,7 @@ export const L1_RESOLVER = {
   salt: `0x${'00'.repeat(32)}` as Hex,
   gatewayUrl: 'https://gw.musename.xyz/{sender}/{data}',
   gatewaySigner: '0x47f471f726Ee612cc769Bc0b03F5482fA2ae1f1e' as Address,
-  /** The account MuseName deploys and administers the resolver with. */
+  /** The account MusePass deploys and administers the resolver with. */
   operator: '0x66F499e8F0A92e44A0F9c59a305E73a12b5684e7' as Address,
 } as const;
 
@@ -207,7 +207,7 @@ export interface SetupStep {
  *
  * `setResolver` comes last: the moment the root name points at our resolver,
  * ENS stops answering from the default one, so the resolver has to know where
- * the data lives first. Backwards, `musename.eth` itself stops resolving until
+ * the data lives first. Backwards, `musepass.eth` itself stops resolving until
  * someone puts it back.
  */
 export function buildSetupSteps(
@@ -241,7 +241,7 @@ export function buildSetupSteps(
       id: 'setL2Registry',
       title: 'Register which chain holds the data',
       detail:
-        'Tell the resolver that subnames of musename.eth live in the Robinhood Chain registry. Only the name owner can sign this one.',
+        'Tell the resolver that subnames of musepass.eth live in the Robinhood Chain registry. Only the name owner can sign this one.',
       done: observation.l2RegistrySet,
       sendable: !observation.l2RegistrySet && isRootOwner && Boolean(deployedResolver),
       blocker: !deployedResolver
@@ -257,7 +257,7 @@ export function buildSetupSteps(
       id: 'setResolver',
       title: 'Point the name at our resolver',
       detail:
-        'The last step. Only after this do subnames of musename.eth resolve in a wallet. It comes last because doing it the other way around would leave the root name itself unresolvable in the meantime.',
+        'The last step. Only after this do subnames of musepass.eth resolve in a wallet. It comes last because doing it the other way around would leave the root name itself unresolvable in the meantime.',
       done: observation.ensPointsAtResolver,
       sendable: !observation.ensPointsAtResolver && isRootOwner && observation.l2RegistrySet,
       blocker: !observation.l2RegistrySet

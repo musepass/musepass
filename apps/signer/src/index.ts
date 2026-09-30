@@ -1,5 +1,5 @@
 /**
- * MuseName signer: a wallet for an agent, without giving the agent a key.
+ * MusePass signer: a wallet for an agent, without giving the agent a key.
  *
  * An agent cannot hold a private key. Pasting one into a chat is publishing it,
  * and a cloud agent has nowhere safe to keep it anyway. What an agent can do is

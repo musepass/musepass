@@ -13,7 +13,7 @@ const live = process.env.MUSENAME_LIVE === '1';
 
 const REGISTRY = '0xdb0e02b4e3509d72c660241f4069b3a477815eb9' as const;
 const CHAIN_ID = 84532n;
-const ROOT = 'musename.eth';
+const ROOT = 'musepass.eth';
 
 /** The address that signed the claim for xiaoming; recorded in deployments/. */
 const EXPECTED_OWNER = '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d';

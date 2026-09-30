@@ -10,9 +10,9 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 const envelopeBody = {
   summary: { zh: '(unused)', en: 'available' },
-  data: { label: 'aguang', fullName: 'aguang.musename.eth', available: true },
+  data: { label: 'aguang', fullName: 'aguang.musepass.eth', available: true },
   errors: [],
-  meta: { asOf: 'now', chain: 'base', chainId: 8453, verified: true, root: 'musename.eth' },
+  meta: { asOf: 'now', chain: 'base', chainId: 8453, verified: true, root: 'musepass.eth' },
 };
 
 describe('api client', () => {
@@ -43,7 +43,7 @@ describe('api client', () => {
             summary: { zh: '(unused)', en: 'reserved' },
             data: { label: 'admin', available: false },
             errors: [{ code: 'RESERVED_NAME', message: 'reserved' }],
-            meta: { asOf: 'now', chain: 'base', chainId: 8453, verified: true, root: 'musename.eth' },
+            meta: { asOf: 'now', chain: 'base', chainId: 8453, verified: true, root: 'musepass.eth' },
           },
           409,
         )) as unknown as typeof fetch,
@@ -88,7 +88,7 @@ describe('api client', () => {
       }) as unknown as typeof fetch,
     });
     expect(config).toEqual(FALLBACK_CONFIG);
-    expect(config.rootName).toBe('musename.eth');
+    expect(config.rootName).toBe('musepass.eth');
   });
 
   it('prefers the real config when the API answers', async () => {

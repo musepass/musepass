@@ -20,7 +20,7 @@
  * Who can do what, straight from Durin's own source:
  *
  *   deploy          anyone — the address is fixed by the bytecode, not the sender
- *   setL2Registry   only `ens.owner(musename.eth)`; the root name's owner has to
+ *   setL2Registry   only `ens.owner(musepass.eth)`; the root name's owner has to
  *                   sign it, and there is no way around that
  *   setResolver     same, root name's owner
  *
@@ -81,7 +81,7 @@ function flag(name) {
 const chains = JSON.parse(readFileSync(resolve(repoRoot, 'config/chains.json'), 'utf8'));
 
 const rpcUrl = arg('rpc', process.env.MAINNET_RPC_URL ?? 'https://ethereum-rpc.publicnode.com');
-const rootName = arg('root', 'musename.eth');
+const rootName = arg('root', 'musepass.eth');
 const l2ChainId = BigInt(arg('l2-chain-id', String(chains.l2.chainId)));
 const l2Registry = arg('registry', chains.l2.l2Registry);
 const gatewayUrl = arg('gateway-url', 'https://gw.musename.xyz/{sender}/{data}');
@@ -267,7 +267,7 @@ async function signerFor(who) {
   return createWalletClient({ account: who, chain, transport: http(rpcUrl) });
 }
 
-console.log('MuseName L1 resolver');
+console.log('MusePass L1 resolver');
 console.log('  rpc            ', rpcUrl);
 console.log('  root name      ', rootName);
 console.log('  resolver       ', resolverAddress, '(deterministic)');
@@ -432,7 +432,7 @@ record('the resolver is told where the data lives', registered);
 
 if (forkProof) {
   const { getEnsAddress } = await import('viem/ens');
-  const name = arg('resolve', 'xiaoming.musename.eth');
+  const name = arg('resolve', 'xiaoming.musepass.eth');
   const expected = arg('expect', '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d');
   let resolved = null;
   try {
@@ -467,7 +467,7 @@ if (deployed && !(pointed && registered)) {
   console.log('');
   console.log('The order matters. Registering the data location first keeps the root');
   console.log('name resolving if anything goes wrong halfway; going the other way takes');
-  console.log(`musename.eth itself offline until it is put back.`);
+  console.log(`musepass.eth itself offline until it is put back.`);
   console.log('');
   console.log(`  1. setL2Registry    to ${resolverAddress}`);
   console.log(

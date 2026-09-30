@@ -70,9 +70,9 @@ await callMcp({
 
 // The agent's own wallet. Nobody signs for it; that is the whole point.
 const agent = privateKeyToAccount(generatePrivateKey());
-console.log('MuseName agent purchase probe');
+console.log('MusePass agent purchase probe');
 console.log(`  mcp    ${mcpUrl}`);
-console.log(`  name   ${label}.${chains.l2.name === 'robinhood' ? 'musename.eth' : 'musename.eth'}`);
+console.log(`  name   ${label}.${chains.l2.name === 'robinhood' ? 'musepass.eth' : 'musepass.eth'}`);
 console.log(`  wallet ${agent.address}  (fresh, owned by "the agent")`);
 
 const prepared = await callTool('prepare_registration', { name: label, ownerAddress: agent.address });
@@ -114,7 +114,7 @@ if (submitted.data.txHash) {
 // on a web page.
 const preparedCard = await callTool('prepare_card', {
   name: label,
-  description: `An autonomous agent that registered itself to test MuseName.`,
+  description: `An autonomous agent that registered itself to test MusePass.`,
   host: 'agent-purchase-probe',
 });
 if (!preparedCard.data.payloadToSign) {
@@ -140,7 +140,7 @@ if (!submittedCard.data.txHash) {
 
 // And the half that matters: does a wallet find it?
 const client = createPublicClient({ chain: mainnet, transport: http('https://ethereum-rpc.publicnode.com') });
-const resolved = await getEnsAddress(client, { name: `${label}.musename.eth` });
+const resolved = await getEnsAddress(client, { name: `${label}.musepass.eth` });
 const ok = resolved?.toLowerCase() === agent.address.toLowerCase();
 console.log(`  mainnet ${resolved ?? 'nothing'}`);
 console.log(ok ? '\nPASS: an agent with a wallet bought a name by itself.' : '\nFAIL: it resolved to the wrong address.');

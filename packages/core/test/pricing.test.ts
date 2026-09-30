@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isMuseNameError } from '../src/errors.js';
+import { isMusePassError } from '../src/errors.js';
 import { quoteLabel } from '../src/pricing.js';
 import { testConfig } from './helpers.js';
 
@@ -52,8 +52,8 @@ describe('quoteLabel', () => {
       quoteLabel(4, brokenPricing);
       throw new Error('expected quoteLabel to throw');
     } catch (error) {
-      expect(isMuseNameError(error)).toBe(true);
-      if (isMuseNameError(error)) expect(error.code).toBe('NOT_FREE_TIER');
+      expect(isMusePassError(error)).toBe(true);
+      if (isMusePassError(error)) expect(error.code).toBe('NOT_FREE_TIER');
     }
   });
 });

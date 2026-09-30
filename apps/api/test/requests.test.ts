@@ -255,7 +255,7 @@ describe('claiming through a request', () => {
     });
 
     expect(response.status).toBe(201);
-    expect(claimBody.data.fullName).toBe('aguang.musename.eth');
+    expect(claimBody.data.fullName).toBe('aguang.musepass.eth');
 
     const request = await deps.requests.findById(body.data.requestId);
     expect(request?.status).toBe('confirmed');

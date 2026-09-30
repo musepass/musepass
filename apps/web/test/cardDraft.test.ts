@@ -8,7 +8,7 @@ import {
   type CardDraft,
 } from '../lib/cardDraft';
 
-const FULL_NAME = 'xiaoming.musename.eth';
+const FULL_NAME = 'xiaoming.musepass.eth';
 
 function draft(overrides: Partial<CardDraft> = {}): CardDraft {
   return {

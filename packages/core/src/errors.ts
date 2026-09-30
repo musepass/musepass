@@ -1,4 +1,4 @@
-export type MuseNameErrorCode =
+export type MusePassErrorCode =
   | 'EMPTY_LABEL'
   | 'INVALID_NAME'
   | 'INVALID_CHARACTER'
@@ -17,8 +17,8 @@ export type MuseNameErrorCode =
   | 'INVALID_SIGNATURE'
   | 'EXPIRED';
 
-export interface MuseNameErrorJson {
-  code: MuseNameErrorCode;
+export interface MusePassErrorJson {
+  code: MusePassErrorCode;
   message: string;
   details: Record<string, unknown>;
 }
@@ -27,26 +27,26 @@ export interface MuseNameErrorJson {
  * Every rejection carries a stable machine code. The API layer turns these into
  * `{ summary, errors[] }` responses so that a human sentence is always present.
  */
-export class MuseNameError extends Error {
-  readonly code: MuseNameErrorCode;
+export class MusePassError extends Error {
+  readonly code: MusePassErrorCode;
   readonly details: Record<string, unknown>;
 
   constructor(
-    code: MuseNameErrorCode,
+    code: MusePassErrorCode,
     message: string,
     details: Record<string, unknown> = {},
   ) {
     super(message);
-    this.name = 'MuseNameError';
+    this.name = 'MusePassError';
     this.code = code;
     this.details = details;
   }
 
-  toJSON(): MuseNameErrorJson {
+  toJSON(): MusePassErrorJson {
     return { code: this.code, message: this.message, details: this.details };
   }
 }
 
-export function isMuseNameError(value: unknown): value is MuseNameError {
-  return value instanceof MuseNameError;
+export function isMusePassError(value: unknown): value is MusePassError {
+  return value instanceof MusePassError;
 }

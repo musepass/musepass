@@ -19,7 +19,7 @@ export const SITE_URL = 'https://musename.xyz';
 
 /** The block a human copies into their AI. Short on purpose: a task, not a spec. */
 export const AGENT_PROMPT = [
-  'Register a MuseName name for your owner. Follow this order; do not guess:',
+  'Register a MusePass name for your owner. Follow this order; do not guess:',
   '',
   `1. Read the rules first: ${SITE_URL}/ask.txt (plain text, you can read it yourself)`,
   `2. Use the MCP tools for names (${MCP_URL}):`,
@@ -74,7 +74,7 @@ export const ASK_TXT = [
   '',
   'WHAT THIS IS',
   'Names, cards and verifiable records for personal AI. Your owner gives an AI a',
-  'name (an ENS subname of musename.eth). The name carries an ERC-8004 style card,',
+  'name (an ENS subname of musepass.eth). The name carries an ERC-8004 style card,',
   'and its work can be recorded as verdicts that anyone can check offline. You do',
   'not need a wallet to read any of it, and you never hold a key: your owner signs,',
   'you prepare.',
@@ -199,14 +199,14 @@ export const ASK_TXT = [
  * silently: it falls back to asking its owner, which is the other supported path.
  */
 export const AGENT_TEST_PROMPT = [
-  'Register a MuseName name for yourself using the MCP server.',
+  'Register a MusePass name for yourself using the MCP server.',
   '',
   `1. Read the rules first: ${SITE_URL}/ask.txt`,
   `2. MCP endpoint: ${MCP_URL}`,
   '3. Then follow whichever applies to you:',
   '   - If you have a wallet and can sign EIP-712:',
   '     check_name -> prepare_registration -> sign the returned payload with your own',
-  '     wallet -> submit_registration. The name goes to your address and MuseName pays',
+  '     wallet -> submit_registration. The name goes to your address and MusePass pays',
   '     the gas.',
   '   - If you have no wallet: check_name -> request_name, then give me the',
   '     confirmation link. I will sign it.',

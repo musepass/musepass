@@ -11,7 +11,7 @@ function envelope(
     summary: { zh: '(unused)', en: options.summaryEn ?? 'summary' },
     data: {
       label: 'aguang',
-      fullName: 'aguang.musename.eth',
+      fullName: 'aguang.musepass.eth',
       available: null,
       policyOk: true,
       onChainFree: null,
@@ -27,7 +27,7 @@ function envelope(
       chain: 'base',
       chainId: 8453,
       verified: options.verified ?? true,
-      root: 'musename.eth',
+      root: 'musepass.eth',
     },
   };
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * What a wallet does when somebody types a MuseName name into it.
+ * What a wallet does when somebody types a MusePass name into it.
  *
  * Phase 1's acceptance asks for four mainstream wallets, by hand, because the
  * thing being tested is the wallet's own resolution path, not ours. This script
@@ -11,7 +11,7 @@
  * What it cannot do is pretend to be a wallet app. The four human rows stay in
  * docs/wallet-compat/README.md.
  *
- *   node scripts/wallet-compat.mjs [--name xiaoming.musename.eth] [--expect 0x…]
+ *   node scripts/wallet-compat.mjs [--name xiaoming.musepass.eth] [--expect 0x…]
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -40,7 +40,7 @@ function arg(name, fallback) {
   return index === -1 ? fallback : process.argv[index + 1];
 }
 
-const name = arg('name', 'xiaoming.musename.eth');
+const name = arg('name', 'xiaoming.musepass.eth');
 const expected = arg('expect', '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d');
 const MAINNET_COIN_TYPE = 60n;
 /** ENSIP-11: 0x80000000 | chainId, as BigInt so JS cannot sign-flip it. */
@@ -90,7 +90,7 @@ async function withRetries(attempts, run) {
   throw Object.assign(last, { attempts });
 }
 
-console.log(`MuseName wallet compatibility`);
+console.log(`MusePass wallet compatibility`);
 console.log(`  name     ${name}`);
 console.log(`  expected ${expected}`);
 console.log('');
@@ -135,7 +135,7 @@ const rootResolver = await client.readContract({
   address: ENS_REGISTRY,
   abi: resolverAbi,
   functionName: 'resolver',
-  args: [namehash('musename.eth')],
+  args: [namehash('musepass.eth')],
 });
 const callData = encodeFunctionData({
   abi: resolverAbi,
@@ -162,7 +162,7 @@ async function rawCall(to, data) {
 
 // Legacy path: the shape every wallet used before ENSIP-10. Durin's resolver
 // does not implement it — there is nothing at this selector — so a wallet that
-// only knows this path cannot resolve a MuseName. Worth stating, not hiding.
+// only knows this path cannot resolve a MusePass. Worth stating, not hiding.
 const legacy = await rawCall(rootResolver, callData);
 add(
   'legacy addr(node,60) on resolver',

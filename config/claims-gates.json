@@ -23,7 +23,7 @@
     },
     "externalAudit": {
       "allowed": false,
-      "blockedBecause": "自写的 MuseNameRegistrar 合约没有做过任何外部审计。",
+      "blockedBecause": "自写的 MusePassRegistrar 合约没有做过任何外部审计。",
       "howToOpen": "外部审计完成并出具报告，把报告链接与审计范围写进 evidence。",
       "updated": "2026-09-29"
     },
@@ -35,7 +35,7 @@
     },
     "sponsorKey": {
       "allowed": true,
-      "evidence": "2026-09-29 实测：线上 API 配好专用发行密钥（relayer 0xC2bf5fdA20fEA5317DdE510aDb483961c5ABc864，setRelayer tx 0x3bb9dcc506be4ed2bceb317dbf1c9befacd5aa51ced133ca11eeaf411530b307），scripts/live-claim-probe.mjs --fresh-owner 通过：probe2ee46f.musename.eth 由 0x759f1b14… 持有，claim tx 0xaccedcff23614261fe031c537a45ce2f1cbeb3c99b340102ff806f0c4a187b24，card tx 0x30facb1619ebbe4463f814ccd8df86adf1f3f7c906d3319677cb63df39ae6abb；该名字在主网解析到同一地址。",
+      "evidence": "2026-09-29 实测：线上 API 配好专用发行密钥（relayer 0xC2bf5fdA20fEA5317DdE510aDb483961c5ABc864，setRelayer tx 0x3bb9dcc506be4ed2bceb317dbf1c9befacd5aa51ced133ca11eeaf411530b307），scripts/live-claim-probe.mjs --fresh-owner 通过：probe2ee46f.musepass.eth 由 0x759f1b14… 持有，claim tx 0xaccedcff23614261fe031c537a45ce2f1cbeb3c99b340102ff806f0c4a187b24，card tx 0x30facb1619ebbe4463f814ccd8df86adf1f3f7c906d3319677cb63df39ae6abb；该名字在主网解析到同一地址。",
       "howToOpen": "已开。若发行密钥被撤下或线上再次返回 CHAIN_ERROR，把 allowed 改回 false：`node scripts/live-claim-probe.mjs` 会给出证据。",
       "updated": "2026-09-29"
     }

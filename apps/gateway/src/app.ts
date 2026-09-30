@@ -86,7 +86,7 @@ export function createGatewayApp(options: GatewayOptions) {
         // back to whoever asked.
         throw new GatewayError(
           'BAD_CALLDATA',
-          'data is not a MuseName resolver call (expected stuffedResolveCall)',
+          'data is not a MusePass resolver call (expected stuffedResolveCall)',
           400,
         );
       }

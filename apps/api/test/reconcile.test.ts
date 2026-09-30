@@ -21,7 +21,7 @@ void createLogger;
 async function seed(repos: ReturnType<typeof createMemoryRepos>, name: string, owner: Address) {
   return repos.names.insert({
     label: name,
-    fullName: `${name}.musename.eth`,
+    fullName: `${name}.musepass.eth`,
     normalized: name,
     ownerAddress: owner,
     tier: 'free',

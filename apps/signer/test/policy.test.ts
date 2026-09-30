@@ -10,14 +10,14 @@ import { checkCardPayload, checkRegistrationPayload, type SignerConfig } from '.
 const config: SignerConfig = {
   chainId: 4663,
   registrar: '0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1',
-  rootName: 'musename.eth',
+  rootName: 'musepass.eth',
 };
 
 const deadline = Math.floor(Date.now() / 1000) + 900;
 
 const payload = (over: Record<string, unknown> = {}, message: Record<string, unknown> = {}) => ({
   domain: {
-    name: 'MuseName',
+    name: 'MusePass',
     version: '1',
     chainId: 4663,
     verifyingContract: '0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1',

@@ -1,15 +1,15 @@
-# MuseName
+# MusePass
 
 [![CI](https://github.com/richard7463/musename/actions/workflows/ci.yml/badge.svg)](https://github.com/richard7463/musename/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
-[![Site](https://img.shields.io/badge/site-musename.xyz-black.svg)](https://musename.xyz)
+[![Site](https://img.shields.io/badge/site-musepass.xyz-black.svg)](https://musepass.xyz)
 [![Offline verifier](https://img.shields.io/badge/verifier-offline%20%2F%20ERC--8412-black.svg)](packages/verify/README.md)
 
 给每个个人 AI 一个可以带着走的名字、一张公开名片和一份可验证的履历。
 
 名字建在 ENS 上（自有根名字下的子名字，ERC-721），名片按 ERC-8004 生成，履历由 the project's own engine 验证引擎出具可独立核实的收据。**我们不重新发明域名系统，我们做名字背后的信誉。**
 
-产品定义见《MuseName Pitch》，本仓库只负责「怎么做、做到什么程度算完成」，对应《MuseName 开发任务书》。
+产品定义见《MusePass Pitch》，本仓库只负责「怎么做、做到什么程度算完成」，对应《MusePass 开发任务书》。
 
 ---
 
@@ -18,7 +18,7 @@
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 0 | 前置决策与准备 | ✅ 完成；品牌、域名、根名字均已落地并记录 |
-| 1 | 名字：**能在真实钱包里解析** | ✅ **已上线**：根名字 `musename.eth` 在以太坊主网，L1 解析器已部署并登记，`xiaoming.musename.eth` 在真实主网解析到 `0x603b8B1f…`；OKX Wallet 人工验证通过，机器侧 17/17 |
+| 1 | 名字：**能在真实钱包里解析** | ✅ **已上线**：根名字 `musepass.eth` 在以太坊主网，L1 解析器已部署并登记，`xiaoming.musepass.eth` 在真实主网解析到 `0x603b8B1f…`；OKX Wallet 人工验证通过，机器侧 17/17 |
 | 2 | 名片 | ✅ 闭环跑通并**真链验证**（Robinhood Chain，6 项断言）；待 ERC-8004 身份登记（规范仍是 Draft） |
 | 3 | AI 一句话注册（MCP） | ✅ 5 个工具、HTTPS、限流、接入说明齐备；客户端菜单路径待人工实测 |
 | 4 | 两周验证期（门槛） | ⬜ **未开始，缺真实用户**——这是现在唯一真正挡住「这是产品」的东西 |
@@ -92,7 +92,7 @@ TODO.md             后续所有阶段的工作清单
 
 ### 名字是什么
 
-根名字 `musename.eth`（**已购买，2027-09-29 到期，owner `0x022Ce19a…`**）下的 ENS 子名字，部署在 Robinhood Chain 上，每个名字是一个 ERC-721。主网通过 CCIP-Read（ERC-3668 / ENSIP-10）解析回 L2，解析器是 `0x9Ea7A889…`。
+根名字 `musepass.eth`（**已购买，2027-09-29 到期，owner `0x022Ce19a…`**）下的 ENS 子名字，部署在 Robinhood Chain 上，每个名字是一个 ERC-721。主网通过 CCIP-Read（ERC-3668 / ENSIP-10）解析回 L2，解析器是 `0x9Ea7A889…`。
 
 链上部分全部使用现成方案：[`ensdomains/durin`](https://github.com/ensdomains/durin)（注册表、L1 解析器、网关）。我们只写中间的服务层和用户体验。
 
@@ -100,7 +100,7 @@ TODO.md             后续所有阶段的工作清单
 
 见 [技术核实报告 F2](docs/tech-verification-report.md)。一句话：Durin 把 registrar 权限定义为「可改写任意节点记录」，如果把这权限给平台热钱包，平台就能改用户的名字 —— 那是产品信任的底线问题。
 
-`contracts/src/MuseNameRegistrar.sol` 因此把 registrar 权限收进合约，只暴露一个 `register()`，且要求受益人本人的 EIP-712 签名。它不持有资金、不托管名字、无升级入口，但**阶段 6 涉及资金前必须完成外部审计**。
+`contracts/src/MusePassRegistrar.sol` 因此把 registrar 权限收进合约，只暴露一个 `register()`，且要求受益人本人的 EIP-712 签名。它不持有资金、不托管名字、无升级入口，但**阶段 6 涉及资金前必须完成外部审计**。
 
 ### 资产归属
 
@@ -156,13 +156,13 @@ TODO.md             后续所有阶段的工作清单
 
 ## 免责声明
 
-MuseName 是独立项目，与 Meta 及其任何产品无关。
+MusePass 是独立项目，与 Meta 及其任何产品无关。
 
 ## Security
 
 报告安全问题请走 GitHub 的私密通道（**Security → Report a vulnerability**），见 [SECURITY.md](SECURITY.md)。
 那里也列出了我们**已知的弱点**（注册表管理员是热钱包、单机部署、网关签名者等）——重复报告这些不算发现，
-因为它们本来就写在 [信任模型页](https://musename.xyz/trust) 上。
+因为它们本来就写在 [信任模型页](https://musepass.xyz/trust) 上。
 
 ## Contributing
 

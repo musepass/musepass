@@ -1,5 +1,5 @@
 import { ens_normalize } from '@adraffy/ens-normalize';
-import { MuseNameError } from './errors.js';
+import { MusePassError } from './errors.js';
 
 export interface NormalizedLabel {
   /** Exactly what the caller passed in. Never displayed to a user. */
@@ -95,27 +95,27 @@ export function isNormalized(input: string): boolean {
  */
 export function normalizeLabel(input: string, opcode = 'NORMALIZE'): NormalizedLabel {
   if (typeof input !== 'string') {
-    throw new MuseNameError('INVALID_NAME', 'name must be a string', { input: typeof input });
+    throw new MusePassError('INVALID_NAME', 'name must be a string', { input: typeof input });
   }
   if (input.length === 0) {
-    throw new MuseNameError('EMPTY_LABEL', 'name is empty');
+    throw new MusePassError('EMPTY_LABEL', 'name is empty');
   }
   if (input.includes('.')) {
-    throw new MuseNameError('INVALID_NAME', 'a single label must not contain a dot', { input, opcode });
+    throw new MusePassError('INVALID_NAME', 'a single label must not contain a dot', { input, opcode });
   }
 
   let normalized: string;
   try {
     normalized = ens_normalize(input);
   } catch (error) {
-    throw new MuseNameError('INVALID_CHARACTER', 'name contains characters that ENS does not allow', {
+    throw new MusePassError('INVALID_CHARACTER', 'name contains characters that ENS does not allow', {
       input,
       cause: error instanceof Error ? error.message : String(error),
     });
   }
 
   if (normalized.length === 0) {
-    throw new MuseNameError('EMPTY_LABEL', 'name is empty after normalization', { input });
+    throw new MusePassError('EMPTY_LABEL', 'name is empty after normalization', { input });
   }
 
   return {
@@ -133,14 +133,14 @@ export interface NormalizedName {
   labels: NormalizedLabel[];
 }
 
-/** Normalizes a dotted name (e.g. `aguang.musename.eth`) label by label. */
+/** Normalizes a dotted name (e.g. `aguang.musepass.eth`) label by label. */
 export function normalizeName(input: string): NormalizedName {
   if (typeof input !== 'string' || input.length === 0) {
-    throw new MuseNameError('EMPTY_LABEL', 'name is empty');
+    throw new MusePassError('EMPTY_LABEL', 'name is empty');
   }
   const parts = input.split('.');
   if (parts.some((part) => part.length === 0)) {
-    throw new MuseNameError('INVALID_NAME', 'name contains an empty label', { input });
+    throw new MusePassError('INVALID_NAME', 'name contains an empty label', { input });
   }
   const labels = parts.map((part) => normalizeLabel(part));
   return {
@@ -150,19 +150,19 @@ export function normalizeName(input: string): NormalizedName {
   };
 }
 
-/** `aguang.musename.eth` -> `aguang`, validated against the configured root. */
+/** `aguang.musepass.eth` -> `aguang`, validated against the configured root. */
 export function labelFromFullName(fullName: string, rootName: string): NormalizedLabel {
   const name = normalizeName(fullName);
   const root = normalizeName(rootName);
   if (!name.normalized.endsWith(`.${root.normalized}`)) {
-    throw new MuseNameError('INVALID_NAME', 'name is not under the configured root name', {
+    throw new MusePassError('INVALID_NAME', 'name is not under the configured root name', {
       fullName,
       rootName,
     });
   }
   const label = name.normalized.slice(0, name.normalized.length - root.normalized.length - 1);
   if (label.includes('.')) {
-    throw new MuseNameError('INVALID_NAME', 'nested subnames are not supported in phase 1', {
+    throw new MusePassError('INVALID_NAME', 'nested subnames are not supported in phase 1', {
       fullName,
       rootName,
     });

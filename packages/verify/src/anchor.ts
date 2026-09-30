@@ -73,7 +73,7 @@ export function verifyAnchor(input: { data: Hex; records: AnchorRecord[] }): {
 } {
   const payload = decodeAnchorPayload(input.data);
   if (!payload) {
-    return { ok: false, reason: 'not a MuseName receipt anchor', root: null, count: null, anchoredAt: null };
+    return { ok: false, reason: 'not a MusePass receipt anchor', root: null, count: null, anchoredAt: null };
   }
   if (payload.count !== input.records.length) {
     return {

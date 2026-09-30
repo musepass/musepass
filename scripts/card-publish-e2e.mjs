@@ -7,7 +7,7 @@
  * whoever submits it does not need to be the owner.
  *
  *   node scripts/card-publish-e2e.mjs \
- *     --rpc <url> --registry <addr> --label xiaoming [--root musename.eth]
+ *     --rpc <url> --registry <addr> --label xiaoming [--root musepass.eth]
  *
  * Keys come from the environment so nothing is passed on a command line:
  *   MUSENAME_E2E_OWNER_KEY    signs the card (must be the name's owner)
@@ -116,7 +116,7 @@ const card = {
   registrations: [],
   musename: {
     ensName: fullName,
-    host: 'MuseName',
+    host: 'MusePass',
     updatedAt: new Date().toISOString(),
     cardVersion: 1,
   },
@@ -151,7 +151,7 @@ if (recovered.toLowerCase() !== owner.address.toLowerCase()) {
 }
 console.log('  recovers to', recovered);
 
-console.log('MuseName card publish');
+console.log('MusePass card publish');
 console.log('  chain      ', chainId);
 console.log('  name       ', fullName);
 console.log('  registry   ', registryAddress);

@@ -11,7 +11,7 @@
 | GET | `/v1/names/{name}` | 1–5 | 名字、所有者；名片与履历在阶段 2/5 前**返回 null，不编造** |
 | POST | `/v1/names/claim` | 1 | 网页领取：校验主人签名 → 检查配额 → 代付发放 |
 
-`{name}` 既接受标签（`aguang`）也接受全名（`aguang.musename.eth`）。
+`{name}` 既接受标签（`aguang`）也接受全名（`aguang.musepass.eth`）。
 
 ### 统一返回约定
 
@@ -22,7 +22,7 @@
   "summary": { "zh": "一句话大白话结论", "en": "one sentence" },
   "data": { /* 结构化数据 */ },
   "errors": [{ "code": "RESERVED_NAME", "message": "..." }],
-  "meta": { "asOf": "2026-09-29T00:00:00.000Z", "chain": "base", "chainId": 8453, "verified": true, "root": "musename.eth" }
+  "meta": { "asOf": "2026-09-29T00:00:00.000Z", "chain": "base", "chainId": 8453, "verified": true, "root": "musepass.eth" }
 }
 ```
 

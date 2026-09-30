@@ -178,15 +178,15 @@ describe('draft_card', () => {
     expect(result.data.contentHash).toMatch(/^0x[0-9a-f]{64}$/);
     const card = result.data.card as Record<string, unknown>;
     expect(card.type).toBe(ERC8004_CARD_TYPE);
-    expect(card.name).toBe('aguang.musename.eth');
+    expect(card.name).toBe('aguang.musepass.eth');
   });
 
   it('accepts a fully qualified name without doubling the suffix', async () => {
     const result = await draftCard(
-      { name: 'aguang.musename.eth', description: 'x', image: 'ipfs://a' },
+      { name: 'aguang.musepass.eth', description: 'x', image: 'ipfs://a' },
       config,
     );
-    expect((result.data.card as Record<string, unknown>).name).toBe('aguang.musename.eth');
+    expect((result.data.card as Record<string, unknown>).name).toBe('aguang.musepass.eth');
   });
 
   it('defaults to publishing only the name and address', async () => {

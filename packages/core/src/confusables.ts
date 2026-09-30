@@ -1,5 +1,5 @@
 import { ens_tokenize } from '@adraffy/ens-normalize';
-import { MuseNameError } from './errors.js';
+import { MusePassError } from './errors.js';
 
 /**
  * Script groups that matter for impersonation. Latin / Cyrillic / Greek share
@@ -70,7 +70,7 @@ export function checkScriptMixing(label: string, enabled = true): ScriptCheckRes
 export function assertNoScriptMixing(label: string, enabled = true): void {
   const result = checkScriptMixing(label, enabled);
   if (!result.ok) {
-    throw new MuseNameError('MIXED_SCRIPT', 'name mixes scripts that look alike', {
+    throw new MusePassError('MIXED_SCRIPT', 'name mixes scripts that look alike', {
       label,
       conflict: result.conflict,
     });

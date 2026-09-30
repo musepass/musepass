@@ -15,6 +15,11 @@
 import { encodeAbiParameters, keccak256, parseAbiParameters, stringToHex, type Address, type Hex } from 'viem';
 
 /** Keccak of the ASCII tag. Must equal `RecordDigest.TAG` in Solidity. */
+/**
+ * Frozen on purpose: the tag names the format, not the brand, and it is compared
+ * byte-for-byte against `RecordDigest.TAG` in Solidity. Renaming it with the
+ * product would invalidate every record already issued.
+ */
 export const RECORD_DIGEST_TAG: Hex = keccak256(stringToHex('MuseNameRecord/1'));
 
 export enum RecordVerdict {

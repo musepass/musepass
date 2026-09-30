@@ -25,7 +25,7 @@ describe('the default avatar', () => {
   it('produces a card the validator accepts, which is the whole point', () => {
     const result = validateCard({
       type: ERC8004_CARD_TYPE,
-      name: 'peter.musename.eth',
+      name: 'peter.musepass.eth',
       description: 'An AI that answers the phone.',
       image: defaultAvatarDataUri('peter'),
       x402Support: false,
@@ -39,7 +39,7 @@ describe('the default avatar', () => {
   it('still tells the truth about what the card requires', () => {
     const result = validateCard({
       type: ERC8004_CARD_TYPE,
-      name: 'peter.musename.eth',
+      name: 'peter.musepass.eth',
       description: 'An AI that answers the phone.',
       x402Support: false,
       active: true,

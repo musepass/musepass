@@ -74,7 +74,7 @@ for tx in data["transactions"]:
     name = tx.get("contractName")
     if name:
         addresses.setdefault(name, tx["contractAddress"])
-print(addresses["LocalL2Registry"], addresses["MuseNameRegistrar"])
+print(addresses["LocalL2Registry"], addresses["MusePassRegistrar"])
 PY
 )
 
@@ -184,7 +184,7 @@ checks = []
 status, html = get("/")
 checks.append(("homepage renders", status == 200 and "给你的 AI" in html))
 checks.append(("hero search box present", 'id="name-search"' in html))
-checks.append(("brand renders from config", "MuseName" in html))
+checks.append(("brand renders from config", "MusePass" in html))
 checks.append(("Meta disclaimer present", "与 Meta" in html))
 
 status, html = get("/claim?label=" + label)

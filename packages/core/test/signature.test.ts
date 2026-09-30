@@ -19,7 +19,7 @@ const account = privateKeyToAccount('0x59c6995e998f97a5a0044966f0945389dc9e86dae
 const VERIFYING_CONTRACT = '0x2222222222222222222222222222222222222222' as Address;
 
 const domain = buildEip712Domain({
-  productName: 'MuseName',
+  productName: 'MusePass',
   chainId: 8453,
   verifyingContract: VERIFYING_CONTRACT,
 });
@@ -29,7 +29,7 @@ const past = () => BigInt(Math.floor(Date.now() / 1000) - 900);
 
 describe('buildEip712Domain', () => {
   it('carries the brand name so a rename invalidates old signatures', () => {
-    expect(domain.name).toBe('MuseName');
+    expect(domain.name).toBe('MusePass');
     expect(domain.version).toBe('1');
     expect(domain.chainId).toBe(8453);
     expect(domain.verifyingContract).toBe(VERIFYING_CONTRACT);
@@ -37,7 +37,7 @@ describe('buildEip712Domain', () => {
 
   it('rejects an address that is not a contract address', () => {
     expect(() =>
-      buildEip712Domain({ productName: 'MuseName', chainId: 8453, verifyingContract: 'nope' as Address }),
+      buildEip712Domain({ productName: 'MusePass', chainId: 8453, verifyingContract: 'nope' as Address }),
     ).toThrow();
   });
 
@@ -122,7 +122,7 @@ describe('card update signature', () => {
 
   it('verifies a card publish signature', async () => {
     const message = cardUpdateMessage({
-      name: 'aguang.musename.eth',
+      name: 'aguang.musepass.eth',
       contentHash,
       version: 1,
       deadline: future(),
@@ -147,9 +147,9 @@ describe('card update signature', () => {
   });
 
   it('changes the digest when the card content changes', () => {
-    const base = cardUpdateMessage({ name: 'a.musename.eth', contentHash, version: 1, deadline: 1n });
+    const base = cardUpdateMessage({ name: 'a.musepass.eth', contentHash, version: 1, deadline: 1n });
     const changed = cardUpdateMessage({
-      name: 'a.musename.eth',
+      name: 'a.musepass.eth',
       contentHash: `0x${'cd'.repeat(32)}`,
       version: 1,
       deadline: 1n,

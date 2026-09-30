@@ -26,7 +26,7 @@ const MAINNET = {
  * "Make this my name."
  *
  * Forward resolution is already live; this is the reverse record, the thing that
- * decides whether a wallet prints `xiaoming.musename.eth` or `0x603b…`. ENS only
+ * decides whether a wallet prints `xiaoming.musepass.eth` or `0x603b…`. ENS only
  * lets the address itself set it, so the platform cannot do this on anyone's
  * behalf — hence a card with one button rather than a background job.
  */

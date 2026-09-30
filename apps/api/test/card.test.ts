@@ -226,7 +226,7 @@ describe('PUT /v1/names/{name}/card', () => {
     const { app, deps } = buildApp();
     const indexedName = await deps.names.insert({
       label: 'aguang',
-      fullName: 'aguang.musename.eth',
+      fullName: 'aguang.musepass.eth',
       normalized: 'aguang',
       ownerAddress: owner.address,
       tier: 'free',
@@ -309,7 +309,7 @@ describe('GET /v1/names/{name} with a card', () => {
 
     expect(body.data.owner).toBe(owner.address);
     // Default visibility: name and address only.
-    expect(body.data.card.name).toBe('aguang.musename.eth');
+    expect(body.data.card.name).toBe('aguang.musepass.eth');
     expect(body.data.card.address).toBe(owner.address);
     expect(body.data.card.description).toBeUndefined();
     expect(body.data.card.contact).toBeUndefined();

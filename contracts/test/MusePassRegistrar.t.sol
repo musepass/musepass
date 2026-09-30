@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MuseNameRegistrar} from "../src/MuseNameRegistrar.sol";
+import {MusePassRegistrar} from "../src/MusePassRegistrar.sol";
 import {IL2Registry} from "../src/interfaces/IL2Registry.sol";
 
 /// @dev Mirrors the parts of Durin's L2Registry this contract touches, including
@@ -62,7 +62,7 @@ contract MockL2Registry is IL2Registry {
     }
 }
 
-contract MuseNameRegistrarTest is Test {
+contract MusePassRegistrarTest is Test {
     bytes32 internal constant ETH_NODE =
         0x93cdeb708b7545dc668eb9280176169d1c33cfd8ed6f04690a0bcc88a93fc4ae;
     bytes32 internal constant DOMAIN_TYPEHASH =
@@ -72,7 +72,7 @@ contract MuseNameRegistrarTest is Test {
     uint256 internal constant STRANGER_PK = 0xB0B;
 
     MockL2Registry internal registry;
-    MuseNameRegistrar internal registrar;
+    MusePassRegistrar internal registrar;
 
     address internal beneficiary;
     address internal stranger;
@@ -80,13 +80,13 @@ contract MuseNameRegistrarTest is Test {
     uint256 internal deadline;
 
     function setUp() public {
-        // namehash("musename.eth") built the same way ENS does it.
+        // namehash("musepass.eth") built the same way ENS does it.
         baseNode = keccak256(abi.encodePacked(ETH_NODE, keccak256(bytes("musename"))));
 
         registry = new MockL2Registry(baseNode);
-        registrar = new MuseNameRegistrar(
+        registrar = new MusePassRegistrar(
             address(registry),
-            "MuseName",
+            "MusePass",
             "1",
             address(this),
             3 // mirror the shortest on chain label we will ever issue until phase 6
@@ -140,7 +140,7 @@ contract MuseNameRegistrarTest is Test {
         bytes32 node = keccak256(abi.encodePacked(baseNode, keccak256(bytes("aguang"))));
 
         vm.expectEmit(true, true, false, true, address(registrar));
-        emit MuseNameRegistrar.NameRegistered(node, "aguang", beneficiary);
+        emit MusePassRegistrar.NameRegistered(node, "aguang", beneficiary);
         registrar.register("aguang", beneficiary, deadline, signature);
     }
 
@@ -163,7 +163,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory signature = _sign(BENEFICIARY_PK, "Aguang", beneficiary, deadline);
 
         vm.expectRevert(
-            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 0, bytes1("A"))
+            abi.encodeWithSelector(MusePassRegistrar.LabelInvalidCharacter.selector, 0, bytes1("A"))
         );
         registrar.register("Aguang", beneficiary, deadline, signature);
     }
@@ -172,7 +172,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory signature = _sign(BENEFICIARY_PK, "a.b", beneficiary, deadline);
 
         vm.expectRevert(
-            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 1, bytes1("."))
+            abi.encodeWithSelector(MusePassRegistrar.LabelInvalidCharacter.selector, 1, bytes1("."))
         );
         registrar.register("a.b", beneficiary, deadline, signature);
     }
@@ -181,7 +181,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory signature = _sign(BENEFICIARY_PK, "a_b", beneficiary, deadline);
 
         vm.expectRevert(
-            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 1, bytes1("_"))
+            abi.encodeWithSelector(MusePassRegistrar.LabelInvalidCharacter.selector, 1, bytes1("_"))
         );
         registrar.register("a_b", beneficiary, deadline, signature);
     }
@@ -191,7 +191,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory signature = _sign(BENEFICIARY_PK, unicode"a\u200Db", beneficiary, deadline);
 
         vm.expectRevert(
-            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 1, bytes1(0xE2))
+            abi.encodeWithSelector(MusePassRegistrar.LabelInvalidCharacter.selector, 1, bytes1(0xE2))
         );
         registrar.register(unicode"a\u200Db", beneficiary, deadline, signature);
     }
@@ -201,7 +201,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory signature = _sign(BENEFICIARY_PK, unicode"a\u202Eb", beneficiary, deadline);
 
         vm.expectRevert(
-            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 1, bytes1(0xE2))
+            abi.encodeWithSelector(MusePassRegistrar.LabelInvalidCharacter.selector, 1, bytes1(0xE2))
         );
         registrar.register(unicode"a\u202Eb", beneficiary, deadline, signature);
     }
@@ -210,7 +210,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory signature = _sign(BENEFICIARY_PK, "-aguang", beneficiary, deadline);
 
         vm.expectRevert(
-            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 0, bytes1("-"))
+            abi.encodeWithSelector(MusePassRegistrar.LabelInvalidCharacter.selector, 0, bytes1("-"))
         );
         registrar.register("-aguang", beneficiary, deadline, signature);
     }
@@ -219,7 +219,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory signature = _sign(BENEFICIARY_PK, "aguang-", beneficiary, deadline);
 
         vm.expectRevert(
-            abi.encodeWithSelector(MuseNameRegistrar.LabelInvalidCharacter.selector, 6, bytes1("-"))
+            abi.encodeWithSelector(MusePassRegistrar.LabelInvalidCharacter.selector, 6, bytes1("-"))
         );
         registrar.register("aguang-", beneficiary, deadline, signature);
     }
@@ -255,21 +255,21 @@ contract MuseNameRegistrarTest is Test {
     function test_Register_RevertsWhenSignatureIsFromAnotherKey() public {
         bytes memory signature = _sign(STRANGER_PK, "aguang", beneficiary, deadline);
 
-        vm.expectRevert(MuseNameRegistrar.InvalidSignature.selector);
+        vm.expectRevert(MusePassRegistrar.InvalidSignature.selector);
         registrar.register("aguang", beneficiary, deadline, signature);
     }
 
     function test_Register_RevertsWhenLabelWasSwappedAfterSigning() public {
         bytes memory signature = _sign(BENEFICIARY_PK, "aguang", beneficiary, deadline);
 
-        vm.expectRevert(MuseNameRegistrar.InvalidSignature.selector);
+        vm.expectRevert(MusePassRegistrar.InvalidSignature.selector);
         registrar.register("someoneelse", beneficiary, deadline, signature);
     }
 
     function test_Register_RevertsWhenBeneficiaryWasSwappedAfterSigning() public {
         bytes memory signature = _sign(BENEFICIARY_PK, "aguang", beneficiary, deadline);
 
-        vm.expectRevert(MuseNameRegistrar.InvalidSignature.selector);
+        vm.expectRevert(MusePassRegistrar.InvalidSignature.selector);
         registrar.register("aguang", stranger, deadline, signature);
     }
 
@@ -278,7 +278,7 @@ contract MuseNameRegistrarTest is Test {
 
         vm.warp(deadline + 1);
 
-        vm.expectRevert(MuseNameRegistrar.SignatureExpired.selector);
+        vm.expectRevert(MusePassRegistrar.SignatureExpired.selector);
         registrar.register("aguang", beneficiary, deadline, signature);
     }
 
@@ -292,7 +292,7 @@ contract MuseNameRegistrarTest is Test {
         );
         uint8 flippedV = v == 27 ? 28 : 27;
 
-        vm.expectRevert(MuseNameRegistrar.InvalidSignature.selector);
+        vm.expectRevert(MusePassRegistrar.InvalidSignature.selector);
         registrar.register("aguang", beneficiary, deadline, abi.encodePacked(r, flipped, flippedV));
     }
 
@@ -305,7 +305,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory signature = _sign(BENEFICIARY_PK, "admin", beneficiary, deadline);
 
         vm.expectRevert(
-            abi.encodeWithSelector(MuseNameRegistrar.LabelReserved.selector, keccak256(bytes("admin")))
+            abi.encodeWithSelector(MusePassRegistrar.LabelReserved.selector, keccak256(bytes("admin")))
         );
         registrar.register("admin", beneficiary, deadline, signature);
     }
@@ -322,14 +322,14 @@ contract MuseNameRegistrarTest is Test {
     function test_Register_RevertsBelowMinimumLabelLength() public {
         bytes memory signature = _sign(BENEFICIARY_PK, "ab", beneficiary, deadline);
 
-        vm.expectRevert(MuseNameRegistrar.LabelTooShort.selector);
+        vm.expectRevert(MusePassRegistrar.LabelTooShort.selector);
         registrar.register("ab", beneficiary, deadline, signature);
     }
 
     function test_Register_RevertsForZeroBeneficiary() public {
         bytes memory signature = _sign(BENEFICIARY_PK, "aguang", address(0), deadline);
 
-        vm.expectRevert(MuseNameRegistrar.ZeroAddress.selector);
+        vm.expectRevert(MusePassRegistrar.ZeroAddress.selector);
         registrar.register("aguang", address(0), deadline, signature);
     }
 
@@ -340,7 +340,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory second = _sign(BENEFICIARY_PK, "aguang", beneficiary, deadline);
         bytes32 node = keccak256(abi.encodePacked(baseNode, keccak256(bytes("aguang"))));
 
-        vm.expectRevert(abi.encodeWithSelector(MuseNameRegistrar.NameUnavailable.selector, node));
+        vm.expectRevert(abi.encodeWithSelector(MusePassRegistrar.NameUnavailable.selector, node));
         registrar.register("aguang", beneficiary, deadline, second);
     }
 
@@ -352,7 +352,7 @@ contract MuseNameRegistrarTest is Test {
         bytes memory signature = _sign(BENEFICIARY_PK, "aguang", beneficiary, deadline);
 
         vm.prank(stranger);
-        vm.expectRevert(MuseNameRegistrar.Unauthorized.selector);
+        vm.expectRevert(MusePassRegistrar.Unauthorized.selector);
         registrar.register("aguang", beneficiary, deadline, signature);
     }
 
@@ -369,19 +369,19 @@ contract MuseNameRegistrarTest is Test {
     function test_AdminFunctions_AreOwnerOnly() public {
         vm.startPrank(stranger);
 
-        vm.expectRevert(MuseNameRegistrar.Unauthorized.selector);
+        vm.expectRevert(MusePassRegistrar.Unauthorized.selector);
         registrar.setRelayer(stranger, true);
 
-        vm.expectRevert(MuseNameRegistrar.Unauthorized.selector);
+        vm.expectRevert(MusePassRegistrar.Unauthorized.selector);
         registrar.setMinLabelBytes(1);
 
-        vm.expectRevert(MuseNameRegistrar.Unauthorized.selector);
+        vm.expectRevert(MusePassRegistrar.Unauthorized.selector);
         registrar.setReserved(_hashes("admin"), true);
 
-        vm.expectRevert(MuseNameRegistrar.Unauthorized.selector);
+        vm.expectRevert(MusePassRegistrar.Unauthorized.selector);
         registrar.setRelayerRestricted(false);
 
-        vm.expectRevert(MuseNameRegistrar.Unauthorized.selector);
+        vm.expectRevert(MusePassRegistrar.Unauthorized.selector);
         registrar.transferOwnership(stranger);
         vm.stopPrank();
     }
@@ -409,7 +409,7 @@ contract MuseNameRegistrarTest is Test {
         bytes32 expected = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
-                keccak256(bytes("MuseName")),
+                keccak256(bytes("MusePass")),
                 keccak256(bytes("1")),
                 block.chainid,
                 address(registrar)
@@ -423,13 +423,13 @@ contract MuseNameRegistrarTest is Test {
     }
 
     function test_Constructor_RejectsZeroRegistry() public {
-        vm.expectRevert(MuseNameRegistrar.ZeroAddress.selector);
-        new MuseNameRegistrar(address(0), "MuseName", "1", address(this), 3);
+        vm.expectRevert(MusePassRegistrar.ZeroAddress.selector);
+        new MusePassRegistrar(address(0), "MusePass", "1", address(this), 3);
     }
 
     function test_Constructor_RejectsTooPermissiveMinimum() public {
-        vm.expectRevert(MuseNameRegistrar.LabelTooShort.selector);
-        new MuseNameRegistrar(address(registry), "MuseName", "1", address(this), 0);
+        vm.expectRevert(MusePassRegistrar.LabelTooShort.selector);
+        new MusePassRegistrar(address(registry), "MusePass", "1", address(this), 0);
     }
 
     /*//////////////////////////////////////////////////////////////

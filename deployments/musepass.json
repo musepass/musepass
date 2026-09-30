@@ -1,0 +1,17 @@
+{
+  "$comment": "Real deployment. Chain is the source of truth; this file is the record.",
+  "chain": {
+    "name": "robinhood",
+    "chainId": 4663,
+    "explorer": "https://robinhoodchain.blockscout.com"
+  },
+  "root": "musepass.eth",
+  "baseNode": "0xa1536a09204f5ad1a715f3054cde4443aedba6875600f94812493c5abfd359b0",
+  "admin": "0x66F499e8F0A92e44A0F9c59a305E73a12b5684e7",
+  "registry": "0x4b959e1fb5567caa7fe21d0d2a7f870af705b792",
+  "registryTx": "",
+  "registrar": "0xb1e8a90e5a9b1c8e69242bc70d928789d89c02b7",
+  "registrarTx": "0xe01cd3b2fad0be96b89b249b790390d91eedecdc530360415802bb5f2e1fe231",
+  "addRegistrarTx": "0xeba5fa4688edad7d62305a0cfc98d88887b66572645f7a64c6367116dd967b7a",
+  "issuer": "0xC2bf5fdA20fEA5317DdE510aDb483961c5ABc864"
+}

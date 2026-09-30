@@ -4,7 +4,7 @@ import { buildProfileJsonLd, serializeJsonLd } from '../lib/profileJsonLd.js';
 
 const base: NameData = {
   label: 'xiaoming',
-  fullName: 'xiaoming.musename.eth',
+  fullName: 'xiaoming.musepass.eth',
   owner: '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d',
   card: { description: 'An AI that shoots wedding photos' },
   trackRecord: null,
@@ -17,7 +17,7 @@ describe('name page structured data', () => {
     expect(jsonLd.url).toBe('https://musename.xyz/name/xiaoming');
     expect(jsonLd.mainEntity).toMatchObject({
       '@type': 'Thing',
-      name: 'xiaoming.musename.eth',
+      name: 'xiaoming.musepass.eth',
       identifier: 'eip155:4663:0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d',
     });
     expect(jsonLd.isBasedOn).toBe('https://musename.xyz/.well-known/musename.json');

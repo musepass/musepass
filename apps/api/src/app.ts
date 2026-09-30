@@ -13,7 +13,7 @@ import {
   checkClaimQuota,
   checkLabel,
   defaultVisibility,
-  isMuseNameError,
+  isMusePassError,
   labelFromFullName,
   namehash,
   normalizeLabel,
@@ -416,7 +416,7 @@ export function createApp(deps: MusenameDeps) {
       label = toLabel(rawName, config.brand.rootName);
       onChainFree = await chain.isLabelAvailable(label);
     } catch (error) {
-      if (isMuseNameError(error) && error.code !== 'INVALID_CONFIG') {
+      if (isMusePassError(error) && error.code !== 'INVALID_CONFIG') {
         label = null;
       } else {
         chainError = error instanceof Error ? error.message : String(error);
@@ -493,7 +493,7 @@ export function createApp(deps: MusenameDeps) {
           summary: { zh: '这个名字不合规。', en: 'That name is not valid.' },
           errors: [
             boom(
-              isMuseNameError(error) ? error.code : 'INVALID_NAME',
+              isMusePassError(error) ? error.code : 'INVALID_NAME',
               error instanceof Error ? error.message : String(error),
               { zh: '这个名字不合规。', en: 'That name is not valid.' },
             ),
@@ -600,7 +600,7 @@ export function createApp(deps: MusenameDeps) {
           summary: { zh: '这个名字不合规。', en: 'That name is not valid.' },
           errors: [
             boom(
-              isMuseNameError(error) ? error.code : 'INVALID_NAME',
+              isMusePassError(error) ? error.code : 'INVALID_NAME',
               error instanceof Error ? error.message : String(error),
               { zh: '这个名字不合规。', en: 'That name is not valid.' },
             ),
@@ -807,7 +807,7 @@ export function createApp(deps: MusenameDeps) {
           summary: { zh: '这个名字不合规。', en: 'That name is not valid.' },
           errors: [
             boom(
-              isMuseNameError(error) ? error.code : 'INVALID_NAME',
+              isMusePassError(error) ? error.code : 'INVALID_NAME',
               error instanceof Error ? error.message : String(error),
               { zh: '这个名字不合规。', en: 'That name is not valid.' },
             ),
@@ -972,7 +972,7 @@ export function createApp(deps: MusenameDeps) {
           summary: { zh: '这个名字不合规，换一个吧。', en: 'That name is not valid; pick another.' },
           errors: [
             boom(
-              isMuseNameError(error) ? error.code : 'INVALID_NAME',
+              isMusePassError(error) ? error.code : 'INVALID_NAME',
               error instanceof Error ? error.message : String(error),
               { zh: '这个名字不合规，换一个吧。', en: 'That name is not valid; pick another.' },
             ),
@@ -1252,7 +1252,7 @@ export function createApp(deps: MusenameDeps) {
           summary: { zh: '签名已经过期了，请重新签名。', en: 'That signature has expired; please sign again.' },
           errors: [
             boom(
-              isMuseNameError(error) ? error.code : 'INVALID_SIGNATURE',
+              isMusePassError(error) ? error.code : 'INVALID_SIGNATURE',
               error instanceof Error ? error.message : String(error),
               { zh: '签名已经过期了，请重新签名。', en: 'That signature has expired; please sign again.' },
             ),
@@ -1292,7 +1292,7 @@ export function createApp(deps: MusenameDeps) {
           summary: { zh: '这个名字不合规。', en: 'That name is not valid.' },
           errors: [
             boom(
-              isMuseNameError(error) ? error.code : 'INVALID_NAME',
+              isMusePassError(error) ? error.code : 'INVALID_NAME',
               error instanceof Error ? error.message : String(error),
               { zh: '这个名字不合规。', en: 'That name is not valid.' },
             ),

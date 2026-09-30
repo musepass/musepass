@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import {IL2Registry} from "./interfaces/IL2Registry.sol";
 
 /**
- * @title MuseNameRegistrar
- * @notice Issues MuseName subnames on a Durin L2 registry using a signature
+ * @title MusePassRegistrar
+ * @notice Issues MusePass subnames on a Durin L2 registry using a signature
  *         that the future owner produced off chain.
  *
  * Design notes, because the trust story is the product:
@@ -25,7 +25,7 @@ import {IL2Registry} from "./interfaces/IL2Registry.sol";
  * This contract holds no funds. It must still be reviewed externally before any
  * paid tier (phase 6) is allowed to depend on it.
  */
-contract MuseNameRegistrar {
+contract MusePassRegistrar {
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/

@@ -11,7 +11,7 @@ const envelope = (data: unknown) => ({
   summary: { zh: '(unused)', en: 'ok' },
   data,
   errors: [],
-  meta: { asOf: 'now', chain: 'robinhood', chainId: 4663, verified: true, root: 'musename.eth' },
+  meta: { asOf: 'now', chain: 'robinhood', chainId: 4663, verified: true, root: 'musepass.eth' },
 });
 
 describe('fetchOwnedNames', () => {
@@ -21,7 +21,7 @@ describe('fetchOwnedNames', () => {
       calls.push(String(url));
       return new Response(
         JSON.stringify(
-          envelope({ owner: '0xAbC', count: 1, names: [{ label: 'peter', fullName: 'peter.musename.eth' }], rootName: 'musename.eth' }),
+          envelope({ owner: '0xAbC', count: 1, names: [{ label: 'peter', fullName: 'peter.musepass.eth' }], rootName: 'musepass.eth' }),
         ),
         { status: 200, headers: { 'content-type': 'application/json' } },
       );
@@ -30,12 +30,12 @@ describe('fetchOwnedNames', () => {
     const payload = await fetchOwnedNames('0xAbC', { fetchImpl });
     expect(calls[0]).toContain('/v1/names?owner=0xAbC');
     expect(payload.data.count).toBe(1);
-    expect(payload.data.names[0]?.fullName).toBe('peter.musename.eth');
+    expect(payload.data.names[0]?.fullName).toBe('peter.musepass.eth');
   });
 
   it('surfaces an empty list as an empty list, not an error', async () => {
     const fetchImpl = vi.fn(async () =>
-      new Response(JSON.stringify(envelope({ owner: '0x0', count: 0, names: [], rootName: 'musename.eth' })), {
+      new Response(JSON.stringify(envelope({ owner: '0x0', count: 0, names: [], rootName: 'musepass.eth' })), {
         status: 200,
         headers: { 'content-type': 'application/json' },
       }),

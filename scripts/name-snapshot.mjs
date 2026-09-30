@@ -134,7 +134,7 @@ for (const log of logs) {
     .catch(() => '');
 
   names.push({
-    name: `${label}.musename.eth`,
+    name: `${label}.musepass.eth`,
     label,
     node,
     ownerAtMint: getAddress(owner),

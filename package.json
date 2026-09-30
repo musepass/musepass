@@ -2,7 +2,7 @@
   "name": "musename",
   "version": "0.1.0",
   "private": true,
-  "description": "MuseName \u2014 ENS names, ERC-8004 cards and verifiable track records for personal AI",
+  "description": "MusePass \u2014 ENS names, ERC-8004 cards and verifiable track records for personal AI",
   "engines": {
     "node": ">=20"
   },

@@ -31,7 +31,7 @@ const anchorsFile =
   process.env.MUSENAME_ANCHORS_FILE ?? resolve(repoRoot, 'deployments/receipt-anchors.json');
 const chains = JSON.parse(readFileSync(resolve(configDir, 'chains.json'), 'utf8'));
 
-const NAME = 'xiaoming.musename.eth';
+const NAME = 'xiaoming.musepass.eth';
 const EXPECTED_ADDRESS = '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d';
 const RESOLVER = '0x9eA7A8896a68717e587BC1EE17B6b0B80EEeb443';
 const SPONSOR = '0x66F499e8F0A92e44A0F9c59a305E73a12b5684e7';
@@ -129,7 +129,7 @@ for (const host of ['musename.xyz', 'gw.musename.xyz']) {
     'function resolver(bytes32) view returns (address)',
     'function l2Registry(bytes32) view returns (uint64, address)',
   ]);
-  const node = namehash('musename.eth');
+  const node = namehash('musepass.eth');
   let resolved = false;
   try {
     const resolver = await client.readContract({ address: ens, abi, functionName: 'resolver', args: [node] });
@@ -294,8 +294,8 @@ async function sendAlert(text) {
 if (shouldAlert) {
   await sendAlert(
     failures.length > 0
-      ? `MuseName health: ${failures.length} failing — ${failures.map((check) => check.name).join(', ')}`
-      : `MuseName health: recovered (was ${previous?.verdict})`,
+      ? `MusePass health: ${failures.length} failing — ${failures.map((check) => check.name).join(', ')}`
+      : `MusePass health: recovered (was ${previous?.verdict})`,
   );
 }
 
@@ -304,7 +304,7 @@ if (shouldAlert) {
 // than silently during an outage.
 if (process.argv.includes('--test-alert')) {
   const sent = await sendAlert(
-    `MuseName health check: test alert. ${checks.length - failures.length}/${checks.length} checks passing.`,
+    `MusePass health check: test alert. ${checks.length - failures.length}/${checks.length} checks passing.`,
   );
   if (!sent) {
     console.error('test alert NOT delivered (no webhook set, or the endpoint refused it)');

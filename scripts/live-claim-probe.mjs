@@ -71,7 +71,7 @@ const signature = await owner.signTypedData({
   message,
 });
 
-console.log(`MuseName live claim probe`);
+console.log(`MusePass live claim probe`);
 console.log(`  api   ${base}`);
 console.log(`  label ${label}.${brand.rootName}`);
 console.log(`  owner ${owner.address}`);

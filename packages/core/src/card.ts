@@ -25,7 +25,7 @@ export interface AgentRegistration {
 }
 
 /**
- * MuseName's additions to the ERC-8004 registration file. They live under one
+ * MusePass's additions to the ERC-8004 registration file. They live under one
  * namespaced key so that other clients can ignore them without breaking.
  */
 export interface MusenameCardExtension {

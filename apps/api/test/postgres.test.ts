@@ -39,7 +39,7 @@ afterAll(async () => {
 function newName(normalized: string, owner: Address = OWNER) {
   return {
     label: normalized,
-    fullName: `${normalized}.musename.eth`,
+    fullName: `${normalized}.musepass.eth`,
     normalized,
     ownerAddress: owner,
     tier: 'free' as const,
@@ -93,7 +93,7 @@ describe('names', () => {
 
     const found = await repos.names.findByNormalized('aguang');
     expect(found?.ownerAddress).toBe(OWNER);
-    expect(found?.fullName).toBe('aguang.musename.eth');
+    expect(found?.fullName).toBe('aguang.musepass.eth');
   });
 
   it('refuses a duplicate, because the schema says so', async () => {

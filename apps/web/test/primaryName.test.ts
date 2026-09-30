@@ -16,7 +16,7 @@ import {
 
 const OWNER = '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d' as const;
 const OTHER = '0x1111111111111111111111111111111111111111' as const;
-const FULL_NAME = 'xiaoming.musename.eth';
+const FULL_NAME = 'xiaoming.musepass.eth';
 
 describe('setName calldata', () => {
   it('uses the reverse registrar and the plain setName(string)', () => {

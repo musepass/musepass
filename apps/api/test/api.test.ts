@@ -139,8 +139,8 @@ describe('GET /v1/config', () => {
     const { app } = buildApp();
     const body = await (await app.request('/v1/config')).json();
 
-    expect(body.data.productName).toBe('MuseName');
-    expect(body.data.rootName).toBe('musename.eth');
+    expect(body.data.productName).toBe('MusePass');
+    expect(body.data.rootName).toBe('musepass.eth');
     expect(body.data.siteUrl).toBe('https://musename.xyz');
     expect(body.data.chain.chainId).toBe(4663);
     expect(body.data.registrar).toBe(REGISTRAR);
@@ -229,10 +229,10 @@ describe('GET /v1/names/{name}/available', () => {
 
   it('accepts the fully qualified name as well as the label', async () => {
     const { app } = buildApp();
-    const response = await app.request('/v1/names/aguang.musename.eth/available');
+    const response = await app.request('/v1/names/aguang.musepass.eth/available');
     const body = await response.json();
     expect(body.data.label).toBe('aguang');
-    expect(body.data.fullName).toBe('aguang.musename.eth');
+    expect(body.data.fullName).toBe('aguang.musepass.eth');
   });
 
   it('reports a reserved name with a reason instead of a bare failure', async () => {
@@ -429,7 +429,7 @@ describe('POST /v1/names/claim', () => {
     const { app, deps } = buildApp();
     await deps.names.insert({
       label: 'existing',
-      fullName: 'existing.musename.eth',
+      fullName: 'existing.musepass.eth',
       normalized: 'existing',
       ownerAddress: ownerAccount.address,
       tier: 'free',
