@@ -14,5 +14,39 @@
       "max": 2
     }
   },
-  "invitations": []
+  "invitations": [
+    {
+      "wallet": "0xd2b294fbe4b6710cf00c4d15a3e8857de12be344",
+      "xHandle": "",
+      "label": "tst1",
+      "issuedBy": "project",
+      "issuedAt": "2026-09-30",
+      "note": "",
+      "claimedAt": null,
+      "claimedLabel": null,
+      "txHash": null
+    },
+    {
+      "wallet": "0xc2bc3cd74d20370f18c17c11a420a3d63f7218f8",
+      "xHandle": "",
+      "label": "tst2",
+      "issuedBy": "project",
+      "issuedAt": "2026-09-30",
+      "note": "",
+      "claimedAt": null,
+      "claimedLabel": null,
+      "txHash": null
+    },
+    {
+      "wallet": "0xea4a6d339ee05286c1aa956bf176a80c58ceeee3",
+      "xHandle": "",
+      "label": "tst3",
+      "issuedBy": "project",
+      "issuedAt": "2026-09-30",
+      "note": "",
+      "claimedAt": null,
+      "claimedLabel": null,
+      "txHash": null
+    }
+  ]
 }
