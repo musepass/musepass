@@ -66,10 +66,11 @@ A project that sells credibility has to be the first to say what it cannot do. T
 on the [trust page](https://musepass.xyz/trust) as well, and `pnpm claims:check` fails
 the build if any published sentence outruns its evidence.
 
-| Not true today | Why it is written down |
-| --- | --- |
 <!-- claims-allow-block: name-not-modifiable — the sentence in quotes is the claim we refuse to make -->
 <!-- claims-allow-block: independent-verifier — same: the row exists to deny it -->
+
+| Not true today | Why it is written down |
+| --- | --- |
 | "The platform cannot change your name." | The registry admin is an operational key, and it can add a registrar. A watchdog ([`scripts/security-power-inventory.mjs`](scripts/security-power-inventory.mjs)) reports the moment that happens; moving the permission to a multisig is the fix, and it has not been done. |
 | "Independently verified." | The only verifier today is our own engine, from the same team. |
 | "Records cannot be changed." | The append-only record contract is written and tested, and is **not deployed**. What exists on chain is one zero-value self-transfer carrying a merkle root. |
