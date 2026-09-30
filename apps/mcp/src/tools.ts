@@ -2,6 +2,7 @@ import {
   ERC8004_CARD_TYPE,
   cardContentHash,
   canonicalJson,
+  defaultAvatarDataUri,
   defaultVisibility,
   validateCard,
   type AgentCard,
@@ -175,7 +176,9 @@ export async function draftCard(
     type: ERC8004_CARD_TYPE,
     name: fullName,
     description: input.description ?? '',
-    image: input.image ?? '',
+    // Required by ERC-8004; generated when the agent did not supply one, so the
+    // draft it hands back is publishable rather than a list of complaints.
+    image: input.image ?? defaultAvatarDataUri(label),
     services: input.services ?? [],
     x402Support: false,
     active: true,

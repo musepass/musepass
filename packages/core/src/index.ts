@@ -11,3 +11,4 @@ export * from './policy.js';
 export * from './claims.js';
 export * from './hygiene.js';
 export * from './record.js';
+export * from './avatar.js';

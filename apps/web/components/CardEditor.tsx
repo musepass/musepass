@@ -41,7 +41,7 @@ export function CardEditor({
   published: RedactedCard | null;
 }) {
   const wallet = useWallet();
-  const [draft, setDraft] = useState<CardDraft>(() => draftFromPublished(published));
+  const [draft, setDraft] = useState<CardDraft>(() => draftFromPublished(published, label));
   const [phase, setPhase] = useState<Phase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [problems, setProblems] = useState<string[]>([]);

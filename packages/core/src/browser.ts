@@ -17,3 +17,4 @@ export * from './namehash.js';
 export * from './card.js';
 export * from './signature.js';
 export * from './policy.js';
+export * from './avatar.js';

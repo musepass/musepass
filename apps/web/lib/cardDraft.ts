@@ -1,6 +1,7 @@
 import {
   CARD_FIELDS,
   ERC8004_CARD_TYPE,
+  defaultAvatarDataUri,
   defaultVisibility,
   validateCard,
   type AgentCard,
@@ -59,11 +60,21 @@ export const VISIBILITY_LABELS: Record<FieldVisibility, string> = {
  * Seeds the editor from what the API could serve. Private fields are absent by
  * design, so they start empty — the editor must not pretend it knows them.
  */
-export function draftFromPublished(card: RedactedCard | null): CardDraft {
+/**
+ * Seeds the editor from what the API could serve, plus a usable avatar for a
+ * card that has none.
+ *
+ * `image` is required by ERC-8004, so an empty image field is a dead end: the
+ * owner fills in a description, presses publish, and is told to go and find an
+ * image. A generated avatar removes that wall. It is a placeholder in the open —
+ * visible in the field, replaceable with one click, and never invented for a
+ * card the owner already published (their own image wins).
+ */
+export function draftFromPublished(card: RedactedCard | null, label = ''): CardDraft {
   return {
     ...EMPTY_DRAFT,
     description: card?.description ?? '',
-    image: card?.image ?? '',
+    image: card?.image ?? (label ? defaultAvatarDataUri(label) : ''),
     host: card?.host ?? '',
     contact: card?.contact ?? '',
     payoutAddress: card?.payoutAddress ?? '',

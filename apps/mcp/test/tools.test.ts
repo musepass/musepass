@@ -195,11 +195,22 @@ describe('draft_card', () => {
     expect(visibility.services).toBe('private');
   });
 
-  it('reports missing required fields instead of guessing', async () => {
+  it('still refuses to guess a description', async () => {
+    // The description is the one field only the owner (or their AI, from the
+    // conversation) can supply. It is never invented.
     const result = await draftCard({ name: 'aguang', description: '' }, config);
     expect(result.data.draft).toBeUndefined();
     expect(result.errors.map((error) => error.code)).toContain('INVALID_CARD');
-    expect(result.data.missingOrInvalid).toContain('image is required');
+    expect(result.data.missingOrInvalid).toContain('description is required');
+  });
+
+  it('fills the required image instead of blocking the agent on it', async () => {
+    // ERC-8004 requires an image. An agent that has nothing to put there should
+    // get a publishable draft, not a chore list.
+    const result = await draftCard({ name: 'aguang', description: 'Photographs weddings.' }, config);
+    expect(result.data.draft).toBe(true);
+    const card = result.data.card as { image: string };
+    expect(card.image.startsWith('data:image/svg+xml;base64,')).toBe(true);
   });
 
   it('never marks a draft as published', async () => {
