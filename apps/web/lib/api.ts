@@ -95,6 +95,8 @@ export interface NameData {
   fullName: string;
   owner: `0x${string}` | null;
   card: RedactedCard | null;
+  /** D18: genesis cover number, only for a card-publishing name in the first 1,000. */
+  genesis?: { number: number } | null;
   trackRecord: unknown | null;
   index?: { tier: string; registeredAt: string; registeredVia: string } | null;
 }

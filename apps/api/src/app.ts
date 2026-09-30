@@ -145,6 +145,49 @@ export function createApp(deps: MusenameDeps) {
     };
   }
 
+  /**
+   * D18: the genesis cover numbers the first 1,000 names that published a card,
+   * in the order the registrar registered them. Nothing is minted and nothing
+   * is stored: the number is a derived view of two chain facts — the
+   * NameRegistered order and whether a card text record exists — so the day
+   * the list is worth checking, anyone can recompute it from the chain.
+   *
+   * Cached for five minutes, like the event scan it reads. The card check is
+   * one read per registered name per refresh, which is fine at the current
+   * scale and needs an index before it is fine at a thousand.
+   */
+  const GENESIS_COVER_CAPACITY = 1000;
+  let genesisCache: {
+    numbered: Array<{ label: string; number: number }>;
+    byLabel: Map<string, number>;
+    expiresAt: number;
+  } | null = null;
+
+  async function genesisCover() {
+    if (genesisCache && genesisCache.expiresAt > Date.now()) return genesisCache;
+    const registered = [...(await chain.listNames())].sort(
+      (a, b) => a.blockNumber - b.blockNumber,
+    );
+    const numbered: Array<{ label: string; number: number }> = [];
+    const byLabel = new Map<string, number>();
+    for (const entry of registered) {
+      if (numbered.length >= GENESIS_COVER_CAPACITY) break;
+      let hasCard = false;
+      try {
+        hasCard = Boolean(await chain.readText(entry.label, CARD_TEXT_KEY));
+      } catch {
+        // An unreadable record is treated as no card, same as the name page.
+        hasCard = false;
+      }
+      if (!hasCard) continue;
+      const number = numbered.length + 1;
+      numbered.push({ label: entry.label, number });
+      byLabel.set(entry.label, number);
+    }
+    genesisCache = { numbered, byLabel, expiresAt: Date.now() + 5 * 60 * 1000 };
+    return genesisCache;
+  }
+
   app.get('/healthz', (c) =>
     c.json({
       status: 'ok',
@@ -462,6 +505,56 @@ export function createApp(deps: MusenameDeps) {
         },
         errors: [],
         meta: meta(false),
+      },
+      200,
+      { 'cache-control': 'public, max-age=60' },
+    );
+  });
+
+  /**
+   * The genesis cover list, so anyone can check the ordering without trusting
+   * a name page: labels in registration order, numbered from 1, capped at the
+   * first 1,000 that published a card.
+   */
+  app.get('/v1/genesis', async (c) => {
+    let cover;
+    try {
+      cover = await genesisCover();
+    } catch (error) {
+      return c.json(
+        {
+          summary: {
+            zh: '链上暂时读不到，封面编号查不了，稍后再试。',
+            en: 'The chain could not be read just now; the cover numbers are unavailable.',
+          },
+          errors: [
+            boom('CHAIN_UNAVAILABLE', error instanceof Error ? error.message : String(error), {
+              zh: '链上暂时读不到。',
+              en: 'The chain could not be read.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        502,
+      );
+    }
+    return c.json(
+      {
+        summary: {
+          zh: `创世封面已发出 ${cover.numbered.length} 个编号（上限 ${GENESIS_COVER_CAPACITY}）。`,
+          en: `${cover.numbered.length} genesis cover numbers issued so far (capacity ${GENESIS_COVER_CAPACITY}).`,
+        },
+        data: {
+          capacity: GENESIS_COVER_CAPACITY,
+          numberedCount: cover.numbered.length,
+          numbered: cover.numbered,
+          ordering:
+            'NameRegistered event order (ascending block number); a name is numbered only after it published a card',
+          noteEn:
+            'A derived view of chain facts, recomputed from the registrar events and the card text records; nothing is minted.',
+        },
+        errors: [],
+        meta: meta(true),
       },
       200,
       { 'cache-control': 'public, max-age=60' },
@@ -990,12 +1083,22 @@ export function createApp(deps: MusenameDeps) {
             zh: `${label} 还没有被注册。`,
             en: `${label} is not registered yet.`,
           },
-          data: { label, fullName: `${label}.${config.brand.rootName}`, owner: null, card: null },
+          data: { label, fullName: `${label}.${config.brand.rootName}`, owner: null, card: null, genesis: null },
           errors: [],
           meta: meta(true),
         },
         404,
       );
+    }
+
+    // Genesis cover number (D18): derived, cached, and only for a name that
+    // published a card. Unavailable chain means "no number shown", not an
+    // error — the rest of the page is still true without it.
+    let genesisNumber: number | null = null;
+    try {
+      genesisNumber = (await genesisCover()).byLabel.get(label) ?? null;
+    } catch {
+      genesisNumber = null;
     }
 
     return c.json({
@@ -1008,6 +1111,7 @@ export function createApp(deps: MusenameDeps) {
         fullName: `${label}.${config.brand.rootName}`,
         owner,
         card,
+        genesis: genesisNumber === null ? null : { number: genesisNumber },
         trackRecord: null,
         index: indexed
           ? {

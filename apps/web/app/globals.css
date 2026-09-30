@@ -1037,6 +1037,26 @@ textarea.field {
   background: var(--white);
 }
 
+/* Genesis cover (D18): gold edge for a numbered name. The number itself is a
+   chain-derived trait, so the decoration is the only thing we add. */
+.passport-genesis {
+  border-color: #b8860b;
+  box-shadow: 0 0 0 1px #b8860b inset;
+}
+
+.passport-genesis-band {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, #fdf6e3, #f5e6b8);
+  border-bottom: 1px solid #e6d192;
+  color: #6b5410;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 .passport-head {
   display: flex;
   justify-content: space-between;

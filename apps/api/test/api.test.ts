@@ -45,24 +45,38 @@ function testConfig(): MusenameConfig {
 interface FakeChain extends ChainReader {
   taken: Set<string>;
   registrations: Array<{ label: string; owner: Address }>;
+  /** Labels with a published card, for the genesis cover numbering. */
+  cards: Set<string>;
   failNext: boolean;
 }
 
 function fakeChain(): FakeChain {
   const taken = new Set<string>();
   const registrations: Array<{ label: string; owner: Address }> = [];
+  const cards = new Set<string>();
   const chain: FakeChain = {
     taken,
     registrations,
+    cards,
     failNext: false,
     async listNames() {
-      return [];
+      return registrations.map((entry, index) => ({
+        ...entry,
+        blockNumber: index + 1,
+        txHash: `0x${'ab'.repeat(32)}` as Hex,
+      }));
     },
     async isLabelAvailable(label) {
       return !taken.has(label);
     },
     async getOwner(label) {
       return taken.has(label) ? ownerAccount.address : null;
+    },
+    async readText(label, key) {
+      return key === 'musename.card' && cards.has(label) ? 'data:application/json,{}' : null;
+    },
+    async writeText() {
+      throw new Error('not used in these tests');
     },
     async register({ label, owner }) {
       if (chain.failNext) throw new Error('rpc exploded');
@@ -380,6 +394,51 @@ describe('GET /v1/invitations', () => {
     });
     const after = await (await app.request('/v1/invitations')).json();
     expect(after.data.claimed).toBe(2);
+  });
+});
+
+describe('genesis cover', () => {
+  it('numbers card-publishing names in registration order, skipping the rest', async () => {
+    const chain = fakeChain();
+    chain.taken.add('first');
+    chain.registrations.push({ label: 'first', owner: ownerAccount.address });
+    chain.taken.add('nocard');
+    chain.registrations.push({ label: 'nocard', owner: ownerAccount.address });
+    chain.taken.add('second');
+    chain.registrations.push({ label: 'second', owner: ownerAccount.address });
+    chain.cards.add('first');
+    chain.cards.add('second');
+    const { app } = buildApp({ chain });
+
+    const list = await (await app.request('/v1/genesis')).json();
+    expect(list.data.numbered).toEqual([
+      { label: 'first', number: 1 },
+      { label: 'second', number: 2 },
+    ]);
+
+    const first = await (await app.request('/v1/names/first')).json();
+    expect(first.data.genesis).toEqual({ number: 1 });
+
+    const skipped = await (await app.request('/v1/names/nocard')).json();
+    expect(skipped.data.genesis).toBeNull();
+  });
+
+  it('shows no number on a chain error rather than a wrong number', async () => {
+    const chain = fakeChain();
+    chain.taken.add('first');
+    chain.registrations.push({ label: 'first', owner: ownerAccount.address });
+    chain.failNext = false;
+    const originalList = chain.listNames;
+    chain.listNames = async () => {
+      throw new Error('rpc exploded');
+    };
+    const { app } = buildApp({ chain });
+
+    const body = await (await app.request('/v1/names/first')).json();
+    expect(body.data.genesis).toBeNull();
+    expect(body.data.owner).toBeTruthy();
+
+    chain.listNames = originalList;
   });
 });
 

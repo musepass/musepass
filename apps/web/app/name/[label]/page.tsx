@@ -89,13 +89,20 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
 
           {/* The document itself. Three facts a reader can use: whether a card
               has been issued, which chain the name lives on, and whether
-              anything is recorded against it. No invented numbers — there is no
-              genesis number until the first 1,000 cards exist. */}
-          <div className="passport">
+              anything is recorded against it. The gold band is the genesis
+              cover (D18): the first 1,000 names that published a card, in
+              registration order — a derived view of chain facts, not a mint. */}
+          <div className={`passport${data.genesis ? ' passport-genesis' : ''}`}>
             <div className="passport-head">
               <span>{config.productName} pass</span>
               <span>{config.rootName}</span>
             </div>
+            {data.genesis ? (
+              <div className="passport-genesis-band">
+                <span>Genesis cover</span>
+                <span className="mono">#{String(data.genesis.number).padStart(4, '0')}</span>
+              </div>
+            ) : null}
             <div className="passport-name mono">
               {decoded}.{config.rootName}
             </div>
@@ -109,6 +116,14 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
               </span>
             </div>
           </div>
+          {data.genesis ? (
+            <p className="body-2" style={{ fontSize: 14, marginTop: -12, opacity: 0.75 }}>
+              Genesis cover number {data.genesis.number}: among the first 1,000 names that published
+              a card, counted in the order the registrar registered them. It is a display trait of
+              this one name — nothing was minted, and the order can be recomputed from the{' '}
+              <span className="mono">NameRegistered</span> events.
+            </p>
+          ) : null}
 
           <div className="panel">
             <dl className="kv">
