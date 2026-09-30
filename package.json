@@ -33,6 +33,7 @@
     "domain:cutover": "./scripts/cutover-domain.sh"
   },
   "devDependencies": {
+    "viem": "2.56.9",
     "typescript": "5.9.3",
     "ethers": "6.17.0"
   }
