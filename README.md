@@ -1,6 +1,6 @@
 # MuseName
 
-[![CI](https://github.com/musename/musename/actions/workflows/ci.yml/badge.svg)](https://github.com/musename/musename/actions/workflows/ci.yml)
+[![CI](https://github.com/richard7463/musename/actions/workflows/ci.yml/badge.svg)](https://github.com/richard7463/musename/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
 [![Site](https://img.shields.io/badge/site-musename.xyz-black.svg)](https://musename.xyz)
 [![Offline verifier](https://img.shields.io/badge/verifier-offline%20%2F%20ERC--8412-black.svg)](packages/verify/README.md)
