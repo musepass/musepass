@@ -43,7 +43,7 @@ describe('whether to offer the button', () => {
     });
     expect(prompt.offer).toBe(true);
     expect(prompt.actionable).toBe(true);
-    expect(prompt.message).toContain('0x 地址');
+    expect(prompt.message).toContain('hex address');
   });
 
   it('will not pretend a different wallet can set it', () => {

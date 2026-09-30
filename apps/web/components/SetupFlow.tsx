@@ -70,7 +70,7 @@ export function SetupFlow({ config }: { config: PublicConfig }) {
       setObservation(next);
     } catch (cause) {
       setError(
-        cause instanceof Error ? `读链失败：${cause.message}` : '读链失败，请刷新重试。',
+        cause instanceof Error ? `Could not read the chain: ${cause.message}` : 'Could not read the chain. Refresh and try again.',
       );
     } finally {
       setLoading(false);
@@ -103,7 +103,7 @@ export function SetupFlow({ config }: { config: PublicConfig }) {
         chain: null,
       });
       await client.waitForTransactionReceipt({ hash });
-      setNote(`${step.title} 已完成，交易 ${hash}`);
+      setNote(`${step.title} done — transaction ${hash}`);
       await refresh();
     } catch (cause) {
       const code = (cause as { code?: number }).code;
@@ -111,8 +111,8 @@ export function SetupFlow({ config }: { config: PublicConfig }) {
         cause instanceof WalletError
           ? cause.message
           : code === 4001
-            ? '你取消了这笔交易。'
-            : `交易没有成功：${(cause as { shortMessage?: string }).shortMessage ?? '请再试一次。'}`,
+            ? 'You cancelled the transaction.'
+            : `The transaction did not go through: ${(cause as { shortMessage?: string }).shortMessage ?? 'try again.'}`,
       );
     } finally {
       setPending(null);
@@ -125,9 +125,9 @@ export function SetupFlow({ config }: { config: PublicConfig }) {
     try {
       const name = `${config.exampleLabel}.${config.rootName}`;
       const address = await getEnsAddress(client, { name });
-      setResolved(address ? `${name} → ${address}` : `${name} 目前没有解析结果。`);
+      setResolved(address ? `${name} → ${address}` : `${name} does not resolve to anything right now.`);
     } catch (cause) {
-      setError(`解析查询失败：${(cause as { shortMessage?: string }).shortMessage ?? '未知错误'}`);
+      setError(`The resolution lookup failed: ${(cause as { shortMessage?: string }).shortMessage ?? 'unknown error'}`);
     }
   }
 
@@ -136,27 +136,28 @@ export function SetupFlow({ config }: { config: PublicConfig }) {
   return (
     <div className="panel" style={{ display: 'grid', gap: 16 }}>
       <div>
-        <h1 className="h2">启动名字解析</h1>
+        <h1 className="h2">Turn on name resolution</h1>
         <p className="body-2">
-          这一步只做一次。名字 <span className="mono">{config.rootName}</span>{' '}
-          已经在链上，缺的只是把它指向我们的解析器，这样别人（和别的 AI）才能在钱包里查到{' '}
+          This is a one-time step. The name <span className="mono">{config.rootName}</span> is already on
+          chain; what is missing is pointing it at our resolver, so that other people — and other AIs —
+          can find{' '}
           <span className="mono">
             {config.exampleLabel}.{config.rootName}
-          </span>
-          。每一步都会先说清楚要签什么，再让你签。
+          </span>{' '}
+          in their wallet. Each step says what you are about to sign before you sign it.
         </p>
       </div>
       <div className="kv">
-        <span>钱包</span>
+        <span>Wallet</span>
         <span className="mono">
-          {wallet.address ? shortAddress(wallet.address) : '未连接'}
-          {wallet.chainId && wallet.chainId !== 1 ? '（这笔要切到 Ethereum 主网）' : ''}
+          {wallet.address ? shortAddress(wallet.address) : 'not connected'}
+          {wallet.chainId && wallet.chainId !== 1 ? ' (this one needs Ethereum mainnet)' : ''}
         </span>
-        <span>名字主人</span>
+        <span>Name owner</span>
         <span className="mono">
-          {loading && !observation ? '读取中…' : (observation?.rootOwner ?? '未知')}
+          {loading && !observation ? 'reading…' : (observation?.rootOwner ?? 'unknown')}
         </span>
-        <span>进度</span>
+        <span>Progress</span>
         <span>
           {done}/{steps.length}
         </span>
@@ -168,11 +169,11 @@ export function SetupFlow({ config }: { config: PublicConfig }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span className="chip">{index + 1}</span>
             <strong>{step.title}</strong>
-            {step.done ? <span className="pill-pass">已完成</span> : null}
+            {step.done ? <span className="pill-pass">Done</span> : null}
           </div>
           <p className="body-2">{step.detail}</p>
           <div className="kv">
-            <span>发往</span>
+            <span>Sends to</span>
             <span className="mono mono-break">{step.to}</span>
           </div>
           {step.done ? null : step.sendable ? (
@@ -182,13 +183,13 @@ export function SetupFlow({ config }: { config: PublicConfig }) {
               disabled={pending !== null}
               onClick={() => void send(step)}
             >
-              {pending === step.id ? '等待钱包确认…' : '用钱包完成这一步'}
+              {pending === step.id ? 'Waiting for your wallet…' : 'Do this step with my wallet'}
             </button>
           ) : (
             <p className="body-2">{step.blocker}</p>
           )}
           <details>
-            <summary className="body-2">手动执行（复制到钱包或 Etherscan）</summary>
+            <summary className="body-2">Do it by hand (copy into a wallet or Etherscan)</summary>
             <p className="mono mono-break" style={{ fontSize: 12 }}>
               to {step.to}
             </p>
@@ -200,7 +201,7 @@ export function SetupFlow({ config }: { config: PublicConfig }) {
       ))}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <button type="button" className="btn" onClick={() => void refresh()} disabled={loading}>
-          {loading ? '读取链上状态…' : '刷新状态'}
+          {loading ? 'Reading chain state…' : 'Refresh' }
         </button>
         <button
           type="button"
@@ -208,13 +209,14 @@ export function SetupFlow({ config }: { config: PublicConfig }) {
           onClick={() => void checkResolution()}
           disabled={done === 0}
         >
-          查一次真实解析
+          Check a real resolution
         </button>
       </div>
       {resolved ? <div className="notice notice-info mono mono-break">{resolved}</div> : null}
       <p className="body-2">
-        解析器地址是预先算好的：同一段字节码用确定性的 CREATE2 部署，谁付款、什么时候付，
-        地址都不变，所以可以先把地址写在配置里，再决定谁去部署。
+        The resolver address is worked out in advance: the same bytecode deployed with deterministic
+        CREATE2 lands on the same address no matter who pays or when, so the address can be written into
+        config before anyone decides who will deploy it.
       </p>
     </div>
   );

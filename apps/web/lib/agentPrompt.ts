@@ -18,22 +18,30 @@ export const MCP_URL = 'https://gw.musename.xyz/mcp';
 export const SITE_URL = 'https://musename.xyz';
 
 /** The block a human copies into their AI. Short on purpose: a task, not a spec. */
-export const AGENT_PROMPT_ZH = [
-  '帮你的主人注册一个 MuseName 名字。按这个顺序做，不要猜：',
+export const AGENT_PROMPT = [
+  'Register a MuseName name for your owner. Follow this order; do not guess:',
   '',
-  `1. 先读规则文件：${SITE_URL}/ask.txt（纯文本，你直接读，不用问我要）`,
-  `2. 名字的事用 MCP 工具（${MCP_URL}）：`,
-  '   check_name 查是否可用 → request_name 发起注册 → get_status 看有没有确认 → draft_card 起草名片',
-  '   想查任何名字的归属和公开名片：get_profile（只读）',
-  `   连不上 MCP 就用 REST：GET ${SITE_URL}/v1/names/{名字}/available、POST ${SITE_URL}/v1/requests`,
-  '3. 注册必须由主人本人签名。把 request_name 返回的链接交给他，告诉他 15 分钟内有效。',
-  '   主人没签名之前，不要说你已经注册好了。',
-  '4. 主人确认之后再起草名片；名片也要他签名才会公开，默认只有名字和地址是公开的。',
-  '5. 只转述工具返回的内容。查不到就说查不到，缺字段就说缺字段，别补全。',
-  '6. 先问他想用哪个名字（给他 2-3 个备选），再动手。',
-  '7. 如果报错里出现 "issuer wallet is not configured"，说明项目方的代付还没配好，',
-  '   名字没有创建成功 —— 如实告诉主人，不要重试十次。',
+  `1. Read the rules first: ${SITE_URL}/ask.txt (plain text, you can read it yourself)`,
+  `2. Use the MCP tools for names (${MCP_URL}):`,
+  '   check_name to see if it is free -> request_name to start -> get_status to see if it was confirmed -> draft_card to draft the card',
+  '   To look up any name and its public card: get_profile (read only)',
+  `   Without MCP, use REST: GET ${SITE_URL}/v1/names/{name}/available and POST ${SITE_URL}/v1/requests`,
+  '3. Registration must be signed by the owner. Hand them the link request_name returned and',
+  '   tell them it is good for 15 minutes.',
+  '   Do not say the name is registered before the owner has signed.',
+  '4. Only after they confirm, draft the card. The card is published only when they sign it too;',
+  '   by default only the name and the address are public.',
+  '5. Report exactly what the tools returned. If something is missing, say it is missing. Do not fill it in.',
+  '6. Ask which name they want first (offer two or three alternatives), then act.',
+  '7. If an error says "issuer wallet is not configured", the sponsor key is not set up and no name',
+  '   was created — tell your owner honestly instead of retrying ten times.',
 ].join('\n');
+
+/**
+ * The old Chinese prompt, kept only so nothing imports a name that vanished.
+ * The site is English-only; do not render this.
+ */
+export const AGENT_PROMPT_ZH = AGENT_PROMPT;
 
 /** The MCP client config, for people whose client takes a config file. */
 export const MCP_CONFIG_JSON = [

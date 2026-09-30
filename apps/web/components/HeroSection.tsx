@@ -36,7 +36,7 @@ export function HeroSection({ config }: { config: PublicConfig }) {
     } catch (error) {
       setStatus({
         kind: 'error',
-        message: error instanceof ApiError ? error.message : '查询失败，请稍后再试。',
+        message: error instanceof ApiError ? error.message : 'The lookup failed. Try again in a moment.',
       });
     }
   }
@@ -45,17 +45,18 @@ export function HeroSection({ config }: { config: PublicConfig }) {
     <section className="hero" id="top">
       <div className="hero-copy">
         <h1 className="h1">
-          给你的 AI
+          A name for
           <br />
-          一个名字。
+          your AI.
         </h1>
         <p className="lede">
-          名字在所有支持 ENS 的钱包里都能用。名片告诉别人它能做什么，履历证明它真的做到过。
+          The name works in every wallet that speaks ENS. The card says what it does, and the track record
+          proves it actually did.
         </p>
 
         <div className="search-block">
           <label className="search-label" htmlFor="name-search">
-            查一个名字
+            Check a name
           </label>
           <div className="search">
             <input
@@ -64,7 +65,7 @@ export function HeroSection({ config }: { config: PublicConfig }) {
               type="text"
               autoComplete="off"
               spellCheck={false}
-              placeholder="输入名字，例如 xiaoming"
+              placeholder="Type a name, for example xiaoming"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => {
@@ -78,7 +79,7 @@ export function HeroSection({ config }: { config: PublicConfig }) {
               disabled={status.kind === 'loading'}
               onClick={() => void run(query)}
             >
-              {status.kind === 'loading' ? '查询中' : '查询'}
+              {status.kind === 'loading' ? 'Checking' : 'Check'}
             </button>
           </div>
 
@@ -110,10 +111,10 @@ function StatusLine({
   onPick: (next: string) => void;
 }) {
   if (status.kind === 'idle') {
-    return <span className="status-idle">或者直接对你的 AI 说：“帮你自己注册个名字。”</span>;
+    return <span className="status-idle">Or just tell your AI: “register a name for yourself”.</span>;
   }
   if (status.kind === 'loading') {
-    return <span className="status-idle">正在查…</span>;
+    return <span className="status-idle">Checking…</span>;
   }
   if (status.kind === 'error') {
     return <span className="status-danger">{status.message}</span>;
@@ -134,13 +135,13 @@ function StatusLine({
                 strokeLinejoin="round"
               />
             </svg>
-            {view.label}.{config.rootName} 可以注册，免费。
+            {view.label}.{config.rootName} is available, free.
           </span>
           <Link className="status-link" href={`/claim?label=${encodeURIComponent(view.label)}`}>
-            连接钱包领取
+            Connect a wallet to claim it
           </Link>
           <span className="status-note">
-            手续费我们代付。也可以直接对你的 AI 说：“帮你自己注册个名字。”
+            We pay the gas. Or tell your AI: “register a name for yourself”.
           </span>
         </>
       );
@@ -149,14 +150,14 @@ function StatusLine({
       return (
         <>
           <span className="status-taken">
-            {view.label}.{config.rootName} 已被注册。
+            {view.label}.{config.rootName} is taken.
           </span>
           <Link className="status-link" href={`/name/${encodeURIComponent(view.label)}`}>
-            查看它的主页
+            See its page
           </Link>
           {view.suggestions.length > 0 ? (
             <span className="suggestions">
-              试试：
+              Try:
               {view.suggestions.map((candidate) => (
                 <button
                   key={candidate}
@@ -175,18 +176,18 @@ function StatusLine({
     case 'premium':
       return (
         <span className="status-warn">
-          {view.label} 太短，属于靓号。
-          {config.features.premiumPurchase ? '可以购买。' : '目前还没开放购买。'}
+          {view.label} is short enough to be a premium name.{' '}
+          {config.features.premiumPurchase ? 'It can be bought.' : 'Premium names are not on sale yet.'}
         </span>
       );
 
     case 'reserved':
       return (
         <>
-          <span className="status-danger">{view.label} 是保留名字，不开放注册。</span>
+          <span className="status-danger">{view.label} is reserved and cannot be registered.</span>
           {view.appealable ? (
             <a className="status-link" href={`mailto:${config.supportEmail}`}>
-              如果这是你的品牌，可以提交申请
+              If this is your brand, you can apply for it
             </a>
           ) : null}
         </>

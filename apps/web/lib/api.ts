@@ -112,11 +112,12 @@ export interface RequestData {
 
 export interface PublicConfig {
   productName: string;
-  tagline: { zh: string; en: string };
+  /** English only: the site must not render Chinese. The API may still send zh. */
+  tagline: { en: string; zh?: string };
   rootName: string;
   siteUrl: string;
   supportEmail: string;
-  legalDisclaimer: { zh: string; en: string };
+  legalDisclaimer: { en: string; zh?: string };
   exampleLabel: string;
   chain: { name: string; chainId: number; explorer: string | null };
   registrar: string | null;
@@ -152,12 +153,11 @@ export interface PublicConfig {
 /** Used when the API cannot be reached so the landing page still renders. */
 export const FALLBACK_CONFIG: PublicConfig = {
   productName: 'MuseName',
-  tagline: { zh: '给每个 AI 一个可信的名字', en: 'Give every AI a name worth trusting' },
+  tagline: { en: 'Give every AI a name worth trusting' },
   rootName: 'musename.eth',
   siteUrl: 'https://musename.xyz',
   supportEmail: 'support@musename.xyz',
   legalDisclaimer: {
-    zh: 'MuseName 是独立项目，与 Meta 及其任何产品无关。',
     en: 'MuseName is an independent project, not affiliated with Meta.',
   },
   exampleLabel: 'xiaoming',
@@ -241,13 +241,13 @@ async function request<T>(
     try {
       payload = (await response.json()) as ApiEnvelope<T>;
     } catch {
-      throw new ApiError('BAD_RESPONSE', `服务返回了无法解析的内容 (HTTP ${response.status})`, response.status);
+      throw new ApiError('BAD_RESPONSE', `The service returned something unreadable (HTTP ${response.status})`, response.status);
     }
 
     if (!response.ok && (!payload.errors || payload.errors.length === 0)) {
       throw new ApiError(
         'HTTP_ERROR',
-        payload.summary?.zh ?? `请求失败 (HTTP ${response.status})`,
+        payload.summary?.en ?? `Request failed (HTTP ${response.status})`,
         response.status,
       );
     }
@@ -255,9 +255,9 @@ async function request<T>(
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new ApiError('TIMEOUT', '服务响应太慢，请稍后再试。', 0);
+      throw new ApiError('TIMEOUT', 'The service took too long to answer. Try again shortly.', 0);
     }
-    throw new ApiError('NETWORK', '连不上名字服务，请检查网络或稍后再试。', 0);
+    throw new ApiError('NETWORK', 'Could not reach the name service. Check your connection or try again.', 0);
   } finally {
     clearTimeout(timeout);
   }
@@ -339,12 +339,44 @@ export function publishCard(name: string, payload: PublishCardPayload, options?:
   );
 }
 
+/**
+ * Drop every Chinese string from anything the browser will receive.
+ *
+ * The API answers in several languages on purpose, and the config it returns
+ * carries both. The site is English-only, and the config travels to the browser
+ * inside the rendered payload — so a `zh` field nobody renders still ends up in
+ * the HTML. Removing the translations here is the difference between "we do not
+ * display Chinese" and "the page does not contain Chinese".
+ *
+ * Belt and braces: any string containing a CJK character is dropped, and any
+ * key with nothing left is dropped with it.
+ */
+const CJK_CHAR = /[\u1100-\u11ff\u2e80-\u2fdf\u3000-\u303f\u3040-\u30ff\u3130-\u318f\u3400-\u4dbf\u4e00-\u9fff\ua960-\ua97f\uac00-\ud7ff\uf900-\ufaff\ufe30-\ufe4f\uff00-\uffef]/;
+
+export function stripChinese<T>(value: T): T {
+  if (typeof value === 'string') {
+    return value.replace(CJK_CHAR, '') as unknown as T;
+  }
+  if (Array.isArray(value)) {
+    return value.filter((entry) => !(typeof entry === 'string' && CJK_CHAR.test(entry))).map(stripChinese) as unknown as T;
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      if (typeof entry === 'string' && CJK_CHAR.test(entry)) continue;
+      out[key] = stripChinese(entry);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 export async function fetchConfig(options?: RequestOptions): Promise<PublicConfig> {
   try {
     const payload = await request<PublicConfig>('/v1/config', {}, options);
-    return payload.data ?? FALLBACK_CONFIG;
+    return stripChinese(payload.data ?? FALLBACK_CONFIG);
   } catch {
     // The landing page must render even when the API is down.
-    return FALLBACK_CONFIG;
+    return stripChinese(FALLBACK_CONFIG);
   }
 }

@@ -1,7 +1,7 @@
 import { LegalPlaceholder } from '@/components/LegalPlaceholder';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: '隐私政策' };
+export const metadata = { title: 'Privacy' };
 export const revalidate = 3600;
 
 export default async function PrivacyPage() {
@@ -9,8 +9,8 @@ export default async function PrivacyPage() {
   return (
     <LegalPlaceholder
       config={config}
-      title="隐私政策"
-      body="隐私政策还没有定稿。可以确定的是产品本身的原则：名片字段默认全部不公开，只有名字和地址可见，其余由主人逐项选择；履历只记录能被证据证明的事。"
+      title="Privacy"
+      body="The privacy policy is not written yet. What is already true of the product: every card field is private by default — only the name and the address are visible, and the owner opts the rest in one field at a time. A track record only holds what evidence can prove."
     />
   );
 }

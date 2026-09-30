@@ -11,13 +11,13 @@ export default function ErrorPage({
     <div className="page">
       <div className="container">
         <main className="narrow">
-          <h1 className="h2">页面出错了。</h1>
+          <h1 className="h2">Something went wrong.</h1>
           <div className="notice notice-error">
-            我们没能渲染这一页。没有发生任何链上操作，也不会产生任何费用。
+            We could not render this page. Nothing happened on chain, and nothing was charged.
           </div>
-          {error.digest ? <p className="mono-break">错误编号：{error.digest}</p> : null}
+          {error.digest ? <p className="mono-break">Error id: {error.digest}</p> : null}
           <button type="button" className="btn btn-primary" onClick={reset}>
-            重试
+            Try again
           </button>
         </main>
       </div>

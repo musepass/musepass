@@ -77,7 +77,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       return address;
     } catch (error) {
       const message =
-        error instanceof WalletError ? error.message : '连接钱包失败，请再试一次。';
+        error instanceof WalletError ? error.message : 'Could not connect the wallet. Try again.';
       setState({ address: null, chainId: null, connecting: false, error: message });
       throw error;
     }
@@ -92,7 +92,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       await ensureChain(chainId);
       setState((prev) => ({ ...prev, chainId, error: null }));
     } catch (error) {
-      const message = error instanceof WalletError ? error.message : '切换网络失败。';
+      const message = error instanceof WalletError ? error.message : 'Could not switch networks.';
       setState((prev) => ({ ...prev, error: message }));
       throw error;
     }

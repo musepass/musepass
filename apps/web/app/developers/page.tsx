@@ -1,7 +1,7 @@
 import { LegalPlaceholder } from '@/components/LegalPlaceholder';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: '开发者文档' };
+export const metadata = { title: 'Developers' };
 export const revalidate = 3600;
 
 export default async function DevelopersPage() {
@@ -9,8 +9,8 @@ export default async function DevelopersPage() {
   return (
     <LegalPlaceholder
       config={config}
-      title="开发者文档"
-      body={`查询接口在 ${config.siteUrl} 同名后端的 /v1 下：可用性查询、注册请求、名字查询、名片版本。MCP 服务提供 check_name、request_name、get_status、draft_card、get_profile 五个工具，任何能连接 MCP 的 AI 都可以直接调用。履历验证是离线的：命令行在 packages/verify，浏览器里在 /verify —— 判定在你自己那台机器上算，不经过我们的服务器。`}
+      title="Developers"
+      body={`The query API lives under /v1 on ${config.siteUrl}: availability, registration requests, name lookup, card versions. The MCP server exposes five tools — check_name, request_name, get_status, draft_card, get_profile — and any AI that can connect to MCP can call them directly. Record verification is offline: the CLI is in packages/verify, the browser version is at /verify, and the verdict is computed on your own machine rather than on our server.`}
     />
   );
 }

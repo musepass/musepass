@@ -52,7 +52,7 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         setAvailability(resolveAvailability(payload, trimmed));
       } catch (cause) {
         setAvailability(null);
-        setError(cause instanceof ApiError ? cause.message : '查不到这个名字的状态。');
+        setError(cause instanceof ApiError ? cause.message : 'The status of that name could not be read.');
       } finally {
         setPhase('ready');
       }
@@ -78,7 +78,7 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         }
       } catch (cause) {
         if (!cancelled) {
-          setError(cause instanceof ApiError ? cause.message : '这个确认链接查不到。');
+          setError(cause instanceof ApiError ? cause.message : 'That confirmation link could not be found.');
         }
       }
     })();
@@ -137,7 +137,7 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
       if (cause instanceof WalletError || cause instanceof ApiError) {
         setError(cause.message);
       } else {
-        setError('没能完成，请再试一次。');
+        setError('It did not go through. Try again.');
       }
     }
   }
@@ -148,17 +148,17 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
       <div className="panel">
         <div className="notice notice-ok">
           {result.alreadyRegistered
-            ? `${result.fullName} 已经是你的了。`
-            : `搞定，${result.fullName} 现在是你的了。`}
+            ? `${result.fullName} is already yours.`
+            : `Done — ${result.fullName} is yours now.`}
         </div>
         <dl className="kv">
-          <dt>名字</dt>
+          <dt>Name</dt>
           <dd className="mono">{result.fullName}</dd>
-          <dt>所有者</dt>
+          <dt>Owner</dt>
           <dd className="mono">{result.owner}</dd>
           {result.txHash ? (
             <>
-              <dt>交易</dt>
+              <dt>Transaction</dt>
               <dd className="mono-break">
                 {explorer ? (
                   <a href={`${explorer}/tx/${result.txHash}`} target="_blank" rel="noreferrer">
@@ -173,15 +173,15 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         </dl>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <a className="btn btn-primary" href={`/name/${encodeURIComponent(result.label)}`}>
-            查看名字主页
+            See the name&apos;s page
           </a>
           <a className="btn" href="/">
-            回首页
+            Back to the home page
           </a>
         </div>
         <p className="body-2" style={{ fontSize: 15 }}>
-          名字已经在你的钱包里了。即使我们停止服务，它依然存在、依然能用。下一步是名片——它可以告诉别的
-          AI 你能做什么，公开哪些字段完全由你决定。
+          The name is in your wallet. Even if we shut down, it stays and keeps working. Next comes the
+          card — it tells another AI what you do, and you decide which fields anyone can see.
         </p>
       </div>
     );
@@ -191,7 +191,8 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
     return (
       <div className="panel">
         <div className="notice notice-warn">
-          名字服务还没有配置好（缺少合约地址），暂时不能发放名字。我们没有对你的钱包做任何操作。
+          The name service is not configured yet (a contract address is missing), so names cannot be
+          issued right now. Nothing was done to your wallet.
         </div>
       </div>
     );
@@ -201,20 +202,20 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="panel">
         <h2 className="h2" style={{ fontSize: 28 }}>
-          {mode === 'confirm' ? '确认一下，就完成了。' : '领取一个名字'}
+          {mode === 'confirm' ? 'One confirmation and it is done.' : 'Claim a name'}
         </h2>
 
         {mode === 'confirm' && request ? (
           <div className="notice notice-info">
-            这个请求来自 <b>{request.requestedByHost ?? '某个 AI'}</b>，是给{' '}
-            <span className="mono">{request.requestedFor}</span> 准备的。
-            {request.expiresAt ? ` 链接近期有效，过期后让 AI 重新发起即可。` : ''}
+            This request came from <b>{request.requestedByHost ?? 'an AI'}</b>, for{' '}
+            <span className="mono">{request.requestedFor}</span>.{' '}
+            {request.expiresAt ? 'The link expires; if it does, ask the AI to start again.' : ''}
           </div>
         ) : null}
 
         <div className="search-block" style={{ marginTop: 0 }}>
           <label className="search-label" htmlFor="claim-name">
-            名字
+            Name
           </label>
           <div className="search">
             <input
@@ -236,7 +237,7 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
             />
             <span className="search-suffix">.{config.rootName}</span>
             <button type="button" className="search-button" onClick={() => void check(label)}>
-              检查
+              Check
             </button>
           </div>
           <div className="status" aria-live="polite">
@@ -247,17 +248,17 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
 
       <div className="panel">
         <h3 className="faq-q" style={{ fontSize: 18 }}>
-          第二步：连接钱包并签名
+          Step 2: connect a wallet and sign
         </h3>
         <p className="body-2" style={{ fontSize: 15 }}>
-          名字会直接归到这个钱包地址，手续费由我们代付。只有你签了名，才会真的发放——AI
-          和我们都不能替你签名，也不能动你已有的名字。
+          The name goes straight to this wallet address, and we pay the gas. Nothing is issued until you
+          sign — neither we nor your AI can sign for you, or touch the names you already hold.
         </p>
 
         {wallet.address ? (
           <div className="notice notice-info">
-            已连接 <span className="mono">{wallet.address}</span>
-            {wrongChain ? ` · 需要切到 ${config.chain.name}` : ''}
+            Connected <span className="mono">{wallet.address}</span>
+            {wrongChain ? ` · switch to ${config.chain.name}` : ''}
           </div>
         ) : null}
 
@@ -278,13 +279,13 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
                 }
               }}
             >
-              {wallet.connecting ? '连接中…' : '连接钱包'}
+              {wallet.connecting ? 'Connecting…' : 'Connect wallet'}
             </button>
           ) : null}
 
           {wallet.address && wrongChain ? (
             <button type="button" className="btn" onClick={() => void wallet.switchTo(config.chain.chainId)}>
-              切换到 {config.chain.name}
+              Switch to {config.chain.name}
             </button>
           ) : null}
 
@@ -295,10 +296,10 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
             onClick={() => void claim()}
           >
             {phase === 'signing'
-              ? '等待钱包签名…'
+              ? 'Waiting for your signature…'
               : phase === 'submitting'
-                ? '发放中…'
-                : '签名并领取'}
+                ? 'Issuing…'
+                : 'Sign and claim'}
           </button>
         </div>
       </div>
@@ -313,33 +314,33 @@ function AvailabilityLine({
   view: AvailabilityView | null;
   config: PublicConfig;
 }) {
-  if (!view) return <span className="status-idle">输入一个名字，先看看能不能用。</span>;
+  if (!view) return <span className="status-idle">Type a name to see whether it is free.</span>;
   switch (view.kind) {
     case 'available':
       return (
         <span className="status-ok">
-          {view.label}.{config.rootName} 可以注册，免费。
+          {view.label}.{config.rootName} is available, free.
         </span>
       );
     case 'taken':
       return (
         <span className="status-taken">
-          {view.label}.{config.rootName} 已被注册。换一个，或者去
+          {view.label}.{config.rootName} is taken. Pick another, or{' '}
           <a className="status-link" href={`/name/${encodeURIComponent(view.label)}`}>
-            看看它的主页
+            see its page
           </a>
-          。
+          .
         </span>
       );
     case 'premium':
       return (
         <span className="status-warn">
-          {view.label} 太短，属于靓号。
-          {config.features.premiumPurchase ? '' : '目前还没开放购买。'}
+          {view.label} is short enough to be a premium name.{' '}
+          {config.features.premiumPurchase ? '' : 'Premium names are not on sale yet.'}
         </span>
       );
     case 'reserved':
-      return <span className="status-danger">{view.label} 是保留名字，不开放注册。</span>;
+      return <span className="status-danger">{view.label} is reserved and cannot be registered.</span>;
     case 'invalid':
     case 'unavailable':
       return <span className="status-danger">{view.message}</span>;

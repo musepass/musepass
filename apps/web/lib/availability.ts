@@ -11,7 +11,7 @@ import type { ApiEnvelope, AvailabilityData } from './api';
  *   available
  *
  * `unavailable` is a sixth state the design does not draw: the chain could not
- * be read. We must not show "可以注册" when we did not actually check.
+ * be read. We must not show "available" when we did not actually check.
  */
 export type AvailabilityView =
   | { kind: 'available'; label: string; fullName: string }
@@ -41,7 +41,7 @@ export function resolveAvailability(
   const fullName = payload.data?.fullName ?? label;
 
   if (payload.errors.some((error) => INVALID_CODES.has(error.code))) {
-    return { kind: 'invalid', message: payload.summary?.zh ?? '这个名字不合规。' };
+    return { kind: 'invalid', message: payload.summary?.en ?? 'That name does not pass the naming rules.' };
   }
 
   if (codes.has('RESERVED_NAME') || payload.data?.reserved) {
@@ -68,9 +68,9 @@ export function resolveAvailability(
   if (payload.data?.available === null || payload.meta?.verified === false) {
     return {
       kind: 'unavailable',
-      message: payload.summary?.zh ?? '链上暂时读不到，请稍后再试。',
+      message: payload.summary?.en ?? 'The chain could not be read just now. Try again shortly.',
     };
   }
 
-  return { kind: 'unavailable', message: payload.summary?.zh ?? '暂时无法判断这个名字。' };
+  return { kind: 'unavailable', message: payload.summary?.en ?? 'This name cannot be judged right now.' };
 }

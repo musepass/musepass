@@ -9,7 +9,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 const envelopeBody = {
-  summary: { zh: '可以用。', en: 'available' },
+  summary: { zh: '(unused)', en: 'available' },
   data: { label: 'aguang', fullName: 'aguang.musename.eth', available: true },
   errors: [],
   meta: { asOf: 'now', chain: 'base', chainId: 8453, verified: true, root: 'musename.eth' },
@@ -21,18 +21,18 @@ describe('api client', () => {
       fetchImpl: (async () => jsonResponse(envelopeBody)) as unknown as typeof fetch,
     });
     expect(payload.data.available).toBe(true);
-    expect(payload.summary.zh).toBe('可以用。');
+    expect(payload.summary.en).toBe('available');
   });
 
   it('url-encodes the name', async () => {
     let called = '';
-    await checkAvailability('阿光摄影', {
+    await checkAvailability('a-guang-photography', {
       fetchImpl: (async (url: string) => {
         called = url;
         return jsonResponse(envelopeBody);
       }) as unknown as typeof fetch,
     });
-    expect(called).toContain(encodeURIComponent('阿光摄影'));
+    expect(called).toContain(encodeURIComponent('a-guang-photography'));
   });
 
   it('keeps a business failure as data, not as an exception', async () => {
@@ -40,7 +40,7 @@ describe('api client', () => {
       fetchImpl: (async () =>
         jsonResponse(
           {
-            summary: { zh: '这个名字被保留。', en: 'reserved' },
+            summary: { zh: '(unused)', en: 'reserved' },
             data: { label: 'admin', available: false },
             errors: [{ code: 'RESERVED_NAME', message: 'reserved' }],
             meta: { asOf: 'now', chain: 'base', chainId: 8453, verified: true, root: 'musename.eth' },
@@ -75,7 +75,7 @@ describe('api client', () => {
         { label: 'a', owner: '0x0', deadline: 1, signature: '0x' },
         {
           fetchImpl: (async () =>
-            jsonResponse({ summary: { zh: '出错', en: 'oops' } }, 500)) as unknown as typeof fetch,
+            jsonResponse({ summary: { zh: '(unused)', en: 'oops' } }, 500)) as unknown as typeof fetch,
         },
       ),
     ).rejects.toMatchObject({ code: 'HTTP_ERROR', status: 500 });

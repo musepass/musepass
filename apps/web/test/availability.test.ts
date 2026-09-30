@@ -5,10 +5,10 @@ import { resolveAvailability } from '../lib/availability';
 function envelope(
   data: Partial<AvailabilityData>,
   errors: Array<{ code: string; message?: string }> = [],
-  options: { summaryZh?: string; verified?: boolean } = {},
+  options: { summaryEn?: string; verified?: boolean } = {},
 ): ApiEnvelope<AvailabilityData> {
   return {
-    summary: { zh: options.summaryZh ?? '结论。', en: 'summary' },
+    summary: { zh: '(unused)', en: options.summaryEn ?? 'summary' },
     data: {
       label: 'aguang',
       fullName: 'aguang.musename.eth',
@@ -67,16 +67,16 @@ describe('resolveAvailability', () => {
   it('reports invalid input with the sentence from the backend', () => {
     const view = resolveAvailability(
       envelope({ label: null }, [{ code: 'INVALID_CHARACTER' }], {
-        summaryZh: '这个名字里有 ENS 不支持的字符。',
+        summaryEn: 'That name has characters ENS does not support.',
       }),
     );
-    expect(view).toEqual({ kind: 'invalid', message: '这个名字里有 ENS 不支持的字符。' });
+    expect(view).toEqual({ kind: 'invalid', message: 'That name has characters ENS does not support.' });
   });
 
   it('never says a name is free when the chain was not read', () => {
     const view = resolveAvailability(
       envelope({ available: null, onChainFree: null }, [], {
-        summaryZh: '链上暂时查不通。',
+        summaryEn: 'The chain could not be reached just now.',
       }),
       'aguang',
     );
@@ -87,10 +87,10 @@ describe('resolveAvailability', () => {
     const view = resolveAvailability(
       envelope({ available: null, onChainFree: null }, [], {
         verified: false,
-        summaryZh: '链上暂时查不通，请稍后再试。',
+        summaryEn: 'The chain could not be reached just now. Try again shortly.',
       }),
     );
-    expect(view).toEqual({ kind: 'unavailable', message: '链上暂时查不通，请稍后再试。' });
+    expect(view).toEqual({ kind: 'unavailable', message: 'The chain could not be reached just now. Try again shortly.' });
   });
 });
 
@@ -129,7 +129,7 @@ describe('state priority', () => {
 
   it('falls back to unavailable instead of guessing', () => {
     const view = resolveAvailability(envelope({ available: false, onChainFree: null }, [], {
-      summaryZh: '暂时无法判断这个名字。',
+      summaryEn: 'This name cannot be judged right now.',
     }));
     expect(view.kind).toBe('unavailable');
   });

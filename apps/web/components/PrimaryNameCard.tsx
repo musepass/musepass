@@ -99,7 +99,7 @@ export function PrimaryNameCard({ fullName, ownerAddress }: { fullName: string; 
         chain: null,
       });
       await client.waitForTransactionReceipt({ hash });
-      setNote(`主名字已提交：${hash}`);
+      setNote(`Primary name submitted: ${hash}`);
       await load();
     } catch (cause) {
       const code = (cause as { code?: number }).code;
@@ -107,8 +107,8 @@ export function PrimaryNameCard({ fullName, ownerAddress }: { fullName: string; 
         cause instanceof WalletError
           ? cause.message
           : code === 4001
-            ? '你取消了这笔交易。'
-            : `没有成功：${(cause as { shortMessage?: string }).shortMessage ?? '请再试一次。'}`,
+            ? 'You cancelled the transaction.'
+            : `Did not go through: ${(cause as { shortMessage?: string }).shortMessage ?? 'try again.'}`,
       );
     } finally {
       setBusy(false);
@@ -119,7 +119,7 @@ export function PrimaryNameCard({ fullName, ownerAddress }: { fullName: string; 
     return (
       <div className="panel">
         <h2 className="faq-q" style={{ fontSize: 18 }}>
-          主名字
+          Primary name
         </h2>
         <div className="notice notice-ok">{prompt.message}</div>
       </div>
@@ -129,19 +129,20 @@ export function PrimaryNameCard({ fullName, ownerAddress }: { fullName: string; 
   return (
     <div className="panel">
       <h2 className="faq-q" style={{ fontSize: 18 }}>
-        主名字
+        Primary name
       </h2>
-      <p className="body-2">{checking ? '正在读链上的反向记录…' : prompt.message}</p>
+      <p className="body-2">{checking ? 'Reading the reverse record from the chain…' : prompt.message}</p>
       {prompt.actionable ? (
         <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void setName()}>
-          {busy ? '等待钱包确认…' : '把这个名字设为主名字'}
+          {busy ? 'Waiting for your wallet…' : 'Make this my primary name'}
         </button>
       ) : null}
       {error ? <div className="notice notice-error" style={{ marginTop: 8 }}>{error}</div> : null}
       {note ? <div className="notice notice-ok" style={{ marginTop: 8 }}>{note}</div> : null}
       <p className="body-2" style={{ fontSize: 13, marginTop: 8 }}>
-        反向记录在以太坊主网的 <span className="mono">addr.reverse</span> 命名空间里，
-        只有这个地址本人能写。设好之后，钱包和区块浏览器显示的就是名字，而不是一串 0x 地址。
+        The reverse record lives in the <span className="mono">addr.reverse</span> namespace on Ethereum
+        mainnet, and only the address itself can write it. Once it is set, wallets and block explorers
+        show the name instead of a hex address.
       </p>
     </div>
   );

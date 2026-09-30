@@ -103,7 +103,7 @@ describe('step order', () => {
     // Pointing ENS at a resolver that does not know where the data lives takes
     // the root name itself offline, so this order is not a preference.
     expect(setResolver.sendable).toBe(false);
-    expect(setResolver.blocker).toContain('上一步');
+    expect(setResolver.blocker).toContain('previous step');
   });
 
   it('unlocks setResolver once the registry entry exists', () => {
@@ -119,7 +119,7 @@ describe('step order', () => {
     expect(deploy.done).toBe(false);
     expect(deploy.sendable).toBe(true);
     expect(setRegistry.sendable).toBe(false);
-    expect(setRegistry.blocker).toContain('还没部署');
+    expect(setRegistry.blocker).toContain('not deployed');
   });
 
   it('tells a stranger which account has to sign', () => {

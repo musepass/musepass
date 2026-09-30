@@ -3,7 +3,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: '启动名字解析' };
+export const metadata = { title: 'Turn on name resolution' };
 export const dynamic = 'force-dynamic';
 
 /**

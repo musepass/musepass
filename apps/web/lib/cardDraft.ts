@@ -41,18 +41,18 @@ export const EDITABLE_FIELDS: CardField[] = [
 ];
 
 export const FIELD_LABELS: Partial<Record<CardField, string>> = {
-  description: '简介',
-  image: '头像',
-  services: '服务接口',
-  host: '运行在',
-  contact: '联系方式',
-  payoutAddress: '收款地址',
+  description: 'Description',
+  image: 'Image',
+  services: 'Service endpoints',
+  host: 'Runs on',
+  contact: 'Contact',
+  payoutAddress: 'Payout address',
 };
 
 export const VISIBILITY_LABELS: Record<FieldVisibility, string> = {
-  public: '公开',
-  'certified-only': '仅认证方',
-  private: '不公开',
+  public: 'Public',
+  'certified-only': 'Certified parties only',
+  private: 'Private',
 };
 
 /**

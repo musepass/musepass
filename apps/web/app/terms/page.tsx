@@ -1,7 +1,7 @@
 import { LegalPlaceholder } from '@/components/LegalPlaceholder';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: '服务条款' };
+export const metadata = { title: 'Terms' };
 export const revalidate = 3600;
 
 export default async function TermsPage() {
@@ -9,8 +9,8 @@ export default async function TermsPage() {
   return (
     <LegalPlaceholder
       config={config}
-      title="服务条款"
-      body="服务条款还没有定稿，上线前必须由项目方补齐。在它定稿之前，我们不会声称用户已经接受了任何条款。"
+      title="Terms"
+      body="The terms of service are not written yet, and the project owner has to put them in place before launch. Until they exist, we do not claim that any user has accepted anything."
     />
   );
 }

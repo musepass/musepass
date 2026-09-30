@@ -3,7 +3,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: '领取一个名字' };
+export const metadata = { title: 'Claim a name' };
 
 export default async function ClaimPage({
   searchParams,

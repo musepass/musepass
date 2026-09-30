@@ -26,14 +26,14 @@ export async function runVerification(text: string): Promise<VerifiedCase | Fail
   try {
     parsed = JSON.parse(text);
   } catch (error) {
-    return { ok: false, error: `这段 JSON 读不了：${(error as Error).message}` };
+    return { ok: false, error: `That JSON does not parse: ${(error as Error).message}` };
   }
 
   const candidate = Array.isArray(parsed) ? parsed[0] : parsed;
-  if (!isRecord(candidate)) return { ok: false, error: '最外层应该是一个对象。' };
+  if (!isRecord(candidate)) return { ok: false, error: 'The top level should be a JSON object.' };
   for (const key of ['chain', 'criteria', 'bundle', 'attestation'] as const) {
     if (!isRecord(candidate[key])) {
-      return { ok: false, error: `缺 ${key}。需要 chain / criteria / bundle / attestation 四份。` };
+      return { ok: false, error: `Missing ${key}. A package needs all four: chain / criteria / bundle / attestation.` };
     }
   }
 
@@ -41,6 +41,6 @@ export async function runVerification(text: string): Promise<VerifiedCase | Fail
     const result = await verifyPackage(candidate as never);
     return { ok: true, result };
   } catch (error) {
-    return { ok: false, error: `验证器拒绝了这份输入：${(error as Error).message}` };
+    return { ok: false, error: `The verifier rejected this input: ${(error as Error).message}` };
   }
 }

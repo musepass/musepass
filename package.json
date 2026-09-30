@@ -8,9 +8,9 @@
   },
   "scripts": {
     "build": "pnpm -r --if-present build",
-    "check": "pnpm typecheck && pnpm test && pnpm test:contracts && pnpm claims:check",
-    "clean": "pnpm -r --if-present clean",
+    "check": "pnpm typecheck && pnpm test && pnpm test:contracts && pnpm claims:check && pnpm web:english",
     "claims:check": "node scripts/check-public-claims.mjs",
+    "clean": "pnpm -r --if-present clean",
     "fetch:erc8412": "node scripts/fetch-erc8412-vectors.mjs",
     "gen:web-bytecode": "node scripts/generate-web-bytecode.mjs",
     "health": "node scripts/health-report.mjs",
@@ -18,16 +18,17 @@
     "install:all": "pnpm install",
     "l1:resolver": "node scripts/l1-resolver.mjs",
     "package:review": "node scripts/package-review.mjs",
+    "power:inventory": "node scripts/security-power-inventory.mjs",
     "review:package": "node scripts/build-review-package.mjs",
     "snapshot:names": "node scripts/name-snapshot.mjs",
-    "power:inventory": "node scripts/security-power-inventory.mjs",
     "test": "pnpm build && pnpm -r --if-present test",
     "test:contracts": "cd contracts && forge test -vv",
     "typecheck": "pnpm build && pnpm -r --if-present typecheck",
     "verify:local": "./scripts/verify-local.sh",
     "verify:resolution": "anvil --fork-url ${ETH_SEPOLIA_RPC:-https://ethereum-sepolia-rpc.publicnode.com} --port 8565 --silent --balance 1000 & FORK=$!; sleep 8; MUSENAME_E2E_OWNER_KEY=${MUSENAME_E2E_OWNER_KEY:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80} MUSENAME_E2E_GATEWAY_KEY=${MUSENAME_E2E_GATEWAY_KEY:-0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d} MUSENAME_EXPECTED_OWNER=${MUSENAME_EXPECTED_OWNER:-0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d} node scripts/resolution-e2e.mjs --rpc http://127.0.0.1:8565 --l2-registry ${MUSENAME_L2_REGISTRY:-0xdb0e02b4e3509d72c660241f4069b3a477815eb9}; STATUS=$?; kill $FORK 2>/dev/null; exit $STATUS",
     "verify:vectors": "node packages/verify/dist/cli.js --vectors packages/verify/test/fixtures/erc8412",
-    "wallet:compat": "node scripts/wallet-compat.mjs"
+    "wallet:compat": "node scripts/wallet-compat.mjs",
+    "web:english": "node scripts/check-web-english.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",

@@ -41,7 +41,7 @@ export interface WellKnownDocument {
   publishedFields: string;
   notVerified: Array<{ claim: string; why: string }>;
   contact: string;
-  legalDisclaimer: { zh: string; en: string };
+  legalDisclaimer: { en: string; zh?: string };
 }
 
 /**

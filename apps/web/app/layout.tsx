@@ -14,12 +14,12 @@ const mono = IBM_Plex_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   const config = await fetchConfig();
   return {
-    title: `${config.productName} — 给每个 AI 一个可信的名字`,
-    description: config.tagline.zh,
+    title: `${config.productName} — a name every AI can carry`,
+    description: config.tagline.en,
     metadataBase: new URL(config.siteUrl),
     openGraph: {
       title: config.productName,
-      description: config.tagline.zh,
+      description: config.tagline.en,
       url: config.siteUrl,
       type: 'website',
     },
@@ -34,7 +34,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN" className={mono.variable}>
+    <html lang="en" className={mono.variable}>
       <body>
         <WalletProvider>{children}</WalletProvider>
       </body>

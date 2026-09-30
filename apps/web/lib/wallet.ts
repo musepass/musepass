@@ -58,7 +58,7 @@ export function getProvider(): Eip1193Provider {
   if (typeof window === 'undefined' || !window.ethereum) {
     throw new WalletError(
       'NO_WALLET',
-      '没有检测到浏览器钱包。装一个 MetaMask 或 Coinbase Wallet，或者直接对你的 AI 说“帮你自己注册个名字”。',
+      'No browser wallet found. Install MetaMask or Coinbase Wallet, or just tell your AI: “register a name for yourself”.',
     );
   }
   return window.ethereum;
@@ -77,7 +77,7 @@ export async function connect(): Promise<Address> {
   const accounts = (await getProvider().request({
     method: 'eth_requestAccounts',
   })) as string[];
-  if (!accounts?.length) throw new WalletError('NO_ACCOUNT', '钱包没有返回任何账户。');
+  if (!accounts?.length) throw new WalletError('NO_ACCOUNT', 'The wallet returned no accounts.');
   return getAddress(accounts[0]);
 }
 
@@ -98,7 +98,7 @@ export async function ensureChain(chainId: number): Promise<void> {
     if (code !== 4902 || !spec) {
       throw new WalletError(
         'WRONG_CHAIN',
-        `请把钱包切到 ${spec?.name ?? `chainId ${chainId}`} 再试。`,
+        `Switch your wallet to ${spec?.name ?? `chainId ${chainId}`} and try again.`,
       );
     }
     await provider.request({
@@ -147,9 +147,9 @@ export async function signRegister(
     });
   } catch (error) {
     if ((error as { code?: number }).code === 4001) {
-      throw new WalletError('REJECTED', '你取消了签名。');
+      throw new WalletError('REJECTED', 'You cancelled the signature.');
     }
-    throw new WalletError('SIGN_FAILED', '签名没有完成，可以再试一次。');
+    throw new WalletError('SIGN_FAILED', 'The signature did not complete. You can try again.');
   }
 }
 
@@ -167,9 +167,9 @@ export async function signCardPayload(account: Address, payload: Hex): Promise<H
     return await client.signMessage({ account, message: { raw: payload } });
   } catch (error) {
     if ((error as { code?: number }).code === 4001) {
-      throw new WalletError('REJECTED', '你取消了签名。');
+      throw new WalletError('REJECTED', 'You cancelled the signature.');
     }
-    throw new WalletError('SIGN_FAILED', '签名没有完成，可以再试一次。');
+    throw new WalletError('SIGN_FAILED', 'The signature did not complete. You can try again.');
   }
 }
 

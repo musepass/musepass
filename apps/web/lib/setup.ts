@@ -219,35 +219,35 @@ export function buildSetupSteps(
   const isRootOwner = Boolean(
     connected && rootOwner && connected.toLowerCase() === rootOwner.toLowerCase(),
   );
-  const ownerHint = rootOwner ? `名字主人是 ${rootOwner}。` : '读不到名字主人。';
+  const ownerHint = rootOwner ? `The name owner is ${rootOwner}.` : 'The name owner could not be read.';
 
   return [
     {
       id: 'deploy',
-      title: '部署 L1 解析器',
-      detail: `一次性部署，地址是预先算好的 ${resolver}。谁付款都一样，地址不变。`,
+      title: 'Deploy the L1 resolver',
+      detail: `A one-time deployment at the precomputed address ${resolver}. The address is the same no matter who pays.`,
       done: Boolean(deployedResolver),
       sendable: !deployedResolver && Boolean(connected && observation.hasBytecode),
       blocker: !observation.hasBytecode
-        ? '这台服务器上找不到合约字节码，改用命令行部署，见 docs/remaining-mainnet-steps.md。'
+        ? 'This server has no copy of the contract bytecode; deploy from the command line instead — see docs/remaining-mainnet-steps.md.'
         : connected
           ? null
-          : '先连接钱包。',
+          : 'Connect a wallet first.',
       to: L1_RESOLVER.factory,
       data: deployResolverCalldata(bytecode, connected ?? L1_RESOLVER.operator),
       value: 0n,
     },
     {
       id: 'setL2Registry',
-      title: '登记数据在哪条链',
+      title: 'Register which chain holds the data',
       detail:
-        '告诉解析器：musename.eth 的子名字，数据在 Robinhood Chain 的注册表里。只有名字主人能签这一笔。',
+        'Tell the resolver that subnames of musename.eth live in the Robinhood Chain registry. Only the name owner can sign this one.',
       done: observation.l2RegistrySet,
       sendable: !observation.l2RegistrySet && isRootOwner && Boolean(deployedResolver),
       blocker: !deployedResolver
-        ? '解析器还没部署。'
+        ? 'The resolver is not deployed yet.'
         : !isRootOwner
-          ? `这一笔必须由名字主人签名，请用那个账户连接钱包。${ownerHint}`
+          ? `The name owner has to sign this one — connect with that account. ${ownerHint}`
           : null,
       to: resolver,
       data: setL2RegistryCalldata(chains.rootName, chains.l2ChainId, chains.l2Registry),
@@ -255,15 +255,15 @@ export function buildSetupSteps(
     },
     {
       id: 'setResolver',
-      title: '把名字的解析器换成我们的',
+      title: 'Point the name at our resolver',
       detail:
-        '最后一步。执行之后，钱包里的 musename.eth 子名字才开始解析。放在最后，是因为中途反了会让根名字自己解析不了。',
+        'The last step. Only after this do subnames of musename.eth resolve in a wallet. It comes last because doing it the other way around would leave the root name itself unresolvable in the meantime.',
       done: observation.ensPointsAtResolver,
       sendable: !observation.ensPointsAtResolver && isRootOwner && observation.l2RegistrySet,
       blocker: !observation.l2RegistrySet
-        ? '先完成上一步：解析器还不知道数据在哪。'
+        ? 'Finish the previous step first: the resolver does not yet know where the data lives.'
         : !isRootOwner
-          ? `这一笔必须由名字主人签名。${ownerHint}`
+          ? `The name owner has to sign this one. ${ownerHint}`
           : null,
       to: L1_RESOLVER.ensRegistry,
       data: setResolverCalldata(chains.rootName, resolver),

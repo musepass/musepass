@@ -3,7 +3,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: '信任模型' };
+export const metadata = { title: 'Trust model' };
 export const revalidate = 3600;
 
 /**
@@ -20,71 +20,83 @@ export default async function TrustPage() {
       <div className="container">
         <SiteHeader config={config} />
         <main className="narrow">
-          <h1 className="h2">信任模型：谁能做什么</h1>
+          <h1 className="h2">Trust model: who can do what</h1>
           <p className="body-2">
-            这一页把缺点写在明处。用户的钱包决定名字归谁；平台握着代付 gas、发行，
-            以及一条我们本来不打算公开的权限 —— 注册表管理员是运营热钱包，它可以把自己加进
-            registrar 名单，而 registrar 能改写任意名字的地址记录。
+            This page puts the weaknesses in writing. The owner&apos;s wallet decides who owns a name. The
+            platform pays for gas and issues names — and it holds one permission we would rather not
+            have: the registry admin is an operational hot wallet, it can add itself to the registrar
+            list, and a registrar can rewrite any name&apos;s address records.
           </p>
 
-          <h2 className="h3">1. 今天为真的事</h2>
+          <h2 className="h3">1. True today</h2>
           <ul className="body-2">
             <li>
-              名字的归属由用户钱包的签名决定：发行合约要求受益人本人签名，签名过的 label
-              不能换成别的名字或别的人。平台代付 gas，但拿不到名字。
+              Ownership follows the owner&apos;s signature: the registrar requires a signature from the
+              beneficiary, and a signed label cannot be swapped for another name or another person. The
+              platform pays the gas and does not get the name.
             </li>
-            <li>注册表没有 burn、没有管理员转移，平台没有直接收回或转走名字的接口。</li>
             <li>
-              解析在真实主网生效（<code className="mono">xiaoming.{config.rootName}</code>{' '}
-              解析到用户地址），网关在 RPC 失败时返回错误，不会签一个空答案。
+              The registry has no burn and no admin transfer, and the platform has no call that takes a
+              name back or moves it.
+            </li>
+            <li>
+              Resolution works on real mainnet (<code className="mono">xiaoming.{config.rootName}</code>{' '}
+              resolves to the owner&apos;s address), and when its RPC fails the gateway returns an error
+              rather than signing an empty answer.
             </li>
           </ul>
 
-          <h2 className="h3">2. 今天为假的事（所以我们不写）</h2>
+          <h2 className="h3">2. False today, which is why we do not write it</h2>
           {/* claims-allow-block: name-not-modifiable — this section lists the claims we do NOT make */}
           {/* claims-allow-block: platform-cannot-modify — same reason */}
           {/* claims-allow-block: record-not-modifiable — same reason */}
+          {/* claims-allow-block: independent-verifier — same reason: the sentence says we do not claim it */}
           <ul className="body-2">
             <li>
-              <strong>「平台无法修改你的名字」</strong>：2026-09-29 链上实测，
-              注册表管理员是运营热钱包 <code className="mono">0x66F499e8…</code>，
-              它可以调用 <code className="mono">addRegistrar</code> 把自己加进名单（不 revert），
-              registrar 能改写任意名字的地址与文本记录。权限没有转走之前，这句话不成立。
+              <strong>&ldquo;The platform cannot change your name.&rdquo;</strong> Measured on chain on
+              2026-09-29: the registry admin is the operational hot wallet{' '}
+              <code className="mono">0x66F499e8…</code>, it can call{' '}
+              <code className="mono">addRegistrar</code> to add itself (the call does not revert), and a
+              registrar can rewrite any name&apos;s address and text records. Until that permission is
+              moved, the sentence does not hold.
             </li>
             <li>
-              <strong>「独立验证」</strong>：目前唯一的验证方是我们自己的 the project's own engine 引擎，
-              属于同一个团队。我们不说独立验证。
+              <strong>&ldquo;Independently verified.&rdquo;</strong> The only verifier today is our own
+              the project's own engine engine, from the same team. We do not say independent.
             </li>
             <li>
-              <strong>「记录不可修改」</strong>：只增不改的记录合约还没有上线，
-              现在链上只有一笔把摘要根写进 calldata 的零金额自转账（见{' '}
+              <strong>&ldquo;Records cannot be changed.&rdquo;</strong> The append-only record contract is
+              not deployed. What exists on chain is one zero-value self-transfer with a digest root in its
+              calldata (see{' '}
               <Link className="record-link" href="/anchors">
-                已锚定的批次
+                anchored batches
               </Link>
-              ）。
+              ).
             </li>
           </ul>
           {/* claims-allow-end: * */}
 
-          <h2 className="h3">3. 那条权限的补偿措施</h2>
+          <h2 className="h3">3. What we do about that permission</h2>
           <p className="body-2">
-            项目方决定暂时不把管理权限迁到多签，改为把「被滥用」变成可检测事件：
-            任何人可以跑{' '}
-            <code className="mono">node scripts/security-power-inventory.mjs</code>，
-            它读链上状态，只要热钱包变成 registrar 就退出码 1。
-            攻击者的第一步就是这一步，而正常业务永远不需要它 —— 所以这个告警误报率为零，
-            代价是只能在第一步之后发现，不能阻止第一步。
+            Rather than move the admin permission to a multisig right now, the project made misuse
+            detectable: anyone can run{' '}
+            <code className="mono">node scripts/security-power-inventory.mjs</code>, which reads chain
+            state and exits 1 the moment the hot wallet becomes a registrar. That is the attacker&apos;s
+            first step, and normal operation never needs it, so the alarm has no false positives — the
+            price is that it can only tell you after that first step, not stop it.
           </p>
 
-          <h2 className="h3">4. 这条权限什么时候消失</h2>
+          <h2 className="h3">4. When that permission goes away</h2>
           <p className="body-2">
-            把注册表管理员、发行合约 owner、解析器 owner 转给硬件钱包或多签（外部签名人参与），
-            热钱包只留代付一个角色，然后公开转出的交易哈希。做到之后，第 2 节第一条会从这一页删掉 ——
-            在这之前它会一直在这里。
+            When the registry admin, the registrar owner and the resolver owner are moved to a hardware
+            wallet or a multisig with an outside signer, and the hot wallet is left with the gas-paying
+            role alone, we will publish the transaction hashes. Then the first item in section 2 comes off
+            this page. Until then it stays.
           </p>
 
           <p className="body-2" style={{ opacity: 0.75 }}>
-            没有值班表，也没有 SLA。这是单机项目，写在这里是为了不让人以为有。
+            There is no on-call rota and no SLA. This is a single-machine project; the sentence is here so
+            nobody assumes otherwise.
           </p>
         </main>
         <SiteFooter config={config} />

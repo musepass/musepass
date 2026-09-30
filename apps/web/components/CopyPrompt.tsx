@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AGENT_PROMPT_ZH, MCP_CONFIG_JSON } from '@/lib/agentPrompt';
+import { AGENT_PROMPT, MCP_CONFIG_JSON } from '@/lib/agentPrompt';
 
 /**
  * The copy-paste block, in the shape MuseFly uses: the text is visible and
@@ -17,9 +17,9 @@ export function CopyPrompt({ askTxtUrl }: { askTxtUrl: string }) {
     try {
       if (!navigator.clipboard?.writeText) throw new Error('no clipboard');
       await navigator.clipboard.writeText(text);
-      setCopied(`${label} 已复制，粘给你的 AI 就行。`);
+      setCopied(`${label} copied — paste it into your AI.`);
     } catch {
-      setCopied('复制失败：请手动选中上面的文字复制。');
+      setCopied('Copying failed: select the text above and copy it by hand.');
     }
   };
 
@@ -27,7 +27,7 @@ export function CopyPrompt({ askTxtUrl }: { askTxtUrl: string }) {
     <div style={{ display: 'grid', gap: 16 }}>
       <div>
         <div className="record-sample-label" style={{ marginBottom: 8 }}>
-          把这段话粘给你的 AI
+          Paste this into your AI
         </div>
         <pre
           className="mono"
@@ -43,19 +43,19 @@ export function CopyPrompt({ askTxtUrl }: { askTxtUrl: string }) {
             overflowX: 'auto',
           }}
         >
-          {AGENT_PROMPT_ZH}
+          {AGENT_PROMPT}
         </pre>
       </div>
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <button className="btn btn-primary" type="button" onClick={() => copy('提示词', AGENT_PROMPT_ZH)}>
-          复制提示词
+        <button className="btn btn-primary" type="button" onClick={() => copy('Prompt', AGENT_PROMPT)}>
+          Copy the prompt
         </button>
-        <button className="btn" type="button" onClick={() => copy('MCP 配置', MCP_CONFIG_JSON)}>
-          复制 MCP 配置
+        <button className="btn" type="button" onClick={() => copy('MCP config', MCP_CONFIG_JSON)}>
+          Copy the MCP config
         </button>
         <a className="btn" href={askTxtUrl} target="_blank" rel="noreferrer">
-          读取 ask.txt（给 AI 的完整规则）
+          Read ask.txt (the full rules for the AI)
         </a>
       </div>
 
@@ -65,7 +65,8 @@ export function CopyPrompt({ askTxtUrl }: { askTxtUrl: string }) {
         </p>
       ) : (
         <p className="body-2" style={{ margin: 0, fontSize: 14, opacity: 0.8 }}>
-          AI 会自己去读 <span className="mono">/ask.txt</span>；领取名字那一步仍然需要你本人签名，AI 只能准备。
+          The AI reads <span className="mono">/ask.txt</span> by itself. Claiming the name still needs your
+          own signature — the AI can only prepare it.
         </p>
       )}
     </div>

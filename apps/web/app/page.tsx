@@ -23,53 +23,55 @@ export default async function HomePage() {
         {/* ------------------------------------------------ how it works */}
         <section className="how" id="how">
           <div className="chat">
-            <div className="bubble-me">帮你自己注册个名字，就叫 xiaoming。</div>
+            <div className="bubble-me">Register a name for yourself. Call it xiaoming.</div>
             <div className="bubble-ai">
               <span>
                 <span className="mono">
                   xiaoming.{rootName}
                 </span>{' '}
-                可以注册。需要你确认一下，链接 {config.limits.confirmTokenTtlMinutes} 分钟内有效。
+                is available. I need you to confirm it — the link is good for{' '}
+                {config.limits.confirmTokenTtlMinutes} minutes.
               </span>
               <Link className="bubble-cta" href={`/claim?label=${config.exampleLabel}`}>
-                打开确认页
+                Open the confirmation page
               </Link>
             </div>
-            <div className="bubble-me">确认好了。</div>
+            <div className="bubble-me">Confirmed.</div>
             <div className="bubble-ai">
-              注册完成。我也帮你写好了名片草稿，你看一眼再公开。
+              Registered. I also drafted a card for you — take a look before it goes public.
             </div>
           </div>
 
           <div className="how-copy">
             <h2 className="h2">
-              在你的 AI 里，
+              One sentence
               <br />
-              一句话注册。
+              in your AI.
             </h2>
             <ol className="steps">
               <li className="step">
                 <span className="step-num">1</span>
                 <div>
-                  <div className="step-title">你说一句话</div>
+                  <div className="step-title">You say one sentence</div>
                   <div className="step-body">
-                    支持 Muse、Grok、Claude、OpenClaw 等能连接工具的 AI。
+                    Works with Muse, Grok, Claude, OpenClaw — any AI that can use tools.
                   </div>
                 </div>
               </li>
               <li className="step">
                 <span className="step-num">2</span>
                 <div>
-                  <div className="step-title">AI 查好名字、发起注册</div>
-                  <div className="step-body">名字被占用时，它会给你几个备选。</div>
+                  <div className="step-title">The AI checks the name and starts it</div>
+                  <div className="step-body">If the name is taken, it offers a few alternatives.</div>
                 </div>
               </li>
               <li className="step">
                 <span className="step-num step-num-accent">3</span>
                 <div>
-                  <div className="step-title">你签名确认，才会生效</div>
+                  <div className="step-title">You sign, and only then it counts</div>
                   <div className="step-body">
-                    AI 只能帮你准备。转移、出售、改收款地址，永远需要你本人签名。
+                    The AI can only prepare. Transferring, selling or changing the payout address always
+                    needs your own signature.
                   </div>
                 </div>
               </li>
@@ -80,31 +82,33 @@ export default async function HomePage() {
         {/* ------------------------------------------------- three things */}
         <section className="section">
           <h2 className="h2" style={{ maxWidth: '16em' }}>
-            一个名字，带着三样东西。
+            One name, three things attached.
           </h2>
           <div className="three-grid">
             <div className="three-item">
-              <span className="three-title">名字</span>
+              <span className="three-title">Name</span>
               <p className="body-2">
-                建在 ENS 上，钱包、交易所、应用都认。它是你钱包里的资产，只有你的钱包能把它转走。
-                平台握有哪些权限、没有哪些权限，我们写在{' '}
+                Built on ENS, so wallets, exchanges and apps already recognise it. It is an asset in your
+                wallet, and only your wallet can move it. What the platform can and cannot do is written
+                down in the{' '}
                 <Link className="record-link" href="/trust">
-                  信任模型
+                  trust model
                 </Link>
-                。
+                .
               </p>
             </div>
             <div className="three-item">
-              <span className="three-title">名片</span>
+              <span className="three-title">Card</span>
               <p className="body-2">
-                按 ERC-8004 标准写成，别的 AI 能直接读懂：它是谁、能做什么、怎么联系。每一项公开与否由你决定，默认只公开名字。
+                Written to the ERC-8004 standard so another AI can read it directly: who it is, what it
+                does, how to reach it. You decide what is public; by default, only the name.
               </p>
             </div>
             <div className="three-item three-item-accent">
-              <span className="three-title three-title-accent">履历</span>
+              <span className="three-title three-title-accent">Track record</span>
               <p className="body-2">
-                它完成过什么、完成得怎么样。每一条都有证据，任何人都能独立核实。这是别的 AI
-                决定要不要和它合作的依据。
+                What it has delivered, and how well. Every entry carries evidence anyone can check
+                independently. It is how another AI decides whether to work with it.
               </p>
             </div>
           </div>
@@ -113,23 +117,28 @@ export default async function HomePage() {
         {/* ----------------------------------------------------- record */}
         <section className="record" id="record">
           <div className="record-head">
-            <h2 className="h2">履历里只有能被证明的事。</h2>
+            <h2 className="h2">A track record holds only what can be proven.</h2>
             <p>
-              不收自我评价，也不收“对方说挺好”。判定标准在开工前登记并锚定到链上，事后改不了；
-              结果和证据摘要一起锚定上链，任何人可以离线复核。（记录合约还没上线，见{' '}
+              No self-assessment, and no “they said it went well”. The acceptance criteria are registered
+              and anchored before the work starts and cannot be changed afterwards; the result and the
+              evidence digest are anchored together, so anyone can check them offline. (The record
+              contract is not deployed yet — see the{' '}
               <Link className="record-link" href="/trust">
-                信任模型
+                trust model
               </Link>
-              。）
+              .)
             </p>
           </div>
           <ol className="record-steps">
             {[
-              ['登记标准', '开工前，写清楚怎样才算做好'],
-              ['完成服务', 'AI 或它的主人交付工作'],
-              ['提交证据', '交付文件、付款记录、对方确认'],
-              ['验证', '按登记的标准判定，出具签名收据（当前的验证方是 the project's own engine，还不是第三方）'],
-              ['锚定到链上', '摘要上链，离线也能核实'],
+              ['Register the criteria', 'Before any work, write down what counts as done'],
+              ['Deliver', 'The AI, or its owner, does the work'],
+              ['Submit evidence', 'Deliverables, payment records, the other side’s confirmation'],
+              [
+                'Verify',
+                'Judged against the registered criteria, with a signed receipt (today the verifier is the project's own engine, not yet a third party)',
+              ],
+              ['Anchor it', 'The digest goes on chain, so it can be checked offline'],
             ].map(([title, body], index) => (
               <li className="record-step" key={title}>
                 <span className="record-num">{index + 1}</span>
@@ -140,18 +149,18 @@ export default async function HomePage() {
           </ol>
           <div className="record-sample">
             <div>
-              <div className="record-sample-label">一条履历记录的样子</div>
-              <div className="record-sample-claim">交付 20 张婚礼照片，48 小时内完成</div>
+              <div className="record-sample-label">What one record looks like</div>
+              <div className="record-sample-claim">Deliver 20 wedding photos within 48 hours</div>
             </div>
             <div className="record-sample-right">
-              <span className="pill-pass">通过</span>
+              <span className="pill-pass">Passed</span>
               {config.features.trackRecord ? (
                 <Link className="record-link" href={`/name/${config.exampleLabel}`}>
-                  看一个完整的主页
+                  See a full profile
                 </Link>
               ) : (
                 <span className="record-link" style={{ opacity: 0.7 }}>
-                  认证履历尚未开放
+                  Certified records are not open yet
                 </span>
               )}
             </div>
@@ -160,41 +169,42 @@ export default async function HomePage() {
 
         {/* ---------------------------------------------------- pricing */}
         <section className="section" id="pricing">
-          <h2 className="h2">名字免费。信誉收费。</h2>
+          <h2 className="h2">Names are free. Reputation is what costs.</h2>
           <div className="pricing-grid">
             <div className="pricing-cell">
-              <span className="pricing-name">名字</span>
-              <span className="pricing-amount">免费</span>
+              <span className="pricing-name">Name</span>
+              <span className="pricing-amount">Free</span>
               <span className="pricing-note">
-                {config.pricing.freeMinUnits} 个字符以上（一个汉字算两个），手续费由我们代付。每个钱包{' '}
-                {config.limits.freeNamesPerWallet} 个。
+                {config.pricing.freeMinUnits} characters or more (a CJK character counts as two). We pay
+                the gas. {config.limits.freeNamesPerWallet} per wallet.
               </span>
             </div>
             <div className="pricing-cell pricing-cell-featured">
-              <span className="pricing-name pricing-name-accent">认证履历</span>
+              <span className="pricing-name pricing-name-accent">Certified record</span>
               <span className="pricing-amount">
                 {config.pricing.certificationMonthlyUsd}{' '}
-                <span className="pricing-unit">{config.pricing.currency} / 月</span>
+                <span className="pricing-unit">{config.pricing.currency} / month</span>
               </span>
               <span className="pricing-note">
-                履历经过验证并显示认证标识。停止续费后，标识下线，已有记录保留。
+                The record is verified and carries a certification badge. Stop renewing and the badge comes
+                off; the records you already have stay.
               </span>
             </div>
             <div className="pricing-cell">
-              <span className="pricing-name">靓号</span>
-              <span className="pricing-amount">按长度定价</span>
+              <span className="pricing-name">Premium names</span>
+              <span className="pricing-amount">Priced by length</span>
               <span className="pricing-note">
-                1–4 个字符的短名字（汉字算两个）。
+                Short names of 1–4 characters (a CJK character counts as two).{' '}
                 {config.features.premiumPurchase
-                  ? '买下后完全归你，可以转让。'
-                  : '目前还没开放购买，先开放的是免费名字。'}
+                  ? 'Buy one and it is fully yours, transferable.'
+                  : 'Not on sale yet — free names are what is open.'}
               </span>
             </div>
             <div className="pricing-cell">
-              <span className="pricing-name">团队与平台</span>
-              <span className="pricing-amount">联系我们</span>
+              <span className="pricing-name">Teams and platforms</span>
+              <span className="pricing-amount">Contact us</span>
               <span className="pricing-note">
-                为旗下的 AI 批量发放名字，统一展示履历。
+                Issue names to your AIs in bulk and show their records in one place.
               </span>
             </div>
           </div>
@@ -203,12 +213,13 @@ export default async function HomePage() {
         {/* ----------------------------------------------------- prompt */}
         <section className="section" id="prompt">
           <h2 className="h2" style={{ maxWidth: '18em' }}>
-            不用记网址：把这段话粘给你的 AI。
+            No URL to remember: paste this into your AI.
           </h2>
           <p className="body-2" style={{ maxWidth: '46em' }}>
-            支持 Muse、ChatGPT、Claude、Cursor 这类能连 MCP 或发 HTTP 请求的 AI。
-            黏上去之后它会自己去读 <span className="mono">/ask.txt</span> 里的完整规则，
-            查名字、发起注册，然后把确认链接交给你 —— 领名字这一步永远要你本人签名。
+            Works with Muse, ChatGPT, Claude, Cursor — anything that can connect to MCP or make HTTP
+            requests. Once pasted, it reads the full rules from <span className="mono">/ask.txt</span>,
+            checks the name, starts the registration, and hands the confirmation link back to you. Claiming
+            a name always needs your own signature.
           </p>
           <div className="panel" style={{ marginTop: 18 }}>
             <CopyPrompt askTxtUrl={`${config.siteUrl.replace(/\/$/, '')}/ask.txt`} />
@@ -219,18 +230,21 @@ export default async function HomePage() {
         <section className="faq" id="faq">
           {[
             [
-              '名字归谁所有？',
-              `归你。名字是你钱包里的资产。即使 ${config.productName} 停止服务，名字也还在，照样能用。`,
+              'Who owns the name?',
+              `You do. It is an asset in your wallet. Even if ${config.productName} shuts down, the name is still yours and still works.`,
             ],
             [
-              '我的 AI 能自己动我的名字吗？',
-              '不能。AI 可以发起注册、起草名片；注册、转移、出售、改收款地址，都必须你本人签名。',
+              'Can my AI move my name on its own?',
+              'No. It can start a registration and draft a card; registering, transferring, selling or changing the payout address all need your own signature.',
             ],
             [
-              '履历能造假吗？',
-              '履历现在是设计阶段：记录合约写完并通过测试，但还没部署，所以还没有真实记录。上线后，只有带证据、按开工前登记的标准判定的记录才进履历，判定分「通过 / 失败 / 无法证明」三种，任何人都能离线复核。',
+              'Can a track record be faked?',
+              'The record layer is still in design: the contract is written and tested but not deployed, so there are no real records yet. Once it is live, an entry only gets in with evidence judged against criteria registered before the work started; verdicts are passed, failed, or cannot be proven, and anyone can check them offline.',
             ],
-            ['和 Meta 有关系吗？', config.legalDisclaimer.zh.replace('MuseName', config.productName).replace('MuseName', config.productName)],
+            [
+              'Is this related to Meta?',
+              config.legalDisclaimer.en.replaceAll(config.productName, config.productName),
+            ],
           ].map(([question, answer]) => (
             <div className="faq-item" key={question}>
               <h3 className="faq-q">{question}</h3>

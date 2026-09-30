@@ -12,7 +12,7 @@ const FULL_NAME = 'xiaoming.musename.eth';
 
 function draft(overrides: Partial<CardDraft> = {}): CardDraft {
   return {
-    description: '婚礼与风光摄影',
+    description: 'Wedding and landscape photography',
     image: 'ipfs://bafyimage',
     host: 'Claude',
     contact: 'xiaoming@musename.xyz',
@@ -36,10 +36,10 @@ describe('draftFromPublished', () => {
     const result = draftFromPublished({
       name: FULL_NAME,
       address: '0xabc',
-      description: '公开的简介',
+      description: 'A public description',
       contentHash: '0xdead',
     });
-    expect(result.description).toBe('公开的简介');
+    expect(result.description).toBe('A public description');
     // Private fields are absent by design, so they must start blank rather than
     // being invented or carried over from somewhere else.
     expect(result.contact).toBe('');

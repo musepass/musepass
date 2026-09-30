@@ -12,14 +12,14 @@ export function WalletButton({ expectedChainId }: { expectedChainId: number }) {
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
         {wrongChain ? (
           <span className="status-warn" style={{ fontSize: 13 }}>
-            网络不对
+            Wrong network
           </span>
         ) : null}
         <button
           type="button"
           className="btn btn-sm"
           onClick={disconnect}
-          title="断开连接（不会影响链上的名字）"
+          title="Disconnect (your on-chain names are unaffected)"
         >
           <span className="mono">{shortAddress(address)}</span>
         </button>
@@ -40,9 +40,9 @@ export function WalletButton({ expectedChainId }: { expectedChainId: number }) {
           // The provider already stored a readable message.
         }
       }}
-      title={error ?? '连接浏览器钱包'}
+      title={error ?? 'Connect a browser wallet'}
     >
-      {connecting ? '连接中…' : '连接钱包'}
+      {connecting ? 'Connecting…' : 'Connect wallet'}
     </button>
   );
 }

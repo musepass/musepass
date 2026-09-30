@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AGENT_PROMPT_ZH,
+  AGENT_PROMPT,
   ASK_TXT,
   MCP_CONFIG_JSON,
   MCP_URL,
@@ -11,21 +11,21 @@ const TOOL_NAMES = ['check_name', 'request_name', 'get_status', 'draft_card', 'g
 
 describe('the prompt a person pastes', () => {
   it('names every tool the MCP server actually registers', () => {
-    for (const tool of TOOL_NAMES) expect(AGENT_PROMPT_ZH).toContain(tool);
+    for (const tool of TOOL_NAMES) expect(AGENT_PROMPT).toContain(tool);
   });
 
   it('tells the AI that the owner signs, and that nothing is registered yet', () => {
-    expect(AGENT_PROMPT_ZH).toContain('必须由主人本人签名');
-    expect(AGENT_PROMPT_ZH).toContain('不要说你已经注册好了');
-    expect(AGENT_PROMPT_ZH).toContain('15 分钟');
+    expect(AGENT_PROMPT).toContain('must be signed by the owner');
+    expect(AGENT_PROMPT).toContain('Do not say the name is registered');
+    expect(AGENT_PROMPT).toContain('15 minutes');
   });
 
   it('does not let the AI fill in what it does not know', () => {
-    expect(AGENT_PROMPT_ZH).toContain('缺字段就说缺字段');
+    expect(AGENT_PROMPT).toContain('If something is missing, say it is missing');
   });
 
   it('names the current broken case instead of letting the AI retry forever', () => {
-    expect(AGENT_PROMPT_ZH).toContain('issuer wallet is not configured');
+    expect(AGENT_PROMPT).toContain('issuer wallet is not configured');
   });
 });
 

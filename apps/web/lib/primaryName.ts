@@ -90,7 +90,7 @@ export function describePrimaryName(state: PrimaryNameState): PrimaryNamePrompt 
       offer: false,
       done: true,
       actionable: false,
-      message: `这个地址的主名字已经设成 ${state.fullName}，钱包里会显示名字而不是地址。`,
+      message: `This address already points at ${state.fullName} as its primary name, so wallets show the name instead of the address.`,
     };
   }
 
@@ -100,8 +100,8 @@ export function describePrimaryName(state: PrimaryNameState): PrimaryNamePrompt 
       done: false,
       actionable: false,
       message: state.currentPrimary
-        ? `这个地址现在的主名字是 ${state.currentPrimary}。只有持有者本人能改——请用 ${state.owner} 连接钱包。`
-        : `这个地址还没有设主名字，所以钱包里显示的是 0x 地址。只有持有者本人能设——请用 ${state.owner} 连接钱包。`,
+        ? `This address currently uses ${state.currentPrimary} as its primary name. Only the holder can change it — connect with ${state.owner}.`
+        : `This address has no primary name yet, which is why wallets show a hex address. Only the holder can set it — connect with ${state.owner}.`,
     };
   }
 
@@ -110,7 +110,7 @@ export function describePrimaryName(state: PrimaryNameState): PrimaryNamePrompt 
     done: false,
     actionable: true,
     message: state.currentPrimary
-      ? `你现在的主名字是 ${state.currentPrimary}，可以改成 ${state.fullName}。`
-      : `把 ${state.fullName} 设成主名字，钱包里就会显示名字而不是 0x 地址。这是主网上的一笔交易，gas 由你付。`,
+      ? `Your primary name is currently ${state.currentPrimary}; you can change it to ${state.fullName}.`
+      : `Set ${state.fullName} as your primary name and wallets will show the name instead of a hex address. It is one transaction on Ethereum mainnet, and you pay the gas.`,
   };
 }

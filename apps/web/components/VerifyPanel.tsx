@@ -6,8 +6,8 @@ import { runVerification, type VerifiedCase } from '@/lib/verifyCase';
 import { VERIFY_EXAMPLES } from '@/lib/verifyExamples';
 
 const EXAMPLES = [
-  { key: 'valid-satisfied', label: '一个站得住的履历', hint: '草案向量 valid-satisfied' },
-  { key: 'o2-met-without-evidence', label: '一个被推翻的履历', hint: '草案向量 o2-met-without-evidence' },
+  { key: 'valid-satisfied', label: 'a record that stands up', hint: 'draft vector valid-satisfied' },
+  { key: 'o2-met-without-evidence', label: 'a refuted record', hint: 'draft vector o2-met-without-evidence' },
 ] as const;
 
 /**
@@ -33,11 +33,12 @@ export function VerifyPanel() {
   return (
     <div className="panel" style={{ display: 'grid', gap: 16 }}>
       <div>
-        <h1 className="h2">自己验证一条履历</h1>
+        <h1 className="h2">Verify a record yourself</h1>
         <p className="body-2">
-          粘贴一条履历的 JSON：链上那条记录（chain），加上公开发布的三份文档（criteria / bundle /
-          attestation）。验证<strong>在你的浏览器里算</strong>，不经过我们的服务器，也不需要联网。
-          这很重要，因为「别人替你算结论」和「你自己算出来」不是一回事。
+          Paste the JSON for one record: what the chain says (chain) plus the three published documents
+          (criteria / bundle / attestation). The verdict is <strong>computed in your browser</strong>, with
+          no request to our server and no network needed. That matters, because “someone else ran the
+          numbers for you” and “you ran them yourself” are not the same thing.
         </p>
       </div>
 
@@ -53,13 +54,13 @@ export function VerifyPanel() {
               void run(value);
             }}
           >
-            载入{example.label}
+            Load {example.label}
           </button>
         ))}
       </div>
 
       <label className="field">
-        <span className="body-2">履历 JSON</span>
+        <span className="body-2">Record JSON</span>
         <textarea
           value={text}
           onChange={(event) => setText(event.target.value)}
@@ -73,10 +74,10 @@ export function VerifyPanel() {
 
       <div style={{ display: 'flex', gap: 8 }}>
         <button type="button" className="btn btn-primary" disabled={busy || text.trim() === ''} onClick={() => void run(text)}>
-          {busy ? '计算中…' : '验证'}
+          {busy ? 'Computing…' : 'Verify'}
         </button>
         <button type="button" className="btn" onClick={() => setText('')} disabled={text === ''}>
-          清空
+          Clear
         </button>
       </div>
 
@@ -84,7 +85,7 @@ export function VerifyPanel() {
 
       {verified ? (
         <div className={verified.result.valid ? 'notice notice-ok' : 'notice notice-error'}>
-          <strong>{verified.result.valid ? '这条履历站得住。' : '这条履历被推翻了。'}</strong>
+          <strong>{verified.result.valid ? 'This record stands up.' : 'This record is refuted.'}</strong>
           {verified.result.violations.length > 0 ? (
             <ul>
               {verified.result.violations.map((violation, index) => (
@@ -96,20 +97,22 @@ export function VerifyPanel() {
           ) : null}
           {verified.result.unchecked.length > 0 ? (
             <p className="body-2">
-              有 {verified.result.unchecked.length} 条这个验证器判定不了（不算错，也不算对）：
-              {verified.result.unchecked.join('；')}
+              {verified.result.unchecked.length} thing(s) this verifier cannot decide — that is neither a
+              pass nor a failure: {verified.result.unchecked.join('; ')}
             </p>
           ) : null}
         </div>
       ) : null}
 
       <details>
-        <summary className="body-2">这里到底在验什么？</summary>
+        <summary className="body-2">What is actually being checked here?</summary>
         <p className="body-2">
-          按 ERC-8412 草案逐条对账：标准是否在证据之前登记、每条 MET 的义务有没有证据覆盖、
-          豁免是不是由豁免权签的、结论能不能由判定规则推出来、公开文档的摘要和链上登记的是不是同一份。
-          实现和向量都钉在草案的某个 commit 上（见 <span className="mono">docs/reference/</span>），
-          因为草案还在 review，编码可能变。
+          It works through the ERC-8412 draft rule by rule: whether the criteria were registered before the
+          evidence, whether every MET obligation actually has covering evidence, whether waivers carry the
+          waiver authority's signature, whether the verdict follows from the decision rule, and whether the
+          published documents hash to what the chain recorded. The implementation and its test vectors are
+          pinned to one commit of the draft (see <span className="mono">docs/reference/</span>), because the
+          draft is still under review and the encoding can change.
         </p>
       </details>
     </div>

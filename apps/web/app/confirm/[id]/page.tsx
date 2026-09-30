@@ -3,7 +3,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: '确认注册' };
+export const metadata = { title: 'Confirm a registration' };
 
 /**
  * The page an AI hands to its owner: `/confirm/<requestId>?token=...`

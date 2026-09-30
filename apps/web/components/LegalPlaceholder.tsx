@@ -24,7 +24,8 @@ export function LegalPlaceholder({
           <h1 className="h2">{title}</h1>
           <div className="notice notice-warn">{body}</div>
           <p className="body-2">
-            有问题可以直接发邮件到 <a href={`mailto:${config.supportEmail}`}>{config.supportEmail}</a>。
+            Questions go to{' '}
+            <a href={`mailto:${config.supportEmail}`}>{config.supportEmail}</a>.
           </p>
         </main>
         <SiteFooter config={config} />

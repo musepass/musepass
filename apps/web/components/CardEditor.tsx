@@ -77,7 +77,7 @@ export function CardEditor({
     }
 
     if (!config.l2Registry || !config.registrar) {
-      setError('服务端还没配置好注册表地址，暂时不能发布。');
+      setError('The server has no registry address configured, so publishing is off.');
       return;
     }
 
@@ -116,7 +116,7 @@ export function CardEditor({
       setError(
         cause instanceof WalletError || cause instanceof ApiError
           ? cause.message
-          : '没能发布，请再试一次。',
+          : 'It did not publish. Try again.',
       );
     }
   }
@@ -125,11 +125,11 @@ export function CardEditor({
     const explorer = config.chain.explorer;
     return (
       <div className="panel">
-        <div className="notice notice-ok">名片已经写进链上了。</div>
+        <div className="notice notice-ok">The card is on chain.</div>
         <dl className="kv">
-          <dt>内容指纹</dt>
+          <dt>Content hash</dt>
           <dd className="mono-break">{result.contentHash}</dd>
-          <dt>交易</dt>
+          <dt>Transaction</dt>
           <dd className="mono-break">
             {explorer ? (
               <a href={`${explorer}/tx/${result.txHash}`} target="_blank" rel="noreferrer">
@@ -141,10 +141,10 @@ export function CardEditor({
           </dd>
         </dl>
         <p className="body-2" style={{ fontSize: 15 }}>
-          刷新页面就能看到别人读到的那一面——只包含你勾了「公开」的字段。
+          Reload the page to see what everyone else sees — only the fields you marked public.
         </p>
         <button type="button" className="btn" onClick={() => window.location.reload()}>
-          刷新查看
+          Reload and look
         </button>
       </div>
     );
@@ -154,10 +154,11 @@ export function CardEditor({
     return (
       <div className="panel">
         <h2 className="faq-q" style={{ fontSize: 18 }}>
-          这是你的名字吗？
+          Is this your name?
         </h2>
         <p className="body-2" style={{ fontSize: 15 }}>
-          连接钱包后可以为它写名片。名片由你签名、我们代付手续费，任何访问者都能读到并自行核实。
+          Connect a wallet to write its card. You sign the card, we pay the fee, and any visitor can read
+          it and check it for themselves.
         </p>
         <div>
           <button
@@ -172,7 +173,7 @@ export function CardEditor({
               }
             }}
           >
-            {wallet.connecting ? '连接中…' : '连接钱包'}
+            {wallet.connecting ? 'Connecting…' : 'Connect wallet'}
           </button>
         </div>
         {wallet.error ? <div className="notice notice-error">{wallet.error}</div> : null}
@@ -184,8 +185,9 @@ export function CardEditor({
     return (
       <div className="panel">
         <div className="notice notice-info">
-          当前钱包 <span className="mono">{wallet.address}</span> 不是这个名字的主人，只能查看。
-          只有主人签名的名片才会生效——我们和 AI 都替不了。
+          The connected wallet <span className="mono">{wallet.address}</span> does not own this name, so
+          this is read-only. Only a card signed by the owner takes effect — neither we nor an AI can sign
+          in their place.
         </div>
       </div>
     );
@@ -194,16 +196,17 @@ export function CardEditor({
   return (
     <div className="panel">
       <h2 className="faq-q" style={{ fontSize: 18 }}>
-        编辑名片
+        Edit the card
       </h2>
       <p className="body-2" style={{ fontSize: 15 }}>
-        按 ERC-8004 标准写成，别的 AI 能直接读懂。
-        <strong>默认全部不公开，只有名字和地址可见</strong>，逐项勾选后才会公开。
-        {published ? '（已发布的内容里，未公开的字段读不回来，需要重新填写。）' : ''}
+        Written to the ERC-8004 standard so another AI can read it directly.{' '}
+        <strong>Everything is private by default — only the name and the address are visible</strong>, and
+        fields become public one switch at a time.
+        {published ? ' (Fields you kept private on the published card cannot be read back; fill them in again if you want them.)' : ''}
       </p>
 
       <label className="search-label" htmlFor="card-description">
-        简介
+        Description
       </label>
       <textarea
         id="card-description"
@@ -211,7 +214,7 @@ export function CardEditor({
         rows={3}
         value={draft.description}
         onChange={(event) => update('description', event.target.value)}
-        placeholder="例如：婚礼与风光摄影，接受档期咨询。"
+        placeholder="For example: wedding and landscape photography, bookings open."
       />
       <VisibilityPicker
         field="description"
@@ -222,7 +225,7 @@ export function CardEditor({
       <div className="field-row">
         <div>
           <label className="search-label" htmlFor="card-host">
-            运行在
+            Runs on
           </label>
           <input
             id="card-host"
@@ -234,7 +237,7 @@ export function CardEditor({
         </div>
         <div>
           <label className="search-label" htmlFor="card-contact">
-            联系方式
+            Contact
           </label>
           <input
             id="card-contact"
@@ -251,19 +254,19 @@ export function CardEditor({
       </div>
 
       <label className="search-label" htmlFor="card-image">
-        头像（IPFS 地址或图片 URL）
+        Image (IPFS address or image URL)
       </label>
       <input
         id="card-image"
         className="field"
         value={draft.image}
         onChange={(event) => update('image', event.target.value)}
-        placeholder="ipfs://… 或 https://…"
+        placeholder="ipfs://… or https://…"
       />
       <VisibilityPicker field="image" draft={draft} onChange={setVisibility} />
 
       <label className="search-label" htmlFor="card-payout">
-        收款地址（可选）
+        Payout address (optional)
       </label>
       <input
         id="card-payout"
@@ -275,7 +278,7 @@ export function CardEditor({
       <VisibilityPicker field="payoutAddress" draft={draft} onChange={setVisibility} />
 
       <div>
-        <span className="search-label">服务接口</span>
+        <span className="search-label">Service endpoints</span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
           {draft.services.map((service, index) => (
             <div key={index} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -286,7 +289,7 @@ export function CardEditor({
                 value={service.name}
                 onChange={(event) => updateService(index, { name: event.target.value })}
                 placeholder="web"
-                aria-label="接口类型"
+                aria-label="Endpoint name"
               />
               <input
                 className="field"
@@ -294,7 +297,7 @@ export function CardEditor({
                 value={service.endpoint}
                 onChange={(event) => updateService(index, { endpoint: event.target.value })}
                 placeholder="https://…"
-                aria-label="接口地址"
+                aria-label="Endpoint URL"
               />
               <button
                 type="button"
@@ -306,7 +309,7 @@ export function CardEditor({
                   }))
                 }
               >
-                删除
+                Remove
               </button>
             </div>
           ))}
@@ -323,7 +326,7 @@ export function CardEditor({
                 setDraft((prev) => ({ ...prev, services: [...prev.services, { name: 'web', endpoint: '' }] }))
               }
             >
-              添加接口
+              Add an endpoint
             </button>
           </div>
         </div>
@@ -332,7 +335,7 @@ export function CardEditor({
 
       {problems.length > 0 ? (
         <div className="notice notice-error">
-          还差这些：
+          Still missing:
           <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
             {problems.map((problem) => (
               <li key={problem}>{problem}</li>
@@ -344,10 +347,10 @@ export function CardEditor({
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void publish()}>
-          {phase === 'signing' ? '等待钱包签名…' : phase === 'publishing' ? '写入链上…' : '签名并发布'}
+          {phase === 'signing' ? 'Waiting for your signature…' : phase === 'publishing' ? 'Writing to chain…' : 'Sign and publish'}
         </button>
         <span className="record-sample-label" style={{ color: 'var(--ink-3)' }}>
-          手续费由我们代付，你只需要签一次名。
+          We pay the fee; you sign once.
         </span>
       </div>
     </div>
@@ -367,7 +370,7 @@ function VisibilityPicker({
   return (
     <div className="visibility-row">
       <span className="record-sample-label" style={{ color: 'var(--ink-3)' }}>
-        {FIELD_LABELS[field]}：
+        {FIELD_LABELS[field]}:
       </span>
       {(['public', 'certified-only', 'private'] as FieldVisibility[]).map((option) => (
         <button

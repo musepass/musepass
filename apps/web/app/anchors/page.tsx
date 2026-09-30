@@ -3,7 +3,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: '已锚定的批次' };
+export const metadata = { title: 'Anchored batches' };
 
 export default async function AnchorsPage() {
   const config = await fetchConfig();
@@ -12,10 +12,11 @@ export default async function AnchorsPage() {
       <div className="container">
         <SiteHeader config={config} />
         <main className="narrow">
-          <h1 className="h2">已锚定在链上的批次</h1>
+          <h1 className="h2">Batches anchored on chain</h1>
           <p className="body-2">
-            每一行是「一批记录的摘要」写成的一个默克尔根，根本身在链上交易里（点交易哈希能看到），
-            记录留在这里。下面的按钮会在这台机器上重新算一遍，你不用信我们说的对不对。
+            Each row is one merkle root over a batch of records. The root itself is in the
+            transaction on chain — click the hash and read it. The records stay here, and the button
+            below recomputes the root on your own machine so you do not have to take our word for it.
           </p>
           <AnchorList />
         </main>

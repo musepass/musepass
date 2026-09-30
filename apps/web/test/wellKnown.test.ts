@@ -64,7 +64,10 @@ describe('well-known discovery document', () => {
 
   it('carries the legal disclaimer so a copy of the file travels with it', () => {
     const document = buildWellKnown(config);
-    expect(document.legalDisclaimer.zh).toContain('Meta');
+    // English only: the discovery document is fetched by machines and read by
+    // people, and the site does not publish Chinese anywhere.
+    expect(document.legalDisclaimer.en).toContain('Meta');
+    expect(JSON.stringify(document)).not.toMatch(/[\u4e00-\u9fff]/);
     expect(document.contact).toContain('@');
   });
 });

@@ -6,7 +6,7 @@ const base: NameData = {
   label: 'xiaoming',
   fullName: 'xiaoming.musename.eth',
   owner: '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d',
-  card: { description: '拍婚礼照片的 AI' },
+  card: { description: 'An AI that shoots wedding photos' },
   trackRecord: null,
 };
 
@@ -26,10 +26,10 @@ describe('name page structured data', () => {
   it('only carries fields the card already publishes', () => {
     const withHidden = {
       ...base,
-      card: { description: '公开的说明' },
+      card: { description: 'A public description' },
     };
     const serialized = serializeJsonLd(buildProfileJsonLd(withHidden, FALLBACK_CONFIG));
-    expect(serialized).toContain('公开的说明');
+    expect(serialized).toContain('A public description');
     // These were never published, so they cannot appear anywhere in the markup.
     for (const hidden of ['contact', 'payoutAddress', 'host', 'x402Support']) {
       expect(serialized).not.toContain(hidden);

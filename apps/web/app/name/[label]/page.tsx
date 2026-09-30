@@ -37,7 +37,7 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
           <main className="narrow">
             <h1 className="h2">{decoded}</h1>
             <div className="notice notice-warn">
-              链上暂时查不到这个名字，请稍后再刷新。我们没有猜测结果。
+              The chain could not be read for this name just now. Refresh in a moment — we do not guess.
             </div>
           </main>
           <SiteFooter config={config} />
@@ -56,13 +56,13 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
             <h1 className="h2">
               <span className="mono">{decoded}</span>.{config.rootName}
             </h1>
-            <div className="notice notice-info">这个名字还没有被注册。</div>
+            <div className="notice notice-info">This name has not been registered.</div>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link className="btn btn-primary" href={`/claim?label=${encodeURIComponent(decoded)}`}>
-                连接钱包领取
+                Connect a wallet to claim it
               </Link>
               <Link className="btn" href="/">
-                回首页
+                Back to the home page
               </Link>
             </div>
           </main>
@@ -89,7 +89,7 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
 
           <div className="panel">
             <dl className="kv">
-              <dt>所有者</dt>
+              <dt>Owner</dt>
               <dd className="mono-break">
                 {data.owner && explorer ? (
                   <a href={`${explorer}/address/${data.owner}`} target="_blank" rel="noreferrer">
@@ -101,10 +101,10 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
               </dd>
               {data.index ? (
                 <>
-                  <dt>注册时间</dt>
+                  <dt>Registered</dt>
                   <dd>{new Date(data.index.registeredAt).toISOString().slice(0, 10)}</dd>
-                  <dt>注册渠道</dt>
-                  <dd>{data.index.registeredVia === 'mcp' ? 'AI 一句话注册' : '网页注册'}</dd>
+                  <dt>Registered via</dt>
+                  <dd>{data.index.registeredVia === 'mcp' ? 'one sentence to an AI' : 'the website'}</dd>
                 </>
               ) : null}
             </dl>
@@ -112,7 +112,7 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
 
           <div className="panel">
             <h2 className="faq-q" style={{ fontSize: 18 }}>
-              名片
+              Card
             </h2>
             {data.card ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -125,25 +125,25 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
                 <dl className="kv" style={{ gridTemplateColumns: '120px 1fr' }}>
                   {data.card.host ? (
                     <>
-                      <dt>运行在</dt>
+                      <dt>Runs on</dt>
                       <dd>{data.card.host}</dd>
                     </>
                   ) : null}
                   {data.card.owner ? (
                     <>
-                      <dt>主人</dt>
+                      <dt>Owner</dt>
                       <dd>{data.card.owner}</dd>
                     </>
                   ) : null}
                   {data.card.contact ? (
                     <>
-                      <dt>联系</dt>
+                      <dt>Contact</dt>
                       <dd>{data.card.contact}</dd>
                     </>
                   ) : null}
                   {data.card.payoutAddress ? (
                     <>
-                      <dt>收款</dt>
+                      <dt>Payout</dt>
                       <dd className="mono-break">{data.card.payoutAddress}</dd>
                     </>
                   ) : null}
@@ -152,7 +152,7 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
                 {data.card.services?.length ? (
                   <div>
                     <div className="record-sample-label" style={{ color: 'var(--ink-3)' }}>
-                      它能做什么 / 怎么找到它
+                      What it does / how to reach it
                     </div>
                     <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {data.card.services.map((service) => (
@@ -170,30 +170,33 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
 
                 {data.card.contentHash ? (
                   <p className="record-sample-label" style={{ margin: 0, color: 'var(--ink-3)' }}>
-                    内容指纹 <span className="mono-break">{data.card.contentHash}</span>
+                    Content hash <span className="mono-break">{data.card.contentHash}</span>
                     <br />
-                    这条记录存在链上的 ENS 文本记录里（键名 <span className="mono">musename.card</span>
-                    ），任何人都能独立取回并重算这个指纹。
+                    The record lives in an ENS text record on chain (key{' '}
+                    <span className="mono">musename.card</span>), so anyone can fetch it and recompute this
+                    hash for themselves.
                   </p>
                 ) : null}
               </div>
             ) : (
               <div className="notice notice-info">
-                还没有公开名片。名片按 ERC-8004 标准生成，公开哪些字段由主人逐项决定，默认只公开名字和地址。
+                No card has been published. Cards follow the ERC-8004 standard; the owner decides which
+                fields to make public, one at a time, and by default only the name and the address are.
               </div>
             )}
           </div>
 
           <div className="panel">
             <h2 className="faq-q" style={{ fontSize: 18 }}>
-              履历
+              Track record
             </h2>
             {data.trackRecord ? (
               <pre className="mono-break">{JSON.stringify(data.trackRecord, null, 2)}</pre>
             ) : (
               <div className="notice notice-info">
-                还没有履历。履历只记录能被证据证明的事，判定标准在开工前登记、事后不能改。
-                {config.features.trackRecord ? '' : '（认证履历尚未开放）'}
+                No track record yet. A record only holds what evidence can prove, and the criteria are
+                registered before the work starts and cannot be changed afterwards.
+                {config.features.trackRecord ? '' : ' (Certified records are not open yet.)'}
               </div>
             )}
           </div>
@@ -209,7 +212,7 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
           <PrimaryNameCard fullName={data.fullName} ownerAddress={data.owner ?? ''} />
 
           <Link className="btn" href="/">
-            回首页
+            Back to the home page
           </Link>
         </main>
         <SiteFooter config={config} />

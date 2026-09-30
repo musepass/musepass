@@ -22,12 +22,12 @@ export function SiteHeader({
         <BrandMark />
         <span className="brand-name">{config.productName}</span>
       </Link>
-      <nav className="nav" aria-label="主导航">
-        <Link href="/#how">怎么注册</Link>
-        <Link href="/#record">履历</Link>
-        <Link href="/#prompt">粘给 AI</Link>
-        <Link href="/#pricing">价格</Link>
-        <Link href="/#faq">常见问题</Link>
+      <nav className="nav" aria-label="Main">
+        <Link href="/#how">How it works</Link>
+        <Link href="/#record">Track record</Link>
+        <Link href="/#prompt">Paste into your AI</Link>
+        <Link href="/#pricing">Pricing</Link>
+        <Link href="/#faq">FAQ</Link>
         <WalletButton expectedChainId={expectedChainId ?? config.chain.chainId} />
       </nav>
     </header>

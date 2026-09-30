@@ -3,7 +3,7 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { ApiError, fetchConfig, fetchMetrics, type MetricsData } from '@/lib/api';
 
-export const metadata = { title: '数字' };
+export const metadata = { title: 'Numbers' };
 /**
  * Rendered per request, not prerendered.
  *
@@ -17,27 +17,26 @@ export const metadata = { title: '数字' };
 export const dynamic = 'force-dynamic';
 
 /**
- * The API answers in English because its consumers are machines. This page is
- * for people, so the known gaps get a Chinese name and a Chinese reason, keyed
- * by the stable id the API sends — an unknown id still renders, in English,
- * rather than disappearing.
+ * The API answers with a stable id and a machine-readable reason. This page
+ * rewrites the known ids into the plainest sentence we can stand behind; an
+ * unknown id still renders with whatever the API sent, rather than vanishing.
  */
-const GAP_ZH: Record<string, { title: string; why: string }> = {
+const GAP_COPY: Record<string, { title: string; why: string }> = {
   queries_by_others: {
-    title: '除了我们自己，还有谁查询过',
-    why: '还没有按调用方统计 API/MCP 请求；我们自己跑测试会把数字刷高，所以现在报不出来。',
+    title: 'Who besides us has looked anything up',
+    why: 'API and MCP calls are not counted per caller yet. Our own test runs would inflate the number, so we would rather report nothing than report that.',
   },
   records: {
-    title: '记录条数与判定结果',
-    why: '记录注册表已写完并通过测试，但还没有部署，链上没有可读的记录。',
+    title: 'Records and verdicts',
+    why: 'The record registry is written and tested but not deployed, so there is nothing on chain to read.',
   },
   external_verifier_records: {
-    title: '由我们团队之外的验证方出具的记录',
-    why: '目前唯一的验证方是我们自己的引擎（the project's own engine），把它说成"独立验证"是不成立的。',
+    title: 'Records issued by a verifier outside our team',
+    why: 'The only verifier today is our own engine (the project's own engine). Calling that independent verification would be false.',
   },
   unique_users: {
-    title: '独立用户数',
-    why: '一个名字对应一个钱包地址，一个人可以持有多个；按地址数当人数就是在猜。',
+    title: 'Distinct users',
+    why: 'A name maps to a wallet address, and one person can hold several. Counting addresses as people would be a guess.',
   },
 };
 
@@ -63,7 +62,7 @@ export default async function NumbersPage() {
   try {
     metrics = (await fetchMetrics()).data;
   } catch (caught) {
-    error = caught instanceof ApiError ? caught.message : '读不到数字，稍后再试。';
+    error = caught instanceof ApiError ? caught.message : 'The numbers could not be read. Try again shortly.';
   }
 
   const row = (label: string, value: React.ReactNode) => (
@@ -82,62 +81,69 @@ export default async function NumbersPage() {
       <div className="container">
         <SiteHeader config={config} />
         <main className="narrow">
-          <h1 className="h2">数字</h1>
+          <h1 className="h2">Numbers</h1>
           <p className="body-2">
-            这一页只放能被核对的东西。名字数量从链上事件读（任何人可以自己数），
-            索引里的数字标明来源；暂时量不出来的，也一并写在下面，并说明为什么。
+            This page only carries things you can check. The name count comes from the chain&apos;s own
+            events, so anyone can count it themselves; index numbers say where they come from; and what
+            cannot be measured yet is listed below with the reason, rather than left out.
           </p>
 
           {error || !metrics ? (
-            <div className="notice notice-warn">{error ?? '读不到数字，稍后再试。'}</div>
+            <div className="notice notice-warn">
+              {error ?? 'The numbers could not be read. Try again shortly.'}
+            </div>
           ) : (
             <>
               <h2 className="faq-q" style={{ fontSize: 18 }}>
-                名字
+                Names
               </h2>
               {row(
-                '链上已注册（来自 NameRegistered 事件）',
-                metrics.chain.names === null ? '暂时读不到链' : metrics.chain.names,
+                'Registered on chain (from the NameRegistered event)',
+                metrics.chain.names === null ? 'chain not readable right now' : metrics.chain.names,
               )}
-              {row('链上不同的持有人地址', metrics.chain.owners)}
-              {row('索引里的行数', `${metrics.index.names}（${metrics.index.kind === 'memory' ? '内存索引' : '数据库索引'}）`)}
-              {row('其中已发布名片', metrics.namesWithCard)}
+              {row('Distinct holder addresses on chain', metrics.chain.owners)}
+              {row(
+                'Rows in the index',
+                `${metrics.index.names} (${metrics.index.kind === 'memory' ? 'in-memory index' : 'database index'})`,
+              )}
+              {row('Of those, cards published', metrics.namesWithCard)}
 
               {metrics.index.warning ? (
                 <p className="body-2" style={{ fontSize: 14, opacity: 0.75 }}>
-                  注意：索引跑在
-                  {metrics.index.kind === 'memory' ? '内存里，服务一重启就清空' : '数据库里'}，
-                  所以上面的索引数字只说明"这个进程见过什么"，不代表链上有什么。链才是完整记录。
+                  Note: the index lives{' '}
+                  {metrics.index.kind === 'memory' ? 'in memory, and a restart empties it' : 'in the database'},
+                  so the index numbers above only say what this process has seen. They are not a statement
+                  about the chain — the chain is the complete record.
                 </p>
               ) : null}
 
               <p className="body-2" style={{ fontSize: 14 }}>
-                自己核对：读发行合约的 <span className="mono">NameRegistered</span> 事件，
-                或者在本仓库跑 <span className="mono">pnpm snapshot:names</span>。
+                Check it yourself: read the registrar&apos;s <span className="mono">NameRegistered</span>{' '}
+                events, or run <span className="mono">pnpm snapshot:names</span> in this repository.
               </p>
 
               <h2 className="faq-q" style={{ fontSize: 18, marginTop: 24 }}>
-                还量不出来的
+                Not measurable yet
               </h2>
               <ul className="body-2" style={{ paddingLeft: 18 }}>
                 {metrics.notMeasured.map((entry) => (
                   <li key={entry.id} style={{ marginBottom: 8 }}>
-                    <strong>{GAP_ZH[entry.id]?.title ?? entry.metric}</strong>：
-                    {GAP_ZH[entry.id]?.why ?? entry.why}
+                    <strong>{GAP_COPY[entry.id]?.title ?? entry.metric}</strong>:{' '}
+                    {GAP_COPY[entry.id]?.why ?? entry.why}
                   </li>
                 ))}
               </ul>
 
               <p className="body-2" style={{ fontSize: 14 }}>
-                想了解权限与风险，见{' '}
+                For who can do what, and the risks, see the{' '}
                 <Link className="record-link" href="/trust">
-                  信任模型
+                  trust model
                 </Link>
-                ；想知道这批数字的语气边界，见{' '}
+                . For what a batch of numbers can and cannot be made to say, see{' '}
                 <Link className="record-link" href="/anchors">
-                  已锚定的批次
+                  anchored batches
                 </Link>
-                。
+                .
               </p>
             </>
           )}
