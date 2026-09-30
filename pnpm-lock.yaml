@@ -111,6 +111,40 @@ importers:
         specifier: 3.2.7
         version: 3.2.7(@types/node@22.20.4)(tsx@4.23.15)
 
+  apps/signer:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^1.19.0
+        version: 1.19.17(hono@4.13.10)
+      '@modelcontextprotocol/sdk':
+        specifier: 1.30.1
+        version: 1.30.1(zod@4.6.5)
+      '@musename/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      hono:
+        specifier: 4.13.10
+        version: 4.13.10
+      viem:
+        specifier: 2.56.9
+        version: 2.56.9(typescript@5.9.3)(zod@4.6.5)
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.4
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 3.2.7
+        version: 3.2.7(@types/node@22.20.4)(tsx@4.23.15)
+
   apps/web:
     dependencies:
       '@musename/core':
