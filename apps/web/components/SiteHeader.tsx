@@ -27,6 +27,7 @@ export function SiteHeader({
         <Link href="/#record">Track record</Link>
         <Link href="/#prompt">Paste into your AI</Link>
         <Link href="/#pricing">Pricing</Link>
+        <Link href="/docs">Docs</Link>
         <Link href="/#faq">FAQ</Link>
         <Link href="/my">My names</Link>
         <WalletButton expectedChainIds={expectedChainIds ?? [config.chain.chainId]} />

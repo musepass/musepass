@@ -1007,3 +1007,143 @@ textarea.field {
     animation: none !important;
   }
 }
+
+/* ------------------------------------------------------------------- docs
+   A documentation layout, borrowed from the shape everyone already knows
+   (sidebar, one readable column, code blocks, tables): the goal is that an
+   integrator finds the endpoint they need without learning our site first. */
+.docs-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 56px;
+  padding: 40px var(--pad-x) 96px;
+  align-items: start;
+}
+
+.docs-side {
+  position: sticky;
+  top: 24px;
+  border-right: 1px solid var(--line);
+  padding-right: 24px;
+}
+
+.docs-side-title {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0 0 10px;
+}
+
+.docs-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 14px;
+  margin-bottom: 26px;
+}
+
+.docs-nav a {
+  color: var(--ink-2);
+  text-decoration: none;
+}
+
+.docs-nav a:hover {
+  color: var(--accent);
+}
+
+.docs-main {
+  min-width: 0;
+  max-width: 780px;
+}
+
+.docs-main h2 {
+  margin: 56px 0 12px;
+  scroll-margin-top: 24px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.docs-main h2:first-of-type {
+  margin-top: 0;
+  border-top: 0;
+}
+
+.docs-main h3 {
+  margin: 28px 0 8px;
+}
+
+.docs-main p,
+.docs-main li {
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+
+.docs-lede {
+  font-size: 18px;
+  color: var(--ink);
+}
+
+.docs-code {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink);
+  margin: 12px 0 18px;
+}
+
+.docs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin: 12px 0 20px;
+}
+
+.docs-table th,
+.docs-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--ink-2);
+}
+
+.docs-table th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.docs-table code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.docs-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 40px;
+}
+
+@media (max-width: 900px) {
+  .docs-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .docs-side {
+    position: static;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0 0 18px;
+  }
+}
