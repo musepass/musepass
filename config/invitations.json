@@ -4,21 +4,15 @@
   "opens": null,
   "closes": null,
   "rules": {
-    "freeLabelUnits": { "min": 3, "max": 4 },
+    "freeLabelUnits": {
+      "min": 3,
+      "max": 4
+    },
     "onePerWallet": true,
-    "reservedByProject": { "min": 1, "max": 2 }
-  },
-  "invitations": [
-    {
-      "$example": "one row per invitation; delete before use",
-      "wallet": "0x0000000000000000000000000000000000000000",
-      "xHandle": "example",
-      "label": "",
-      "issuedBy": "",
-      "issuedAt": "",
-      "claimedAt": null,
-      "claimedLabel": null,
-      "txHash": null
+    "reservedByProject": {
+      "min": 1,
+      "max": 2
     }
-  ]
+  },
+  "invitations": []
 }

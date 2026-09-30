@@ -31,7 +31,8 @@
     "web:english": "node scripts/check-web-english.mjs",
     "deploy:web": "./scripts/deploy-web.sh",
     "domain:cutover": "./scripts/cutover-domain.sh",
-    "push:config": "./scripts/push-config.sh"
+    "push:config": "./scripts/push-config.sh",
+    "invite": "node scripts/invite.mjs"
   },
   "devDependencies": {
     "viem": "2.56.9",
