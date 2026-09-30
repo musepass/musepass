@@ -175,3 +175,32 @@ export const ASK_TXT = [
   'QUESTIONS: support@musename.xyz',
   '',
 ].join('\n');
+
+/**
+ * The prompt for testing agent self-registration.
+ *
+ * Different audience from the one above: this is for somebody who runs an agent
+ * and wants to watch it do the whole thing — check, sign for itself, report the
+ * transaction. It is written so that a bot without a wallet does not fail
+ * silently: it falls back to asking its owner, which is the other supported path.
+ */
+export const AGENT_TEST_PROMPT = [
+  'Register a MuseName name for yourself using the MCP server.',
+  '',
+  `1. Read the rules first: ${SITE_URL}/ask.txt`,
+  `2. MCP endpoint: ${MCP_URL}`,
+  '3. Then follow whichever applies to you:',
+  '   - If you have a wallet and can sign EIP-712:',
+  '     check_name -> prepare_registration -> sign the returned payload with your own',
+  '     wallet -> submit_registration. The name goes to your address and MuseName pays',
+  '     the gas.',
+  '   - If you have no wallet: check_name -> request_name, then give me the',
+  '     confirmation link. I will sign it.',
+  '4. Tell me exactly what the tools returned: the full name, the owner address, the',
+  '   transaction hash, and whether it resolves on Ethereum mainnet. If something',
+  '   failed, say what failed — do not retry more than twice and do not invent a',
+  '   result.',
+  '',
+  'Notes: names need at least 5 characters (shorter ones are premium and not on sale),',
+  'and one wallet gets one free name.',
+].join('\n');

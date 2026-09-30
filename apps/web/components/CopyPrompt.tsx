@@ -10,7 +10,16 @@ import { AGENT_PROMPT, MCP_CONFIG_JSON } from '@/lib/agentPrompt';
  * the two audiences differ: a person pastes the prompt into their AI, a client
  * needs the MCP config JSON.
  */
-export function CopyPrompt({ askTxtUrl }: { askTxtUrl: string }) {
+export function CopyPrompt({
+  askTxtUrl,
+  prompt = AGENT_PROMPT,
+  heading = 'Paste this into your AI',
+}: {
+  askTxtUrl: string;
+  /** Which prompt to offer; the agent test prompt lives on the developer page. */
+  prompt?: string;
+  heading?: string;
+}) {
   const [copied, setCopied] = useState<string | null>(null);
 
   const copy = async (label: string, text: string) => {
@@ -27,7 +36,7 @@ export function CopyPrompt({ askTxtUrl }: { askTxtUrl: string }) {
     <div style={{ display: 'grid', gap: 16 }}>
       <div>
         <div className="record-sample-label" style={{ marginBottom: 8 }}>
-          Paste this into your AI
+          {heading}
         </div>
         <pre
           className="mono"
@@ -43,12 +52,12 @@ export function CopyPrompt({ askTxtUrl }: { askTxtUrl: string }) {
             overflowX: 'auto',
           }}
         >
-          {AGENT_PROMPT}
+          {prompt}
         </pre>
       </div>
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <button className="btn btn-primary" type="button" onClick={() => copy('Prompt', AGENT_PROMPT)}>
+        <button className="btn btn-primary" type="button" onClick={() => copy('Prompt', prompt)}>
           Copy the prompt
         </button>
         <button className="btn" type="button" onClick={() => copy('MCP config', MCP_CONFIG_JSON)}>

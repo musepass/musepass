@@ -309,6 +309,84 @@ export function createApp(deps: MusenameDeps) {
     );
   });
 
+  /**
+   * Which names a wallet owns.
+   *
+   * The chain already knows, and the event scan behind `listNames` is cached for
+   * five minutes, so this is a filter rather than a new source of truth. It
+   * exists because a name you cannot find again is a name you cannot use: before
+   * this, the only way back to a name was to remember its label.
+   */
+  app.get('/v1/names', async (c) => {
+    const owner = (c.req.query('owner') ?? '').trim();
+    if (!isAddress(owner)) {
+      return c.json(
+        {
+          summary: {
+            zh: '需要一个钱包地址（0x… 40 位十六进制）才能列出名字。',
+            en: 'I need a wallet address (0x…, 40 hex characters) to list names.',
+          },
+          errors: [
+            boom('BAD_OWNER', 'owner must be an address', {
+              zh: '地址格式不对。',
+              en: 'That address is not valid.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    try {
+      const all = await chain.listNames();
+      const mine = all
+        .filter((entry) => entry.owner.toLowerCase() === owner.toLowerCase())
+        .map((entry) => ({
+          label: entry.label,
+          fullName: `${entry.label}.${config.brand.rootName}`,
+          owner: entry.owner,
+          txHash: entry.txHash,
+          blockNumber: entry.blockNumber,
+        }));
+
+      return c.json(
+        {
+          summary: {
+            zh: mine.length > 0 ? `这个钱包有 ${mine.length} 个名字。` : '这个钱包还没有名字。',
+            en:
+              mine.length > 0
+                ? `This wallet holds ${mine.length} name(s).`
+                : 'This wallet does not hold a name yet.',
+          },
+          data: { owner, count: mine.length, names: mine, rootName: config.brand.rootName },
+          errors: [],
+          meta: meta(true),
+        },
+        200,
+        { 'cache-control': 'public, max-age=60' },
+      );
+    } catch (error) {
+      // Read-only, and the message says what happened rather than guessing.
+      return c.json(
+        {
+          summary: {
+            zh: '链上暂时读不到，稍后再试。',
+            en: 'The chain could not be read just now; try again shortly.',
+          },
+          errors: [
+            boom('CHAIN_ERROR', error instanceof Error ? error.message : 'chain read failed', {
+              zh: '链上暂时读不到。',
+              en: 'The chain could not be read.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        502,
+      );
+    }
+  });
+
   app.get('/v1/names/:name/available', async (c) => {
     const rawName = c.req.param('name');
     const limit = config.limits.rateLimits.availabilityPerMinutePerIp;

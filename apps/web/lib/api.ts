@@ -380,3 +380,23 @@ export async function fetchConfig(options?: RequestOptions): Promise<PublicConfi
     return stripChinese(FALLBACK_CONFIG);
   }
 }
+
+export interface OwnedName {
+  label: string;
+  fullName: string;
+  owner: string;
+  txHash: string | null;
+  blockNumber: number;
+}
+
+export interface OwnedNamesData {
+  owner: string;
+  count: number;
+  names: OwnedName[];
+  rootName: string;
+}
+
+/** The names a wallet holds, read from the registrar's events. */
+export async function fetchOwnedNames(owner: string, options?: RequestOptions) {
+  return request<OwnedNamesData>(`/v1/names?owner=${encodeURIComponent(owner)}`, {}, options);
+}

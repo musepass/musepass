@@ -561,3 +561,31 @@ describe('unknown routes', () => {
 beforeEach(() => {
   // Nothing global to reset yet; keeps the shape ready for the Postgres repo.
 });
+
+describe('GET /v1/names?owner=', () => {
+  it('lists the names a wallet holds, from the chain events', async () => {
+    const { app } = buildApp();
+    const response = await app.request(`/v1/names?owner=${ownerAccount.address}`);
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.data.owner.toLowerCase()).toBe(ownerAccount.address.toLowerCase());
+    expect(Array.isArray(body.data.names)).toBe(true);
+  });
+
+  it('refuses a wallet address it cannot read', async () => {
+    const { app } = buildApp();
+    const response = await app.request('/v1/names?owner=not-an-address');
+    const body = await response.json();
+    expect(response.status).toBe(400);
+    expect(body.errors[0].code).toBe('BAD_OWNER');
+  });
+
+  it('says nothing was found rather than failing, for a wallet with no names', async () => {
+    const { app } = buildApp();
+    const response = await app.request('/v1/names?owner=0x1111111111111111111111111111111111111111');
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.data.count).toBe(0);
+    expect(body.summary.en).toContain('does not hold a name');
+  });
+});
