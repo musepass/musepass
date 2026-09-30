@@ -145,6 +145,9 @@ export function createMemoryRepos(): {
     async markClaimed(claim) {
       invitationClaims.set(claim.wallet.toLowerCase(), claim);
     },
+    async listClaimedWallets() {
+      return [...invitationClaims.keys()];
+    },
   };
 
   return { names, sponsorship, requests, cards, invitationClaims: claims };

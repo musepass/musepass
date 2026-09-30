@@ -338,6 +338,13 @@ export function createPostgresRepos(sql: Sql): {
         [claim.wallet, claim.claimedLabel, claim.txHash, claim.claimedAt],
       );
     },
+
+    async listClaimedWallets() {
+      const { rows } = await sql.query<{ wallet: string }>(
+        'select lower(wallet_address) as wallet from invitation_claims',
+      );
+      return rows.map((row) => row.wallet);
+    },
   };
 
   return { names, sponsorship, requests, cards, invitationClaims };

@@ -416,6 +416,58 @@ export function createApp(deps: MusenameDeps) {
     }
   });
 
+  /**
+   * D17, in public: how many invitations exist and how many are spent.
+   *
+   * Counts only. The list itself — which wallets, which X handles — is the one
+   * thing this endpoint must never return: publishing it would tell everyone
+   * who was considered worth inviting, and would hand spammers a target list.
+   * The claim count comes from the spend ledger, not from the config file, so
+   * pushing a fresh config cannot change history.
+   */
+  app.get('/v1/invitations', async (c) => {
+    const rows = config.invitations.invitations.filter((row) => !row.$example);
+    const claimedInConfig = new Set(
+      rows.filter((row) => row.claimedAt).map((row) => (row.wallet ?? '').trim().toLowerCase()),
+    );
+    let spent: string[];
+    try {
+      spent = await invitationClaims.listClaimedWallets();
+    } catch {
+      spent = [];
+    }
+    const claimed = new Set([...claimedInConfig, ...spent.map((wallet) => wallet.toLowerCase())]);
+
+    const issued = rows.length;
+    const claimedCount = claimed.size;
+
+    return c.json(
+      {
+        summary: {
+          zh: `这次邀请一共 ${issued} 个名额，已经用掉 ${claimedCount} 个。`,
+          en: `This campaign has ${issued} invitations and ${claimedCount} of them are spent.`,
+        },
+        data: {
+          campaign: config.invitations.campaign ?? null,
+          opens: config.invitations.opens ?? null,
+          closes: config.invitations.closes ?? null,
+          issued,
+          claimed: claimedCount,
+          remaining: Math.max(issued - claimedCount, 0),
+          rule: config.invitations.rules?.freeLabelUnits ?? null,
+          /** The spend ledger is part of the index, so the count says which one. */
+          claimsSource: indexKind,
+          noteEn: 'Counts only. The invited wallets and handles are not published, on purpose.',
+          noteZh: '只公开数量。受邀钱包与 handle 名单有意不公开。',
+        },
+        errors: [],
+        meta: meta(false),
+      },
+      200,
+      { 'cache-control': 'public, max-age=60' },
+    );
+  });
+
   app.get('/v1/names/:name/available', async (c) => {
     const rawName = c.req.param('name');
     const limit = config.limits.rateLimits.availabilityPerMinutePerIp;

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
-import { ApiError, fetchConfig, fetchMetrics, type MetricsData } from '@/lib/api';
+import { ApiError, fetchConfig, fetchInvitations, fetchMetrics, type InvitationsData, type MetricsData } from '@/lib/api';
 
 export const metadata = { title: 'Numbers' };
 /**
@@ -58,11 +58,18 @@ const GAP_COPY: Record<string, { title: string; why: string }> = {
 export default async function NumbersPage() {
   const config = await fetchConfig();
   let metrics: MetricsData | null = null;
+  let invitations: InvitationsData | null = null;
   let error: string | null = null;
   try {
     metrics = (await fetchMetrics()).data;
   } catch (caught) {
     error = caught instanceof ApiError ? caught.message : 'The numbers could not be read. Try again shortly.';
+  }
+  try {
+    invitations = (await fetchInvitations()).data;
+  } catch {
+    // The invitation section simply does not render; the rest of the page is
+    // still true without it.
   }
 
   const row = (label: string, value: React.ReactNode) => (
@@ -121,6 +128,33 @@ export default async function NumbersPage() {
                 Check it yourself: read the registrar&apos;s <span className="mono">NameRegistered</span>{' '}
                 events, or run <span className="mono">pnpm snapshot:names</span> in this repository.
               </p>
+
+              {invitations ? (
+                <>
+                  <h2 className="faq-q" style={{ fontSize: 18, marginTop: 24 }}>
+                    Invitations{invitations.campaign ? ` (${invitations.campaign})` : ''}
+                  </h2>
+                  <p className="body-2" style={{ fontSize: 14 }}>
+                    Short names (3–4 characters) are invitation only. This is the ledger of that
+                    campaign — counts only: which wallets and accounts were invited is not published,
+                    on purpose.
+                  </p>
+                  {row('Invitations issued', invitations.issued)}
+                  {row('Spent on a short name', invitations.claimed)}
+                  {row('Still open', invitations.remaining)}
+                  {invitations.rule ? (
+                    <p className="body-2" style={{ fontSize: 14, opacity: 0.75 }}>
+                      The invitation covers a name of {invitations.rule.min}–{invitations.rule.max}{' '}
+                      display units, one name per invitation. The spend count comes from the{' '}
+                      {invitations.claimsSource === 'postgres' ? 'database' : 'in-memory'} ledger
+                      {invitations.claimsSource === 'memory'
+                        ? ', so a restart of the service can undercount it until the database is attached'
+                        : ''}
+                      .
+                    </p>
+                  ) : null}
+                </>
+              ) : null}
 
               <h2 className="faq-q" style={{ fontSize: 18, marginTop: 24 }}>
                 Not measurable yet

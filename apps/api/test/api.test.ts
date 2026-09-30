@@ -330,6 +330,59 @@ describe('GET /v1/names/{name}/available', () => {
   });
 });
 
+describe('GET /v1/invitations', () => {
+  it('publishes counts, never the list', async () => {
+    const { app } = buildApp();
+    const body = await (await app.request('/v1/invitations')).json();
+
+    expect(body.data.issued).toBe(3);
+    expect(body.data.claimed).toBe(0);
+    expect(body.data.remaining).toBe(3);
+    expect(body.data.claimsSource).toBe('memory');
+    // The one thing this endpoint must not do: name a wallet or a handle.
+    expect(JSON.stringify(body)).not.toContain('d2b294');
+  });
+
+  it('counts a spent invitation after a successful invited claim', async () => {
+    const config = testConfig();
+    config.invitations.invitations.push({
+      wallet: ownerAccount.address,
+      issuedBy: 'test',
+      issuedAt: '2026-09-30',
+      claimedAt: null,
+      claimedLabel: null,
+      txHash: null,
+    });
+    const { app, deps } = buildApp({ config });
+    const { signature } = await signClaim('gold', config, futureSeconds);
+    await app.request('/v1/names/claim', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'gold',
+        owner: ownerAccount.address,
+        deadline: futureSeconds,
+        signature,
+      }),
+    });
+
+    const body = await (await app.request('/v1/invitations')).json();
+    expect(body.data.issued).toBe(4);
+    expect(body.data.claimed).toBe(1);
+    expect(body.data.remaining).toBe(3);
+
+    // And a claim recorded outside the config file still counts.
+    await deps.invitationClaims.markClaimed({
+      wallet: '0xd2b294fbe4b6710cf00c4d15a3e8857de12be344',
+      claimedLabel: 'tst1',
+      txHash: null,
+      claimedAt: new Date(),
+    });
+    const after = await (await app.request('/v1/invitations')).json();
+    expect(after.data.claimed).toBe(2);
+  });
+});
+
 describe('POST /v1/names/claim', () => {
   it('issues the name to the signer and records the sponsorship', async () => {
     const { app, deps } = buildApp();

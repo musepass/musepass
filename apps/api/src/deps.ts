@@ -62,6 +62,8 @@ export interface InvitationClaimsRepo {
   findByWallet(wallet: Address): Promise<InvitationClaim | null>;
   /** Idempotent per wallet: writing a second claim for the same wallet is a no-op. */
   markClaimed(claim: InvitationClaim): Promise<void>;
+  /** Every wallet that has spent its invitation, lowercased. For the public count. */
+  listClaimedWallets(): Promise<string[]>;
 }
 
 /**

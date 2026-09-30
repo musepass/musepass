@@ -318,6 +318,23 @@ export function fetchMetrics(options?: RequestOptions) {
   return request<MetricsData>('/v1/metrics', {}, options);
 }
 
+export interface InvitationsData {
+  campaign: string | null;
+  opens: string | null;
+  closes: string | null;
+  issued: number;
+  claimed: number;
+  remaining: number;
+  rule: { min: number; max: number } | null;
+  claimsSource: 'memory' | 'postgres';
+  noteEn: string;
+}
+
+/** Counts only — the API never publishes which wallets or handles are invited. */
+export function fetchInvitations(options?: RequestOptions) {
+  return request<InvitationsData>('/v1/invitations', {}, options);
+}
+
 export function fetchRequest(id: string, options?: RequestOptions) {
   return request<RequestData>(`/v1/requests/${encodeURIComponent(id)}`, {}, options);
 }
