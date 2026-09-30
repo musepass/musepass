@@ -20,7 +20,7 @@ export const ASK_TXT_VERSION = '1.0 · 2026-09-29';
 // the apex, not a separate domain), so an agent reads whichever brand the rest
 // of the prompt names. It used to be hardcoded to the gateway host, which meant
 // the paste block and the site could disagree about where the product lives.
-export const SITE_URL = 'https://musename.xyz';
+export const SITE_URL = 'https://musepass.xyz';
 export const MCP_URL = `${SITE_URL}/mcp`;
 
 /** The block a human copies into their AI. Short on purpose: a task, not a spec. */
@@ -84,7 +84,7 @@ export const L2_REGISTRY_ADDRESS = FALLBACK_CONFIG.l2Registry ?? '';
  * happy path will invent the rest.
  */
 export const ASK_TXT = [
-  'MUSENAME — RULES FOR AIs',
+  'MUSEPASS — RULES FOR AIs',
   '========================',
   `${SITE_URL} · plain text on purpose: you can read this yourself.`,
   `Version ${ASK_TXT_VERSION}`,

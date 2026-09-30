@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -13,6 +14,12 @@ import {
 } from '@musename/core';
 
 import { createApp } from '../src/app.js';
+
+// The canonical domain is config, not a constant to retype: the 2026-09-30 move
+// to musepass.xyz broke these two assertions, and the API was right both times.
+const SITE_URL = JSON.parse(
+  readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../config/brand.json'), 'utf8'),
+).siteUrl as string;
 import type { ChainReader, MusenameDeps } from '../src/deps.js';
 import { createMemoryRepos } from '../src/repositories/memory.js';
 
@@ -141,7 +148,7 @@ describe('GET /v1/config', () => {
 
     expect(body.data.productName).toBe('MusePass');
     expect(body.data.rootName).toBe('musepass.eth');
-    expect(body.data.siteUrl).toBe('https://musename.xyz');
+    expect(body.data.siteUrl).toBe(SITE_URL);
     expect(body.data.chain.chainId).toBe(4663);
     expect(body.data.registrar).toBe(REGISTRAR);
     expect(body.data.legalDisclaimer.zh).toContain('Meta');
@@ -206,11 +213,11 @@ describe('browser access', () => {
     const response = await app.request('/v1/names/aguang/available', {
       method: 'OPTIONS',
       headers: {
-        origin: 'https://musename.xyz',
+        origin: SITE_URL,
         'access-control-request-method': 'GET',
       },
     });
-    expect(response.headers.get('access-control-allow-origin')).toBe('https://musename.xyz');
+    expect(response.headers.get('access-control-allow-origin')).toBe(SITE_URL);
   });
 });
 

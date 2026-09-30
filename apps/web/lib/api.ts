@@ -155,7 +155,7 @@ export const FALLBACK_CONFIG: PublicConfig = {
   productName: 'MusePass',
   tagline: { en: 'Give every AI a name worth trusting' },
   rootName: 'musepass.eth',
-  siteUrl: 'https://musename.xyz',
+  siteUrl: 'https://musepass.xyz',
   supportEmail: 'support@musepass.xyz',
   legalDisclaimer: {
     en: 'MusePass is an independent project, not affiliated with Meta.',

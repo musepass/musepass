@@ -59,7 +59,7 @@ describe('well-known discovery document', () => {
     expect(document.verification.steps).toHaveLength(3);
     expect(document.verification.steps[0].how).toContain('owner(bytes32)');
     expect(document.verification.steps[0].how).toContain(deployments.l2Registry.address);
-    expect(document.api.nameLookup).toBe('https://musename.xyz/v1/names/{name}');
+    expect(document.api.nameLookup).toBe(`${config.siteUrl}/v1/names/{name}`);
   });
 
   it('carries the legal disclaimer so a copy of the file travels with it', () => {

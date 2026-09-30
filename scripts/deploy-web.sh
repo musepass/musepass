@@ -89,7 +89,17 @@ done
 REMOTE
 
 echo "== verify"
+# The report exits non-zero for the checks that are open on purpose (the root
+# name's two signatures, for one). The deploy itself is what this script owns, so
+# a failing report is printed rather than treated as a failed deploy.
+set +e
 node "$ROOT_DIR/scripts/health-report.mjs" | tail -20
+health="${PIPESTATUS[0]:-0}"
+set -e
+if [ "$health" != "0" ]; then
+  echo
+  echo "health report exited $health — open items are listed above; the deploy itself succeeded."
+fi
 
 echo
 echo "deployed. If the site looks wrong, the previous bundle is at"

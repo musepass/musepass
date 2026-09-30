@@ -14,13 +14,16 @@ describe('name page structured data', () => {
   it('identifies the page and the entity behind it', () => {
     const jsonLd = buildProfileJsonLd(base, FALLBACK_CONFIG);
     expect(jsonLd['@type']).toBe('ProfilePage');
-    expect(jsonLd.url).toBe('https://musename.xyz/name/xiaoming');
+    // Read from the config the same way the page does, so moving the product to
+    // another domain does not require editing this expectation.
+    const site = FALLBACK_CONFIG.siteUrl.replace(/\/$/, '');
+    expect(jsonLd.url).toBe(`${site}/name/xiaoming`);
     expect(jsonLd.mainEntity).toMatchObject({
       '@type': 'Thing',
       name: 'xiaoming.musepass.eth',
       identifier: 'eip155:4663:0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d',
     });
-    expect(jsonLd.isBasedOn).toBe('https://musename.xyz/.well-known/musename.json');
+    expect(jsonLd.isBasedOn).toBe(`${site}/.well-known/musename.json`);
   });
 
   it('only carries fields the card already publishes', () => {
