@@ -17,6 +17,7 @@ import {
   deadlineInSeconds,
   signRegister,
 } from '@/lib/wallet';
+import { PrimaryNameCard } from './PrimaryNameCard';
 import { useWallet } from './WalletProvider';
 
 type Phase = 'loading' | 'ready' | 'signing' | 'submitting' | 'done' | 'failed';
@@ -31,6 +32,7 @@ export interface ClaimFlowProps {
 
 export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken }: ClaimFlowProps) {
   const wallet = useWallet();
+  const disconnect = wallet.disconnect;
   const [label, setLabel] = useState(initialLabel);
   const [availability, setAvailability] = useState<AvailabilityView | null>(null);
   const [request, setRequest] = useState<RequestData | null>(null);
@@ -90,6 +92,29 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
   const isAvailable = availability?.kind === 'available';
   const wrongChain = Boolean(wallet.address) && wallet.chainId !== config.chain.chainId;
   const busy = phase === 'signing' || phase === 'submitting';
+
+  /**
+   * Whatever is still missing, in order: connect a wallet, switch it to the
+   * chain, then ask for the signature. Splitting these into separate buttons
+   * made the owner work out our state machine.
+   */
+  async function start() {
+    setError(null);
+    if (!isAvailable) return;
+    try {
+      if (!wallet.address) {
+        await wallet.connectWallet();
+      }
+      if (wallet.chainId !== config.chain.chainId) {
+        await wallet.switchTo(config.chain.chainId);
+      }
+    } catch {
+      // The provider already stored a readable message; a second attempt is one
+      // click away, which is better than guessing why nothing happened.
+      return;
+    }
+    await claim();
+  }
 
   async function claim() {
     setError(null);
@@ -171,18 +196,18 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
             </>
           ) : null}
         </dl>
+        <p className="body-2" style={{ fontSize: 15 }}>
+          The name is in your wallet. Even if we shut down, it stays and keeps working.
+        </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <a className="btn btn-primary" href={`/name/${encodeURIComponent(result.label)}`}>
-            See the name&apos;s page
+            Add its card
           </a>
           <a className="btn" href="/">
             Back to the home page
           </a>
         </div>
-        <p className="body-2" style={{ fontSize: 15 }}>
-          The name is in your wallet. Even if we shut down, it stays and keeps working. Next comes the
-          card — it tells another AI what you do, and you decide which fields anyone can see.
-        </p>
+        <PrimaryNameCard fullName={result.fullName} ownerAddress={result.owner} />
       </div>
     );
   }
@@ -265,42 +290,33 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         {wallet.error ? <div className="notice notice-error">{wallet.error}</div> : null}
         {error ? <div className="notice notice-error">{error}</div> : null}
 
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {!wallet.address ? (
-            <button
-              type="button"
-              className="btn"
-              disabled={wallet.connecting}
-              onClick={async () => {
-                try {
-                  await wallet.connectWallet();
-                } catch {
-                  // message already in wallet.error
-                }
-              }}
-            >
-              {wallet.connecting ? 'Connecting…' : 'Connect wallet'}
-            </button>
-          ) : null}
-
-          {wallet.address && wrongChain ? (
-            <button type="button" className="btn" onClick={() => void wallet.switchTo(config.chain.chainId)}>
-              Switch to {config.chain.name}
-            </button>
-          ) : null}
-
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* One button, whatever is left: connect, switch networks, then sign.
+              Two buttons here meant the owner had to guess the right order, and
+              the second one only worked if the first had been pressed. */}
           <button
             type="button"
             className="btn btn-primary"
-            disabled={!isAvailable || busy || phase === 'loading'}
-            onClick={() => void claim()}
+            disabled={!isAvailable || busy || wallet.connecting || phase === 'loading'}
+            onClick={() => void start()}
           >
-            {phase === 'signing'
-              ? 'Waiting for your signature…'
-              : phase === 'submitting'
-                ? 'Issuing…'
-                : 'Sign and claim'}
+            {wallet.connecting
+              ? 'Connecting…'
+              : !wallet.address
+                ? 'Connect and claim'
+                : wrongChain
+                  ? `Switch to ${config.chain.name} and claim`
+                  : phase === 'signing'
+                    ? 'Waiting for your signature…'
+                    : phase === 'submitting'
+                      ? 'Issuing…'
+                      : 'Sign and claim'}
           </button>
+          {wallet.address ? (
+            <button type="button" className="btn" onClick={disconnect} disabled={busy}>
+              Use a different wallet
+            </button>
+          ) : null}
         </div>
       </div>
     </div>
