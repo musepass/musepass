@@ -1,6 +1,7 @@
 import type { MusenameConfig } from './config.js';
 import { checkScriptMixing, hasEmoji } from './confusables.js';
 import { isMusePassError, type MusePassErrorCode } from './errors.js';
+import { invitedShortNameDecision, type Invitation } from './invitations.js';
 import { fullNameFromLabel, measureLength, normalizeLabel } from './normalize.js';
 import { quoteLabel, type PriceQuote } from './pricing.js';
 import { checkReserved, type ReservedHit, type ReservedIndex } from './reserved.js';
@@ -42,6 +43,12 @@ export interface LabelCheckOptions {
   onChainFree?: boolean | null;
   /** Phase 1 rejects anything that is not a free name; phase 6 turns this on. */
   allowPremium?: boolean;
+  /**
+   * D17: an unclaimed invitation makes a 3–4 unit name free for the wallet it
+   * belongs to. Without it (the default) short names stay behind the premium
+   * gate, exactly as before.
+   */
+  invitation?: Invitation | null;
 }
 
 const SUMMARY: Record<string, BilingualText> = {
@@ -138,7 +145,18 @@ export function checkLabel(rawLabel: string, options: LabelCheckOptions): LabelC
     price = quoteLabel(units, config.pricing);
 
     if (price.tier === 'premium') {
-      if (!options.allowPremium) {
+      const invite = invitedShortNameDecision(options.invitation ?? null, units);
+      if (invite.allowed) {
+        // The invitation, not the ladder, pays for this name: the price a
+        // front end shows and the tier the API records both say free.
+        price = {
+          tier: 'free',
+          tierId: 'invited-short',
+          priceUsd: 0,
+          currency: config.pricing.currency,
+          active: true,
+        };
+      } else if (!options.allowPremium) {
         issues.push({
           code: 'NOT_FREE_TIER',
           message: `label measures ${units}, free names need at least ${config.pricing.freeTier.minUnits}`,

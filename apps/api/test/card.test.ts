@@ -110,6 +110,7 @@ function buildApp(chain: FakeChain = fakeChain(), config = testConfig()) {
     requests: repos.requests,
       cards: repos.cards,
     sponsorship: repos.sponsorship,
+    invitationClaims: repos.invitationClaims,
     indexKind: 'memory',
     clock: () => FIXED_NOW,
   };

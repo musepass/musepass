@@ -13,6 +13,9 @@ import {
   checkClaimQuota,
   checkLabel,
   defaultVisibility,
+  findInvitation,
+  invitedShortNameDecision,
+  INVITED_MAX_UNITS,
   isMusePassError,
   labelFromFullName,
   namehash,
@@ -23,6 +26,7 @@ import {
   verifyCardTextSignature,
   verifyRegisterSignature,
   type BilingualText,
+  type Invitation,
   type LabelIssue,
   type VisibilityMap,
 } from '@musename/core';
@@ -61,7 +65,7 @@ function boom(
 }
 
 export function createApp(deps: MusenameDeps) {
-  const { config, reservedIndex, chain, names, requests, cards, sponsorship, indexKind, clock } = deps;
+  const { config, reservedIndex, chain, names, requests, cards, sponsorship, invitationClaims, indexKind, clock } = deps;
   const app = new Hono();
   const buckets = new Map<string, RateBucket>();
 
@@ -114,6 +118,31 @@ export function createApp(deps: MusenameDeps) {
     if (bucket.count >= limitPerHour) return false;
     bucket.count += 1;
     return true;
+  }
+
+  /**
+   * D17: the invitation as it stands *now* — the config row, overridden by the
+   * spend record if the wallet already used it. The database wins over the
+   * config file so that pushing a fresh config can never revive a used
+   * invitation.
+   */
+  async function invitationFor(wallet: string): Promise<Invitation | null> {
+    const row = findInvitation(config.invitations.invitations, { wallet });
+    let claim = null;
+    try {
+      claim = await invitationClaims.findByWallet(wallet as Address);
+    } catch {
+      // A short name should not become claimable because our own index is
+      // down; fall through with the config row only, which is the stricter view.
+    }
+    if (!claim) return row;
+    return {
+      ...row,
+      wallet: row?.wallet ?? wallet,
+      claimedAt: claim.claimedAt.toISOString(),
+      claimedLabel: claim.claimedLabel,
+      txHash: claim.txHash,
+    };
   }
 
   app.get('/healthz', (c) =>
@@ -423,7 +452,34 @@ export function createApp(deps: MusenameDeps) {
       }
     }
 
-    const result = checkLabel(label ?? rawName, { config, reservedIndex, onChainFree });
+    // D17: with ?owner=0x… the answer says whether *this wallet* may take the
+    // name, which is what the claim page needs for a 3–4 character name.
+    const ownerQuery = (c.req.query('owner') ?? '').trim();
+    if (ownerQuery && !isAddress(ownerQuery)) {
+      return c.json(
+        {
+          summary: {
+            zh: 'owner 参数需要一个钱包地址（0x… 40 位十六进制）。',
+            en: 'The owner parameter must be a wallet address (0x…, 40 hex characters).',
+          },
+          errors: [
+            boom('BAD_OWNER', 'owner must be an address', {
+              zh: '地址格式不对。',
+              en: 'That address is not valid.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+    const invitation = ownerQuery ? await invitationFor(ownerQuery) : null;
+
+    const result = checkLabel(label ?? rawName, { config, reservedIndex, onChainFree, invitation });
+    const invited =
+      ownerQuery && result.units !== null
+        ? invitedShortNameDecision(invitation, result.units).allowed
+        : null;
 
     let suggestions: string[] = [];
     if (!result.policyOk || result.available === false) {
@@ -459,6 +515,7 @@ export function createApp(deps: MusenameDeps) {
         reserved: result.reserved
           ? { category: result.reserved.category, appealable: result.reserved.appealable }
           : null,
+        invited,
         suggestions,
       },
       errors: result.issues.map((issue: LabelIssue) => ({
@@ -1324,7 +1381,11 @@ export function createApp(deps: MusenameDeps) {
         503,
       );
     }
-    const policy = checkLabel(label, { config, reservedIndex, onChainFree });
+    // 2b. D17, the authoritative check: a 3–4 unit name exists only through an
+    //     invitation, and one invitation is ever worth one name. The signature
+    //     above decided who `owner` is, so this cannot be spoofed by the body.
+    const invitation = await invitationFor(owner);
+    const policy = checkLabel(label, { config, reservedIndex, onChainFree, invitation });
 
     // Idempotency: the same owner asking again is not an error.
     const existing = await names.findByNormalized(label);
@@ -1345,6 +1406,45 @@ export function createApp(deps: MusenameDeps) {
         errors: [],
         meta: meta(true),
       });
+    }
+
+    // 2c. Same rule, as a rejection with its own code: the checkLabel pass above
+    //     already waived the premium gate when the invitation allows it, so this
+    //     branch is what an uninvited or already-served wallet hits.
+    const units = policy.units ?? 0;
+    let usedInvitation = false;
+    if (units > 0 && units <= INVITED_MAX_UNITS) {
+      const decision = invitedShortNameDecision(invitation, units);
+      if (!decision.allowed) {
+        return c.json(
+          {
+            summary: {
+              zh:
+                decision.code === 'ALREADY_CLAIMED'
+                  ? '这个邀请已经用过了，一个邀请只能领一个名字。'
+                  : decision.code === 'PROJECT_RESERVED'
+                    ? '1–2 字符的名字由项目保留，不对外发放。'
+                    : '3–4 字符的名字只发给受邀的钱包。',
+              en:
+                decision.code === 'ALREADY_CLAIMED'
+                  ? 'This invitation has already been used; one invitation is worth one name.'
+                  : decision.code === 'PROJECT_RESERVED'
+                    ? 'One and two character names are held by the project and are never given away.'
+                    : 'Short names (3–4 characters) are only given to invited wallets.',
+            },
+            data: { label, suggestions: [] },
+            errors: [
+              boom(decision.code, decision.reason, {
+                zh: '这次领取没有创建任何名字。',
+                en: 'No name was created.',
+              }),
+            ],
+            meta: meta(true),
+          },
+          decision.code === 'ALREADY_CLAIMED' ? 409 : 403,
+        );
+      }
+      usedInvitation = true;
     }
 
     if (!policy.policyOk || !onChainFree) {
@@ -1542,6 +1642,18 @@ export function createApp(deps: MusenameDeps) {
       txHash,
     });
     await sponsorship.record({ wallet: owner, txHash, nameId: record.id });
+    if (usedInvitation) {
+      // Only after the chain accepted the registration: a failed claim must not
+      // spend the invitation. If the process dies between the two, the name
+      // exists unindexed and the invitation reads unused — the reconciliation
+      // job is the place that catches it, same as the name index.
+      await invitationClaims.markClaimed({
+        wallet: owner,
+        claimedLabel: label,
+        txHash,
+        claimedAt: clock(),
+      });
+    }
     if (confirmedRequestId) {
       await requests.markStatus(confirmedRequestId, 'confirmed', clock());
     }

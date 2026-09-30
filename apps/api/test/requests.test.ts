@@ -70,6 +70,7 @@ function buildApp(overrides: Partial<MusenameDeps> = {}) {
     requests: repos.requests,
       cards: repos.cards,
     sponsorship: repos.sponsorship,
+    invitationClaims: repos.invitationClaims,
     indexKind: 'memory',
     clock: () => now,
     ...overrides,

@@ -106,6 +106,16 @@ create table if not exists sponsorship_ledger (
 create index if not exists sponsorship_ledger_wallet_idx
   on sponsorship_ledger (wallet_address, sponsored_at);
 
+-- D17: one invitation is worth one name. This is the spend record; who was
+-- invited lives in config/invitations.json. Not a chain index: the chain
+-- cannot say whether an invitation was used.
+create table if not exists invitation_claims (
+  wallet_address  text primary key,
+  claimed_label   text        not null,
+  tx_hash         text,
+  claimed_at      timestamptz not null default now()
+);
+
 create table if not exists abuse_reports (
   id                bigserial primary key,
   name_id           bigint      references names (id) on delete set null,

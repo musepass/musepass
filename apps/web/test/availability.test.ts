@@ -18,6 +18,7 @@ function envelope(
       price: null,
       units: 6,
       reserved: null,
+      invited: null,
       suggestions: [],
       ...data,
     },

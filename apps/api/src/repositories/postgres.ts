@@ -2,6 +2,8 @@ import type { Address, Hex } from 'viem';
 import type {
   CardVersion,
   CardsRepo,
+  InvitationClaim,
+  InvitationClaimsRepo,
   NamesRepo,
   NewRegistry,
   RegistrationRequest,
@@ -80,6 +82,7 @@ export function createPostgresRepos(sql: Sql): {
   sponsorship: SponsorshipRepo;
   requests: RegistrationRequestRepo;
   cards: CardsRepo;
+  invitationClaims: InvitationClaimsRepo;
 } {
   const names: NamesRepo = {
     async findByNormalized(normalized) {
@@ -303,5 +306,39 @@ export function createPostgresRepos(sql: Sql): {
     },
   };
 
-  return { names, sponsorship, requests, cards };
+  // Unlike the other tables here, this one is not an index over chain state: it
+  // is the record that an invitation was spent, and the chain cannot say that.
+  // on conflict do nothing: the first write wins, so a claim cannot be rewritten.
+  const invitationClaims: InvitationClaimsRepo = {
+    async findByWallet(wallet) {
+      const { rows } = await sql.query<{
+        wallet_address: string;
+        claimed_label: string;
+        tx_hash: string | null;
+        claimed_at: Date | string;
+      }>(
+        'select * from invitation_claims where lower(wallet_address) = lower($1) limit 1',
+        [wallet],
+      );
+      const row = rows[0];
+      if (!row) return null;
+      return {
+        wallet: row.wallet_address as Address,
+        claimedLabel: row.claimed_label,
+        txHash: (row.tx_hash as Hex | null) ?? null,
+        claimedAt: new Date(row.claimed_at),
+      };
+    },
+
+    async markClaimed(claim) {
+      await sql.query(
+        `insert into invitation_claims (wallet_address, claimed_label, tx_hash, claimed_at)
+         values ($1,$2,$3, coalesce($4, now()))
+         on conflict (wallet_address) do nothing`,
+        [claim.wallet, claim.claimedLabel, claim.txHash, claim.claimedAt],
+      );
+    },
+  };
+
+  return { names, sponsorship, requests, cards, invitationClaims };
 }

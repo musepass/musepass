@@ -14,7 +14,7 @@ import type { ApiEnvelope, AvailabilityData } from './api';
  * be read. We must not show "available" when we did not actually check.
  */
 export type AvailabilityView =
-  | { kind: 'available'; label: string; fullName: string }
+  | { kind: 'available'; label: string; fullName: string; invited: boolean }
   | { kind: 'taken'; label: string; fullName: string; suggestions: string[] }
   | { kind: 'premium'; label: string; priceUsd: number | null }
   | { kind: 'reserved'; label: string; appealable: boolean }
@@ -62,7 +62,7 @@ export function resolveAvailability(
 
   // Never claim a name is free when the chain was not read.
   if (payload.data?.available === true && payload.meta?.verified !== false) {
-    return { kind: 'available', label, fullName };
+    return { kind: 'available', label, fullName, invited: payload.data?.invited === true };
   }
 
   if (payload.data?.available === null || payload.meta?.verified === false) {

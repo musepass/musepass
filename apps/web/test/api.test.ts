@@ -17,7 +17,7 @@ const envelopeBody = {
 
 describe('api client', () => {
   it('parses the shared envelope', async () => {
-    const payload = await checkAvailability('aguang', {
+    const payload = await checkAvailability('aguang', null, {
       fetchImpl: (async () => jsonResponse(envelopeBody)) as unknown as typeof fetch,
     });
     expect(payload.data.available).toBe(true);
@@ -26,7 +26,7 @@ describe('api client', () => {
 
   it('url-encodes the name', async () => {
     let called = '';
-    await checkAvailability('a-guang-photography', {
+    await checkAvailability('a-guang-photography', null, {
       fetchImpl: (async (url: string) => {
         called = url;
         return jsonResponse(envelopeBody);
@@ -36,7 +36,7 @@ describe('api client', () => {
   });
 
   it('keeps a business failure as data, not as an exception', async () => {
-    const payload = await checkAvailability('admin', {
+    const payload = await checkAvailability('admin', null, {
       fetchImpl: (async () =>
         jsonResponse(
           {
@@ -53,7 +53,7 @@ describe('api client', () => {
 
   it('throws a readable error for an unparsable body', async () => {
     await expect(
-      checkAvailability('aguang', {
+      checkAvailability('aguang', null, {
         fetchImpl: (async () => new Response('not json', { status: 502 })) as unknown as typeof fetch,
       }),
     ).rejects.toBeInstanceOf(ApiError);
@@ -61,7 +61,7 @@ describe('api client', () => {
 
   it('throws a readable error when the network is down', async () => {
     await expect(
-      checkAvailability('aguang', {
+      checkAvailability('aguang', null, {
         fetchImpl: (async () => {
           throw new TypeError('fetch failed');
         }) as unknown as typeof fetch,

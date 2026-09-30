@@ -44,6 +44,27 @@ export interface SponsorshipRepo {
 }
 
 /**
+ * D17: the proof that an invitation was spent. One invitation is worth one
+ * name, so this ledger — not the config file — is what stops a second claim.
+ *
+ * The config file lists who was invited; this table records who already used
+ * it. Keeping them apart means `pnpm push:config` cannot reset a claim, and a
+ * claim survives the invitation row being edited out of the list.
+ */
+export interface InvitationClaim {
+  wallet: Address;
+  claimedLabel: string;
+  txHash: Hex | null;
+  claimedAt: Date;
+}
+
+export interface InvitationClaimsRepo {
+  findByWallet(wallet: Address): Promise<InvitationClaim | null>;
+  /** Idempotent per wallet: writing a second claim for the same wallet is a no-op. */
+  markClaimed(claim: InvitationClaim): Promise<void>;
+}
+
+/**
  * Card version history.
  *
  * The chain keeps every version too — Durin's resolver writes text records into
@@ -140,6 +161,7 @@ export interface MusenameDeps {
   requests: RegistrationRequestRepo;
   cards: CardsRepo;
   sponsorship: SponsorshipRepo;
+  invitationClaims: InvitationClaimsRepo;
   /**
    * 'postgres' when DATABASE_URL is set, 'memory' otherwise.
    *

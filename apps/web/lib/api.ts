@@ -53,6 +53,8 @@ export interface AvailabilityData {
   price: PriceQuote | null;
   units: number | null;
   reserved: { category: string; appealable: boolean } | null;
+  /** Null when the query did not say who is asking (no ?owner=). */
+  invited: boolean | null;
   suggestions: string[];
 }
 
@@ -273,8 +275,22 @@ async function request<T>(
   }
 }
 
-export function checkAvailability(name: string, options?: RequestOptions) {
-  return request<AvailabilityData>(`/v1/names/${encodeURIComponent(name)}/available`, {}, options);
+/**
+ * `owner` is optional: with it the answer also says whether *this wallet* may
+ * take the name, which is how an invited wallet learns a 3–4 character name is
+ * free for it.
+ */
+export function checkAvailability(
+  name: string,
+  owner?: string | null,
+  options?: RequestOptions,
+) {
+  const query = owner ? `?owner=${encodeURIComponent(owner)}` : '';
+  return request<AvailabilityData>(
+    `/v1/names/${encodeURIComponent(name)}/available${query}`,
+    {},
+    options,
+  );
 }
 
 export function fetchName(name: string, options?: RequestOptions) {

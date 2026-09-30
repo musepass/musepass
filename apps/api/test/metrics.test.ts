@@ -55,6 +55,7 @@ function build() {
     requests: repos.requests,
     cards: repos.cards,
     sponsorship: repos.sponsorship,
+    invitationClaims: repos.invitationClaims,
     indexKind: 'memory',
     clock: () => new Date('2026-09-29T12:00:00.000Z'),
   };

@@ -50,7 +50,9 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
       }
       setPhase('loading');
       try {
-        const payload = await checkAvailability(trimmed);
+        // With the wallet connected the answer also says whether an invitation
+        // makes this short name free for this wallet (D17).
+        const payload = await checkAvailability(trimmed, wallet.address ?? undefined);
         setAvailability(resolveAvailability(payload, trimmed));
       } catch (cause) {
         setAvailability(null);
@@ -59,12 +61,19 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         setPhase('ready');
       }
     },
-    [],
+    [wallet.address],
   );
 
   useEffect(() => {
     void check(initialLabel);
   }, [check, initialLabel]);
+
+  // Connecting a wallet can change the answer for a 3–4 character name
+  // (invited or not), so re-check once the address appears.
+  useEffect(() => {
+    if (wallet.address) void check(label);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallet.address]);
 
   useEffect(() => {
     if (mode !== 'confirm' || !requestId) return;
@@ -382,6 +391,7 @@ function AvailabilityLine({
       return (
         <span className="status-ok">
           {view.label}.{config.rootName} is available, free.
+          {view.invited ? ' Your invitation covers this short name.' : ''}
         </span>
       );
     case 'taken':
@@ -399,6 +409,7 @@ function AvailabilityLine({
         <span className="status-warn">
           {view.label} is short enough to be a premium name.{' '}
           {config.features.premiumPurchase ? '' : 'Premium names are not on sale yet.'}
+          {!config.features.premiumPurchase ? ' Invited wallets can still take a 3–4 character name — connect your wallet to check.' : ''}
         </span>
       );
     case 'reserved':

@@ -2,6 +2,8 @@ import type { Address } from 'viem';
 import type {
   CardVersion,
   CardsRepo,
+  InvitationClaim,
+  InvitationClaimsRepo,
   NamesRepo,
   NewRegistry,
   RegistrationRequest,
@@ -23,11 +25,13 @@ export function createMemoryRepos(): {
   sponsorship: SponsorshipRepo;
   requests: RegistrationRequestRepo;
   cards: CardsRepo;
+  invitationClaims: InvitationClaimsRepo;
 } {
   const byNormalized = new Map<string, Registry>();
   const sponsorships: Array<SponsorshipEntry & { sponsoredAt: Date }> = [];
   const registrationRequests = new Map<string, RegistrationRequest>();
   const cardVersions: CardVersion[] = [];
+  const invitationClaims = new Map<string, InvitationClaim>();
   let nextId = 1;
 
   const names: NamesRepo = {
@@ -134,5 +138,14 @@ export function createMemoryRepos(): {
     },
   };
 
-  return { names, sponsorship, requests, cards };
+  const claims: InvitationClaimsRepo = {
+    async findByWallet(wallet) {
+      return invitationClaims.get(wallet.toLowerCase()) ?? null;
+    },
+    async markClaimed(claim) {
+      invitationClaims.set(claim.wallet.toLowerCase(), claim);
+    },
+  };
+
+  return { names, sponsorship, requests, cards, invitationClaims: claims };
 }

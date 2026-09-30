@@ -67,6 +67,42 @@ describe('checkLabel — rejections', () => {
     expect(result.price?.priceUsd).toBe(20);
   });
 
+  // D17: the invitation is the third way between "too short to be free" and
+  // "wait for premium sales".
+  it('accepts a 3–4 unit name for a wallet with an unspent invitation', () => {
+    const invitation = { wallet: '0x0000000000000000000000000000000000000001', claimedAt: null };
+    const result = check('gold', { invitation });
+    expect(result.policyOk).toBe(true);
+    expect(result.price?.tier).toBe('free');
+    expect(result.price?.tierId).toBe('invited-short');
+    expect(result.price?.priceUsd).toBe(0);
+  });
+
+  it('still refuses a short name when the invitation was already spent', () => {
+    const invitation = {
+      wallet: '0x0000000000000000000000000000000000000001',
+      claimedAt: '2026-09-30T00:00:00.000Z',
+    };
+    const result = check('gold', { invitation });
+    expect(result.policyOk).toBe(false);
+    expect(result.issues.map((issue) => issue.code)).toContain('NOT_FREE_TIER');
+  });
+
+  it('does not let an invitation reach a 1–2 unit name', () => {
+    const invitation = { wallet: '0x0000000000000000000000000000000000000001', claimedAt: null };
+    const result = check('ab', { invitation });
+    expect(result.policyOk).toBe(false);
+    expect(result.issues.map((issue) => issue.code)).toContain('NOT_FREE_TIER');
+  });
+
+  it('treats a two character CJK name (4 units) as an invited short name', () => {
+    const invitation = { wallet: '0x0000000000000000000000000000000000000001', claimedAt: null };
+    const result = check('中文', { invitation });
+    expect(result.units).toBe(4);
+    expect(result.policyOk).toBe(true);
+    expect(result.price?.tier).toBe('free');
+  });
+
   it('keeps a tier closed while its price is still a placeholder', () => {
     const priced = checkLabel('abc', {
       config: {

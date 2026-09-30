@@ -87,6 +87,7 @@ function buildApp(overrides: Partial<MusenameDeps> = {}, config = testConfig()) 
     requests: repos.requests,
     cards: repos.cards,
     sponsorship: repos.sponsorship,
+    invitationClaims: repos.invitationClaims,
     indexKind: 'memory',
     clock: () => FIXED_NOW,
     ...overrides,
@@ -280,6 +281,47 @@ describe('GET /v1/names/{name}/available', () => {
     expect(body.errors.map((error: { code: string }) => error.code)).toContain('NOT_FREE_TIER');
   });
 
+  it('says an invited wallet may take a 4 character name, with ?owner=', async () => {
+    const config = testConfig();
+    config.invitations.invitations.push({
+      wallet: ownerAccount.address,
+      issuedBy: 'test',
+      issuedAt: '2026-09-30',
+      claimedAt: null,
+      claimedLabel: null,
+      txHash: null,
+    });
+    const { app } = buildApp({ config });
+
+    const body = await (
+      await app.request(`/v1/names/gold/available?owner=${ownerAccount.address}`)
+    ).json();
+
+    expect(body.data.available).toBe(true);
+    expect(body.data.invited).toBe(true);
+    expect(body.data.price.tier).toBe('free');
+    expect(body.data.price.priceUsd).toBe(0);
+  });
+
+  it('says a wallet without an invitation may not, with ?owner=', async () => {
+    const { app } = buildApp();
+
+    const body = await (
+      await app.request(`/v1/names/gold/available?owner=${ownerAccount.address}`)
+    ).json();
+
+    expect(body.data.invited).toBe(false);
+    expect(body.errors.map((error: { code: string }) => error.code)).toContain('NOT_FREE_TIER');
+  });
+
+  it('rejects a malformed owner query instead of guessing', async () => {
+    const { app } = buildApp();
+    const response = await app.request('/v1/names/gold/available?owner=0x1234');
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.errors[0].code).toBe('BAD_OWNER');
+  });
+
   it('rejects names with disallowed characters', async () => {
     const { app } = buildApp();
     const body = await (await app.request('/v1/names/hello%20world/available')).json();
@@ -409,6 +451,118 @@ describe('POST /v1/names/claim', () => {
     });
 
     expect(response.status).toBe(409);
+  });
+
+  // D17: three and four character names exist only through an invitation, and
+  // one invitation is ever worth one name.
+  function invitedConfig(): MusenameConfig {
+    const config = testConfig();
+    return {
+      ...config,
+      invitations: {
+        ...config.invitations,
+        invitations: [
+          ...config.invitations.invitations,
+          {
+            wallet: ownerAccount.address,
+            issuedBy: 'test',
+            issuedAt: '2026-09-30',
+            claimedAt: null,
+            claimedLabel: null,
+            txHash: null,
+          },
+        ],
+      },
+    };
+  }
+
+  it('refuses a 4 character name to a wallet without an invitation', async () => {
+    const { app, deps } = buildApp();
+    const { signature } = await signClaim('abcd', deps.config, futureSeconds);
+
+    const response = await app.request('/v1/names/claim', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'abcd',
+        owner: ownerAccount.address,
+        deadline: futureSeconds,
+        signature,
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.errors[0].code).toBe('NOT_INVITED');
+    expect((deps.chain as FakeChain).registrations).toHaveLength(0);
+  });
+
+  it('issues a 4 character name to an invited wallet and spends the invitation', async () => {
+    const config = invitedConfig();
+    const { app, deps } = buildApp({ config });
+    const first = await signClaim('gold', config, futureSeconds);
+
+    const response = await app.request('/v1/names/claim', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'gold',
+        owner: ownerAccount.address,
+        deadline: futureSeconds,
+        signature: first.signature,
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.label).toBe('gold');
+    expect(body.data.tier).toBe('free');
+    expect((deps.chain as FakeChain).registrations).toEqual([
+      { label: 'gold', owner: ownerAccount.address },
+    ]);
+
+    // Same wallet, another short name: the invitation is gone.
+    const second = await signClaim('iron', config, futureSeconds);
+    const again = await app.request('/v1/names/claim', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'iron',
+        owner: ownerAccount.address,
+        deadline: futureSeconds,
+        signature: second.signature,
+      }),
+    });
+    const againBody = await again.json();
+
+    expect(again.status).toBe(409);
+    expect(againBody.errors[0].code).toBe('ALREADY_CLAIMED');
+    expect((deps.chain as FakeChain).registrations).toHaveLength(1);
+
+    const claim = await deps.invitationClaims.findByWallet(ownerAccount.address);
+    expect(claim?.claimedLabel).toBe('gold');
+    expect(claim?.txHash).toBe(`0x${'ab'.repeat(32)}`);
+  });
+
+  it('refuses a 2 character name even to an invited wallet', async () => {
+    const config = invitedConfig();
+    const { app } = buildApp({ config });
+    const { signature } = await signClaim('ab', config, futureSeconds);
+
+    const response = await app.request('/v1/names/claim', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'ab',
+        owner: ownerAccount.address,
+        deadline: futureSeconds,
+        signature,
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.errors[0].code).toBe('PROJECT_RESERVED');
   });
 
   it('is idempotent for the same owner', async () => {

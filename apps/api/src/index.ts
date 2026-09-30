@@ -3,7 +3,13 @@ import { buildReservedIndex, loadConfig } from '@musename/core';
 
 import { createApp } from './app.js';
 import { createChainReader } from './chain/registry.js';
-import type { CardsRepo, NamesRepo, RegistrationRequestRepo, SponsorshipRepo } from './deps.js';
+import type {
+  CardsRepo,
+  InvitationClaimsRepo,
+  NamesRepo,
+  RegistrationRequestRepo,
+  SponsorshipRepo,
+} from './deps.js';
 import { createLogger } from './observability.js';
 import { createMemoryRepos } from './repositories/memory.js';
 import { createPostgresRepos } from './repositories/postgres.js';
@@ -22,6 +28,7 @@ let names: NamesRepo;
 let requests: RegistrationRequestRepo;
 let cards: CardsRepo;
 let sponsorship: SponsorshipRepo;
+let invitationClaims: InvitationClaimsRepo;
 let indexKind: 'memory' | 'postgres' = 'memory';
 if (process.env.DATABASE_URL) {
   // Imported only when it is actually used, so a deployment that runs without
@@ -35,11 +42,11 @@ if (process.env.DATABASE_URL) {
     },
   };
   await migrate(sql);
-  ({ names, requests, cards, sponsorship } = createPostgresRepos(sql));
+  ({ names, requests, cards, sponsorship, invitationClaims } = createPostgresRepos(sql));
   indexKind = 'postgres';
   logger.log('info', 'using postgres for the index');
 } else {
-  ({ names, requests, cards, sponsorship } = createMemoryRepos());
+  ({ names, requests, cards, sponsorship, invitationClaims } = createMemoryRepos());
   logger.log('warn', 'DATABASE_URL is not set: the index is in memory and is lost on restart', {
     effect: 'chain data is unaffected; the index is rebuilt by re-reading',
   });
@@ -53,6 +60,7 @@ const app = createApp({
   requests,
   cards,
   sponsorship,
+  invitationClaims,
   indexKind,
   clock: () => new Date(),
   logger,
