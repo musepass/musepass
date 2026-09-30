@@ -100,9 +100,21 @@ export interface MusenameConfig {
   pricing: PricingConfig;
   limits: LimitsConfig;
   reserved: ReservedConfig;
+  /** D17: who may take a three or four character name for free. */
+  invitations: InvitationsConfig;
   /** Origins allowed to call the API from a browser. Config, not code. */
   allowedOrigins: string[];
 }
+
+export interface InvitationsConfig {
+  campaign?: string;
+  opens?: string | null;
+  closes?: string | null;
+  rules?: { freeLabelUnits?: { min: number; max: number } };
+  invitations: Invitation[];
+}
+
+import type { Invitation } from './invitations.js';
 
 export interface LoadConfigOptions {
   configDir?: string;
@@ -210,6 +222,7 @@ export function loadConfig(options: LoadConfigOptions = {}): MusenameConfig {
     pricing: readJson<PricingConfig>(join(configDir, 'pricing.json')),
     limits: readJson<LimitsConfig>(join(configDir, 'limits.json')),
     reserved: readJson<ReservedConfig>(join(configDir, 'reserved-names.json')),
+    invitations: readJson<InvitationsConfig>(join(configDir, 'invitations.json')),
     allowedOrigins: [],
   };
 

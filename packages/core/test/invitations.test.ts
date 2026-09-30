@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { resolve } from 'node:path';
+
+import { loadConfig } from '../src/config.js';
 import {
   findInvitation,
   invitedShortNameDecision,
@@ -68,5 +71,13 @@ describe('invitedShortNameDecision', () => {
     const decision = invitedShortNameDecision(claimed, 3);
     expect(decision.allowed).toBe(false);
     if (!decision.allowed) expect(decision.code).toBe('ALREADY_CLAIMED');
+  });
+
+  it('the running configuration carries the list', () => {
+    // The list is config, so it loads with everything else. An empty list is the
+    // normal state before a campaign; a missing file would be a deployment error.
+    const config = loadConfig({ configDir: resolve(__dirname, '../../../config'), env: {} });
+    expect(Array.isArray(config.invitations.invitations)).toBe(true);
+    expect(config.invitations.rules?.freeLabelUnits).toEqual({ min: 3, max: 4 });
   });
 });
