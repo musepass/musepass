@@ -241,29 +241,76 @@ if (statePath) {
   );
 }
 
-// If a webhook is configured, that is where a failing report goes — and now only
-// when the verdict changes, so a long outage sends one message, and the recovery
-// sends another. Without a webhook the exit code and the journal entry are all
-// there is, which is why the runbook says to wire one up.
+// If a webhook is configured, that is where a failing report goes — and only when
+// the verdict changes, so a long outage sends one message and the recovery sends
+// another. Without a webhook the exit code and the journal entry are all there is,
+// which is why the runbook says to wire one up.
+//
+// Two payload shapes, because the two things people actually use differ: a
+// generic webhook (Slack, Feishu, anything taking {"text": ...}) and Telegram,
+// whose Bot API wants {"chat_id", "text"} at a URL that already carries the bot
+// token. Guessing wrong sends a message nobody sees and reports success, so the
+// shape is chosen from the URL.
 const webhook = process.env.MUSENAME_ALERT_WEBHOOK;
-const shouldAlert = failures.length > 0 ? (statePath ? changed : true) : statePath !== null && changed && previous?.verdict?.startsWith('failing');
-if (webhook && shouldAlert) {
+const shouldAlert =
+  failures.length > 0
+    ? statePath
+      ? changed
+      : true
+    : statePath !== null && changed && previous?.verdict?.startsWith('failing');
+
+async function sendAlert(text) {
+  if (!webhook) return false;
+  const telegram = /api\.telegram\.org\/bot[^/]+\/sendMessage/.test(webhook);
+  const body = telegram
+    ? {
+        chat_id:
+          process.env.MUSENAME_ALERT_TELEGRAM_CHAT_ID ??
+          new URL(webhook).searchParams.get('chat_id') ??
+          '',
+        text,
+        disable_web_page_preview: true,
+      }
+    : { text, checks };
   try {
-    await fetch(webhook, {
+    const response = await fetch(webhook, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        text:
-          failures.length > 0
-            ? `MuseName health: ${failures.length} failing — ${failures.map((check) => check.name).join(', ')}`
-            : `MuseName health: recovered (was ${previous?.verdict})`,
-        checks,
-      }),
+      body: JSON.stringify(body),
     });
-    console.log(`alert sent to the configured webhook`);
+    const detail = await response.text().catch(() => '');
+    if (!response.ok) {
+      console.log(`the alert endpoint answered ${response.status}: ${detail.slice(0, 160)}`);
+      return false;
+    }
+    console.log('alert sent to the configured webhook');
+    return true;
   } catch (error) {
-    console.log(`could not reach the alert webhook: ${String(error.message ?? error).slice(0, 60)}`);
+    console.log(`could not reach the alert webhook: ${String(error.message ?? error).slice(0, 80)}`);
+    return false;
   }
+}
+
+if (shouldAlert) {
+  await sendAlert(
+    failures.length > 0
+      ? `MuseName health: ${failures.length} failing — ${failures.map((check) => check.name).join(', ')}`
+      : `MuseName health: recovered (was ${previous?.verdict})`,
+  );
+}
+
+// `--test-alert` proves the wiring instead of assuming it: whoever set the webhook
+// up should watch a message arrive, and a wrong payload shape fails here rather
+// than silently during an outage.
+if (process.argv.includes('--test-alert')) {
+  const sent = await sendAlert(
+    `MuseName health check: test alert. ${checks.length - failures.length}/${checks.length} checks passing.`,
+  );
+  if (!sent) {
+    console.error('test alert NOT delivered (no webhook set, or the endpoint refused it)');
+    process.exit(1);
+  }
+  console.log('test alert delivered');
 }
 
 if (process.argv.includes('--json')) {
