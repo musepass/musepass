@@ -19,6 +19,7 @@ import {
   draftFromPublished,
   type CardDraft,
 } from '@/lib/cardDraft';
+import { defaultAvatarDataUri } from '@/lib/avatar';
 import { WalletError, deadlineInSeconds, signCardPayload } from '@/lib/wallet';
 import { useWallet } from './WalletProvider';
 
@@ -254,7 +255,7 @@ export function CardEditor({
       </div>
 
       <label className="search-label" htmlFor="card-image">
-        Image (IPFS address or image URL)
+        Image — required by the ERC-8004 standard
       </label>
       <input
         id="card-image"
@@ -263,6 +264,18 @@ export function CardEditor({
         onChange={(event) => update('image', event.target.value)}
         placeholder="ipfs://… or https://…"
       />
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          className="btn btn-sm"
+          onClick={() => update('image', defaultAvatarDataUri(label))}
+        >
+          Use a default avatar
+        </button>
+        <span className="body-2" style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>
+          Generates one from the name and stores it inside the card, so it cannot break later.
+        </span>
+      </div>
       <VisibilityPicker field="image" draft={draft} onChange={setVisibility} />
 
       <label className="search-label" htmlFor="card-payout">
@@ -335,7 +348,7 @@ export function CardEditor({
 
       {problems.length > 0 ? (
         <div className="notice notice-error">
-          Still missing:
+          Still missing (the card is published to the ERC-8004 standard, where these are required):
           <ul style={{ margin: '8px 0 0', paddingLeft: 18 }}>
             {problems.map((problem) => (
               <li key={problem}>{problem}</li>
