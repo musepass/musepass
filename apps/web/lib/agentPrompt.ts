@@ -12,10 +12,16 @@
  * asserts the tool names and endpoints they promise actually exist.
  */
 
+import { FALLBACK_CONFIG } from './api';
+
 export const ASK_TXT_VERSION = '1.0 · 2026-09-29';
 
-export const MCP_URL = 'https://gw.musename.xyz/mcp';
+// The MCP endpoint is served from the product's own host (`/mcp` is a path on
+// the apex, not a separate domain), so an agent reads whichever brand the rest
+// of the prompt names. It used to be hardcoded to the gateway host, which meant
+// the paste block and the site could disagree about where the product lives.
 export const SITE_URL = 'https://musename.xyz';
+export const MCP_URL = `${SITE_URL}/mcp`;
 
 /** The block a human copies into their AI. Short on purpose: a task, not a spec. */
 export const AGENT_PROMPT = [
@@ -58,8 +64,19 @@ export const MCP_CONFIG_JSON = [
   '}',
 ].join('\n');
 
-/** The registry the name registry lives in on Robinhood Chain (chainId 4663). */
-export const L2_REGISTRY_ADDRESS = '0x0ca717398428bcae7fae24e656e8444ecd9ba5a5';
+/**
+ * The registry the names live in on Robinhood Chain (chainId 4663).
+ *
+ * Taken from the same constant the rest of the front end falls back to, not
+ * typed out again: the 2026-09-30 rename to musepass.eth deployed a new registry
+ * and this line kept pointing at the old one, so /ask.txt told every agent to
+ * check ownership in a contract that had never heard of the new names.
+ * `apps/web/test/agentPrompt.test.ts` pins that constant to config/chains.json:
+ * it must be a real address and it must be the one the API serves. The `?? ''`
+ * is only there because the public config allows null on a deployment that has
+ * not chosen a registry yet; the test refuses to let the empty string through.
+ */
+export const L2_REGISTRY_ADDRESS = FALLBACK_CONFIG.l2Registry ?? '';
 
 /**
  * What an agent reads at /ask.txt. Longer than the paste block: this is the
@@ -186,7 +203,7 @@ export const ASK_TXT = [
   `- ${SITE_URL}/verify       verify a record in a browser`,
   `- ${SITE_URL}/developers   integration notes`,
   '',
-  'QUESTIONS: support@musename.xyz',
+  'QUESTIONS: support@musepass.xyz',
   '',
 ].join('\n');
 

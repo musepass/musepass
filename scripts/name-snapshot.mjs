@@ -25,7 +25,7 @@
  * so in the output (`coverage`) rather than pretending the list is complete,
  * and `security-power-inventory.mjs` is what watches for a second registrar.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,9 +47,16 @@ const outIndex = process.argv.indexOf('--out');
 const outDir = resolve(outIndex === -1 ? resolve(repoRoot, 'snapshots') : process.argv[outIndex + 1]);
 const rpcUrl = process.env.ROBINHOOD_RPC_URL ?? 'https://rpc.mainnet.chain.robinhood.com';
 
-const CHAIN_ID = 4663;
-const REGISTRY = getAddress('0x0ca717398428bcae7fae24e656e8444ecd9ba5a5');
-const REGISTRAR = getAddress('0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1');
+// Addresses come from config/chains.json, the same file the API serves, so this
+// script cannot keep snapshotting a registry the product stopped writing to —
+// which is what it did after the 2026-09-30 rename to musepass.eth.
+const chains = JSON.parse(readFileSync(resolve(repoRoot, 'config/chains.json'), 'utf8'));
+const brand = JSON.parse(readFileSync(resolve(repoRoot, 'config/brand.json'), 'utf8'));
+const CHAIN_ID = chains.l2.chainId;
+const REGISTRY = getAddress(chains.l2.l2Registry);
+const REGISTRAR = getAddress(chains.l2.registrar);
+const ROOT_NAME = brand.rootName;
+const PREVIOUS_ROOT = chains.l2.previousRoot ?? null;
 
 const NAME_REGISTERED = parseAbiItem(
   'event NameRegistered(bytes32 indexed node, string label, address indexed owner)',
@@ -134,7 +141,7 @@ for (const log of logs) {
     .catch(() => '');
 
   names.push({
-    name: `${label}.musepass.eth`,
+    name: `${label}.${ROOT_NAME}`,
     label,
     node,
     ownerAtMint: getAddress(owner),
@@ -165,8 +172,10 @@ const snapshot = {
   },
   registry: REGISTRY,
   registrar: REGISTRAR,
+  rootName: ROOT_NAME,
+  previousRoot: PREVIOUS_ROOT,
   coverage:
-    'Names minted through this registrar. A name created by a different registrar would not appear; security-power-inventory.mjs is what watches for one.',
+    'Names minted through this registrar. A name created by a different registrar would not appear; security-power-inventory.mjs is what watches for one. Names minted under the earlier root (previousRoot above) are in that registry, not this one.',
   count: names.length,
   names,
 };

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AGENT_PROMPT,
   ASK_TXT,
+  L2_REGISTRY_ADDRESS,
   MCP_CONFIG_JSON,
   MCP_URL,
   SITE_URL,
@@ -73,15 +74,21 @@ describe('the file an AI reads itself', () => {
 
   it('tells the agent how to check us without trusting us', () => {
     expect(ASK_TXT).toContain('HOW TO CHECK US WITHOUT TRUSTING US');
-    expect(ASK_TXT).toContain('0x0ca717398428bcae7fae24e656e8444ecd9ba5a5');
+    expect(ASK_TXT).toContain(L2_REGISTRY_ADDRESS);
     expect(ASK_TXT).toContain(`${SITE_URL}/.well-known/musename.json`);
   });
 
   it('matches the live registry address in the deployment record', async () => {
     const { readFileSync } = await import('node:fs');
-    const deployments = JSON.parse(
-      readFileSync(new URL('../../../deployments/robinhood.json', import.meta.url), 'utf8'),
-    ) as { l2Registry: { address: string } };
-    expect(ASK_TXT.toLowerCase()).toContain(deployments.l2Registry.address.toLowerCase());
+    // config/chains.json is what the API serves and what the front end falls
+    // back to; deployments/*.json are historical records, so comparing against
+    // those would let /ask.txt name a registry the running product no longer
+    // writes to — which is exactly what happened during the 2026-09-30 rename.
+    const chains = JSON.parse(
+      readFileSync(new URL('../../../config/chains.json', import.meta.url), 'utf8'),
+    ) as { l2: { l2Registry: string } };
+    expect(L2_REGISTRY_ADDRESS).toMatch(/^0x[0-9a-fA-F]{40}$/);
+    expect(L2_REGISTRY_ADDRESS.toLowerCase()).toBe(chains.l2.l2Registry.toLowerCase());
+    expect(ASK_TXT.toLowerCase()).toContain(chains.l2.l2Registry.toLowerCase());
   });
 });

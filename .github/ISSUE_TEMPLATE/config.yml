@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security report
-    url: https://github.com/musename/musename/security/advisories/new
+    url: https://github.com/musepass/musepass/security/advisories/new
     about: Private reporting for anything that could make a name resolve wrongly or be taken.
   - name: The rules an agent follows
     url: https://musename.xyz/ask.txt

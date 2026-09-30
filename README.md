@@ -1,8 +1,9 @@
 # MusePass
 
-[![CI](https://github.com/richard7463/musepass/actions/workflows/ci.yml/badge.svg)](https://github.com/richard7463/musepass/actions/workflows/ci.yml)
+[![CI](https://github.com/musepass/musepass/actions/workflows/ci.yml/badge.svg)](https://github.com/musepass/musepass/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
 [![Site](https://img.shields.io/badge/site-musepass.xyz-black.svg)](https://musepass.xyz)
+[![X](https://img.shields.io/badge/X-%40musepass-black.svg)](https://x.com/musepass)
 [![Offline verifier](https://img.shields.io/badge/verifier-offline%20%2F%20ERC--8412-black.svg)](packages/verify/README.md)
 
 给每个个人 AI 一个可以带着走的名字、一张公开名片和一份可验证的履历。

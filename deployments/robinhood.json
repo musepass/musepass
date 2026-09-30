@@ -5,6 +5,12 @@
     "explorer": "https://robinhoodchain.blockscout.com"
   },
   "note": "Durin 此前未在此链部署。字节码取自 Sourcify 验证过的 Base 部署，并在链上核对 runtime 哈希一致后部署。",
+  "supersededBy": {
+    "$comment": "这份记录里只有 l2Registry / registrar 两个地址被换掉了，其余（验证器、解析器、锚定、第一次领取和发名片）仍然是当前事实。改名到 musepass.eth 之后，新注册写在 deployments/musepass.json 记的那套里；config/chains.json 的 l2.* 是程序真正读的来源，l2.previousRoot 保留了这里的旧地址。",
+    "l2Registry": "deployments/musepass.json",
+    "registrar": "deployments/musepass.json",
+    "currentSourceOfTruth": "config/chains.json"
+  },
   "universalSigValidator": {
     "requiredAddress": "0x164af34fAF9879394370C7f09064127C043A35E9",
     "requiredAddressIsHardcoded": true,
@@ -35,6 +41,7 @@
   },
   "l2Registry": {
     "address": "0x0ca717398428bcae7fae24e656e8444ecd9ba5a5",
+    "isCurrent": false,
     "baseNodeMatchesNamehash": true
   },
   "registrar": "0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1",
