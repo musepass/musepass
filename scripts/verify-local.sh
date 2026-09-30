@@ -187,8 +187,10 @@ def get(path):
 # character reaches apps/web, so these assertions look for the English copy.
 checks = []
 
+# Structural, not copy: the hero used to be asserted by its headline, so
+# rewriting the headline failed this smoke test while the page was fine.
 status, html = get("/")
-checks.append(("homepage renders", status == 200 and "A name for" in html))
+checks.append(("homepage renders", status == 200 and 'class="hero"' in html))
 checks.append(("hero search box present", 'id="name-search"' in html))
 checks.append(("brand renders from config", "MusePass" in html))
 checks.append(("Meta disclaimer present", "not affiliated" in html and "Meta" in html))
