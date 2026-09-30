@@ -4,6 +4,9 @@ import {
   canonicalJson,
   defaultAvatarDataUri,
   defaultVisibility,
+  buildEip712Domain,
+  registerMessage,
+  REGISTER_TYPES,
   validateCard,
   type AgentCard,
   type AgentService,
@@ -29,6 +32,12 @@ export interface ToolResult {
 
 export interface MusenameApi {
   checkName(name: string): Promise<ToolResult>;
+  claimName(input: {
+    label: string;
+    owner: string;
+    deadline: number;
+    signature: string;
+  }): Promise<ToolResult>;
   createRequest(input: {
     label: string;
     requestedFor: string;
@@ -61,7 +70,16 @@ export function render(result: ToolResult): string {
       '',
     );
   }
-  lines.push('数据 / data:', '```json', JSON.stringify(result.data, null, 2), '```');
+  // EIP-712 payloads carry uint256 values, and JSON.stringify throws on a BigInt
+  // rather than degrading. Rendering is the last step before an agent reads this,
+  // so it must not be the thing that fails: integers go out as decimal strings,
+  // which is what a signer parses back anyway.
+  const json = JSON.stringify(
+    result.data,
+    (_key, value) => (typeof value === 'bigint' ? value.toString() : value),
+    2,
+  );
+  lines.push('数据 / data:', '```json', json, '```');
   return lines.join('\n');
 }
 
@@ -289,3 +307,102 @@ export async function getProfile(
   }
   return api.getProfile(input.name.trim());
 }
+
+/**
+ * `prepare_registration`: everything an agent needs to sign for itself.
+ *
+ * The rule this project does not bend is that a name is issued to whoever signed
+ * for it. An agent with its own wallet is that owner — it just needs the exact
+ * typed data, because a signature over anything else reverts on chain and costs
+ * a failed transaction to discover. So this returns the payload, and
+ * `submit_registration` takes the signature back.
+ */
+export function prepareRegistration(
+  input: { name: string; ownerAddress: string },
+  config: MusenameConfig,
+): ToolResult {
+  const label = (input.name ?? '').trim().toLowerCase();
+  const owner = (input.ownerAddress ?? '').trim();
+
+  if (!label || !/^0x[0-9a-fA-F]{40}$/.test(owner)) {
+    return {
+      summary: {
+        zh: '需要一个名字和一个钱包地址，地址形如 0x…（40 位十六进制）。',
+        en: 'I need a name and a wallet address (0x…, 40 hex characters).',
+      },
+      data: {},
+      errors: [{ code: 'BAD_INPUT', message: 'name and ownerAddress are required' }],
+    };
+  }
+
+  // Fifteen minutes, the same window the web flow uses. A signature that lives
+  // forever is a signature somebody can find later.
+  const deadline = Math.floor(Date.now() / 1000) + 15 * 60;
+  const domain = buildEip712Domain({
+    productName: config.brand.productName,
+    chainId: config.chains.l2.chainId,
+    verifyingContract: config.chains.l2.registrar as `0x${string}`,
+  });
+  const message = registerMessage({ label, owner: owner as `0x${string}`, deadline: BigInt(deadline) });
+
+  return {
+    summary: {
+      zh: `把这个 EIP-712 数据用 ${owner} 的钱包签名，然后把签名交给 submit_registration；${label}.${config.brand.rootName} 会直接发给这个地址，手续费我们付。`,
+      en: `Sign this EIP-712 payload with the wallet at ${owner}, then hand the signature to submit_registration. ${label}.${config.brand.rootName} is issued straight to that address and we pay the gas.`,
+    },
+    data: {
+      label,
+      fullName: `${label}.${config.brand.rootName}`,
+      owner,
+      deadline,
+      typedData: { domain, types: REGISTER_TYPES, primaryType: 'Register', message },
+      submitWith: 'submit_registration',
+    },
+    errors: [],
+  };
+}
+
+/**
+ * `submit_registration`: the second half, for an agent that signs for itself.
+ *
+ * Nothing here is trusted on the agent's word: the API verifies the signature
+ * against the registrar's EIP-712 domain before it spends anyone's gas.
+ */
+export async function submitRegistration(
+  api: MusenameApi,
+  input: { label: string; owner: string; deadline: number; signature: string },
+): Promise<ToolResult> {
+  if (!input.label?.trim() || !input.owner?.trim() || !input.signature?.trim()) {
+    return {
+      summary: {
+        zh: '需要 label、owner、deadline 和 signature 四个字段。',
+        en: 'I need all four: label, owner, deadline and signature.',
+      },
+      data: {},
+      errors: [{ code: 'BAD_INPUT', message: 'label, owner, deadline and signature are required' }],
+    };
+  }
+
+  const result = await api.claimName({
+    label: input.label.trim(),
+    owner: input.owner.trim(),
+    deadline: Number(input.deadline),
+    signature: input.signature.trim(),
+  });
+
+  if (result.errors.length > 0) return result;
+
+  const fullName = (result.data as { fullName?: string }).fullName ?? input.label.trim();
+  const txHash = (result.data as { txHash?: string | null }).txHash ?? null;
+  return {
+    ...result,
+    data: {
+      ...(result.data as object),
+      txHash,
+      nextStep: 'card',
+      nextStepEn: `The name exists now. Next: draft its card, and have the owner publish it at ${SITE_URL}/name/${input.label.trim()}.`,
+    },
+  };
+}
+
+const SITE_URL = 'https://musename.xyz';

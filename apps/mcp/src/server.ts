@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { MusenameConfig } from '@musename/core';
 import {
   checkName,
+  prepareRegistration,
+  submitRegistration,
   draftCard,
   getProfile,
   getStatus,
@@ -40,7 +42,7 @@ export function createServer(api: MusenameApi, config: MusenameConfig): McpServe
     {
       title: 'Request a name for the owner to confirm',
       description:
-        'Start a registration and get a confirmation link. IMPORTANT: registering needs the owner to confirm. Hand the returned link to the owner; the name is NOT issued until they open it and sign. The link expires.',
+        'Start a registration and get a confirmation link. IMPORTANT: registering needs the owner to confirm. Hand the returned link to the owner; the name is NOT issued until they open it and sign. The link expires. Use this when you have no wallet of your own — if you do have one, prepare_registration lets you sign for yourself instead.',
       inputSchema: {
         name: z.string().describe('The name the owner wants.'),
         ownerEmail: z.string().optional().describe('Owner email, when the owner has no wallet.'),
@@ -94,6 +96,37 @@ export function createServer(api: MusenameApi, config: MusenameConfig): McpServe
       },
     },
     async (args) => text(render(await draftCard(args, config))),
+  );
+
+  server.registerTool(
+    'prepare_registration',
+    {
+      title: 'Prepare a registration for an agent that signs for itself',
+      description:
+        'Use this when you have your OWN wallet and will sign for yourself. Returns the exact EIP-712 payload to sign for a name; hand the signature to submit_registration and the name is issued to that address, with the project paying the gas. Use request_name instead if you have no wallet of your own: it returns a confirmation link for your owner to sign.',
+      inputSchema: {
+        name: z.string().describe('The name to register, with or without the root suffix.'),
+        ownerAddress: z.string().describe('Your own wallet address, the one that will sign and own the name.'),
+      },
+    },
+    async ({ name, ownerAddress }) => text(render(prepareRegistration({ name, ownerAddress }, config))),
+  );
+
+  server.registerTool(
+    'submit_registration',
+    {
+      title: 'Submit a signature and receive the name',
+      description:
+        'Second half of the self-signing path. Takes the signature you produced over the prepare_registration payload and issues the name to that address. The signature is verified against the registrar before anything is spent, so a wrong payload simply fails.',
+      inputSchema: {
+        label: z.string().describe('The label that was signed.'),
+        owner: z.string().describe('The wallet address that signed.'),
+        deadline: z.number().describe('The deadline from the prepared payload, in Unix seconds.'),
+        signature: z.string().describe('The EIP-712 signature over the prepared payload.'),
+      },
+    },
+    async ({ label, owner, deadline, signature }) =>
+      text(render(await submitRegistration(api, { label, owner, deadline, signature }))),
   );
 
   server.registerTool(

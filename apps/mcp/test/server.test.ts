@@ -63,15 +63,28 @@ function textOf(result: unknown): string {
 }
 
 describe('tool registration over the MCP protocol', () => {
-  it('exposes exactly the five tools from the task document', async () => {
+  it('exposes the five tools from the task document, plus the self-signing pair', async () => {
     const { tools } = await client.listTools();
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'check_name',
       'draft_card',
       'get_profile',
       'get_status',
+      'prepare_registration',
       'request_name',
+      'submit_registration',
     ]);
+  });
+
+  it('keeps the two paths apart in what the model is told', async () => {
+    const { tools } = await client.listTools();
+    const owner = tools.find((tool) => tool.name === 'request_name');
+    const self = tools.find((tool) => tool.name === 'prepare_registration');
+    // An agent with no wallet must not think it can register on its own, and an
+    // agent with a wallet should not have to involve its owner at all.
+    expect(owner?.description).toContain('no wallet');
+    expect(self?.description).toContain('OWN wallet');
+    expect(self?.description).toContain('submit_registration');
   });
 
   it('tells the model in the tool description that the owner must confirm', async () => {

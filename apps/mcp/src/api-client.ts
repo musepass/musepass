@@ -79,6 +79,23 @@ export function createHttpApi(options: { baseUrl: string; fetchImpl?: typeof fet
       });
     },
 
+    async claimName(input) {
+      const payload = await request('/v1/names/claim', {
+        method: 'POST',
+        body: JSON.stringify({
+          label: input.label,
+          owner: input.owner,
+          deadline: input.deadline,
+          signature: input.signature,
+          via: 'mcp',
+        }),
+      });
+      return normalise(payload, {
+        zh: '这个名字已经发到这个钱包了。',
+        en: 'The name has been issued to that wallet.',
+      });
+    },
+
     async getProfile(name) {
       const payload = await request(`/v1/names/${encodeURIComponent(name)}`);
       const data = payload.data ?? {};

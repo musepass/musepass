@@ -7,7 +7,15 @@ import {
   SITE_URL,
 } from '../lib/agentPrompt.js';
 
-const TOOL_NAMES = ['check_name', 'request_name', 'get_status', 'draft_card', 'get_profile'];
+const TOOL_NAMES = [
+  'check_name',
+  'request_name',
+  'get_status',
+  'draft_card',
+  'get_profile',
+  'prepare_registration',
+  'submit_registration',
+];
 
 describe('the prompt a person pastes', () => {
   it('names every tool the MCP server actually registers', () => {
