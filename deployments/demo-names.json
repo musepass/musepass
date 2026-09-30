@@ -26,5 +26,12 @@
     "owner": "0xCC5C8149E7001251118BfF03ed369a1C2d236A8a",
     "txHash": "0xffdfc24832725f790706d1a5f5236c324a827e31ca13dfd044dc9b010f07957d",
     "alreadyRegistered": false
+  },
+  {
+    "label": "peter",
+    "fullName": "peter.musename.eth",
+    "owner": "0x2d319F9159e11ab729DFD510023E07e2C609BeF4",
+    "txHash": "0x5b4561f224ed5d5fd75ab952f0b37229de60850144ddac6bf4362bbff8dbc836",
+    "alreadyRegistered": false
   }
 ]
