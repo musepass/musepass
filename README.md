@@ -1,182 +1,196 @@
-# MusePass
+<div align="center">
+  <img src="launch-kit/assets/musepass-x-banner.png" width="820" alt="MusePass — a passport and an account for every AI agent">
+  <h1>MusePass</h1>
+  <p><strong>A passport and an account for every AI agent.</strong></p>
+  <p>A name that resolves in any wallet · a card another agent can read · a record anyone can check</p>
+  <p>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-4f46e5?style=flat-square" alt="MIT license"></a>
+    <a href="https://musepass.xyz"><img src="https://img.shields.io/badge/live-musepass.xyz-10b981?style=flat-square" alt="Live site"></a>
+    <a href="#what-works-today"><img src="https://img.shields.io/badge/resolves-Ethereum%20mainnet-38bdf8?style=flat-square" alt="Resolves on mainnet"></a>
+    <a href="#what-works-today"><img src="https://img.shields.io/badge/names-Robinhood%20Chain%204663-38bdf8?style=flat-square" alt="Robinhood Chain"></a>
+    <a href="#the-card"><img src="https://img.shields.io/badge/card-ERC--8004-000000?style=flat-square" alt="ERC-8004 card"></a>
+    <a href="packages/verify/README.md"><img src="https://img.shields.io/badge/verifier-offline-0ea5e9?style=flat-square" alt="Offline verifier"></a>
+    <a href="https://x.com/musepass"><img src="https://img.shields.io/badge/X-%40musepass-000000?style=flat-square" alt="MusePass on X"></a>
+    <a href="https://github.com/musepass/musepass/actions/workflows/ci.yml"><img src="https://github.com/musepass/musepass/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  </p>
+</div>
 
-[![CI](https://github.com/musepass/musepass/actions/workflows/ci.yml/badge.svg)](https://github.com/musepass/musepass/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
-[![Site](https://img.shields.io/badge/site-musepass.xyz-black.svg)](https://musepass.xyz)
-[![X](https://img.shields.io/badge/X-%40musepass-black.svg)](https://x.com/musepass)
-[![Offline verifier](https://img.shields.io/badge/verifier-offline%20%2F%20ERC--8412-black.svg)](packages/verify/README.md)
+> **Live today:** a name that resolves in a real wallet, and a card the owner publishes
+> on chain with their own signature. **Design, not shipped:** the vault, the bond, the
+> stamps and the notary seats. **One NFT exists — the name.** Nothing here is audited,
+> and nothing here holds customer money.
 
-给每个个人 AI 一个可以带着走的名字、一张公开名片和一份可验证的履历。
+Agents can already pay, hire and be paid. What they cannot do is say who they are, or
+prove what they did, in a form the other side can check without trusting a platform.
 
-名字建在 ENS 上（自有根名字下的子名字，ERC-721），名片按 ERC-8004 生成，履历由 the project's own engine 验证引擎出具可独立核实的收据。**我们不重新发明域名系统，我们做名字背后的信誉。**
+An address has no name, no history and nobody accountable behind it. MusePass gives an
+agent a name that resolves anywhere ENS is spoken, a card that describes what it does,
+and a record built from evidence rather than from our word.
 
-产品定义见《MusePass Pitch》，本仓库只负责「怎么做、做到什么程度算完成」，对应《MusePass 开发任务书》。
+```text
+wallet or agent asks ENS          mainnet resolver            our gateway          names live here
+───────────────────────────▶  0x9eA7A889…  ──CCIP-Read──▶  gw.musename.xyz  ──▶  Robinhood Chain 4663
+      name → address                 (ours)                 (ERC-3668)            registry + registrar
+```
+
+The resolution path deliberately crosses two chains: the name is ENS on Ethereum
+mainnet, so every wallet can read it, while the registry that mints it lives on an L2
+where a registration costs cents. The L1 resolver is a deployed copy of
+[`ensdomains/durin`](https://github.com/ensdomains/durin) — we did not write a name
+system, we run one.
 
 ---
 
-## 现在到哪一步了
+## What works today — checked 2026-09-30
 
-| 阶段 | 内容 | 状态 |
-|---|---|---|
-| 0 | 前置决策与准备 | ✅ 完成；品牌、域名、根名字均已落地并记录 |
-| 1 | 名字：**能在真实钱包里解析** | ✅ **已上线**：根名字 `musepass.eth` 在以太坊主网，L1 解析器已部署并登记，`xiaoming.musepass.eth` 在真实主网解析到 `0x603b8B1f…`；OKX Wallet 人工验证通过，机器侧 17/17 |
-| 2 | 名片 | ✅ 闭环跑通并**真链验证**（Robinhood Chain，6 项断言）；待 ERC-8004 身份登记（规范仍是 Draft） |
-| 3 | AI 一句话注册（MCP） | ✅ 5 个工具、HTTPS、限流、接入说明齐备；客户端菜单路径待人工实测 |
-| 4 | 两周验证期（门槛） | ⬜ **未开始，缺真实用户**——这是现在唯一真正挡住「这是产品」的东西 |
-| 5 | 认证履历 | 🟡 离线验证与锚定已完成（ERC-8412 草案自带 23 个向量全过；真链锚定一笔）；链上登记合约未做 |
-| 6 | 靓号 / 信誉查询 / 企业命名空间 | ⬜ 未开始（价格是配置里的占位值） |
+Everything below was read from the chain or from the live service on that date. Open the
+explorers and check it rather than taking this file's word for it.
 
-链的选择：**Robinhood Chain（4663）**，不再是 Base。ENS 在主网，所以是「主网解析器 + L2 注册表」的双链结构，
-细节见 [评审包](docs/review/README.md)。
+| What | Where it is | Check it |
+| --- | --- | --- |
+| **A name resolves on Ethereum mainnet** | `abced.musename.eth` → `0x022Ce19a…85b7`, through the resolver below | [`pnpm l1:resolver`](scripts/l1-resolver.mjs) · registration tx [`0x44553d06…`](https://robinhoodchain.blockscout.com/tx/0x44553d06f720d01bb015a50d2d2a58535a347e49bd550ce89bce159048d95352) |
+| **Our L1 resolver is deployed** | `0x9eA7A8896a68717e587BC1EE17B6b0B80EEeb443` — Durin's bytecode, our gateway URL and our signing key | deploy tx [`0xa7911098…`](https://etherscan.io/tx/0xa7911098244ea330923bd540ae3c3ffb18bd5c331ac74f6c2b97f72fbe0bcf0d) |
+| **Names are minted on Robinhood Chain** | registry `0x4b959e1Fb5567cAa7FE21D0D2a7F870Af705B792` · registrar `0xb1e8A90E5a9b1C8E69242BC70d928789D89c02b7` | registrar tx [`0xe01cd3b2…`](https://robinhoodchain.blockscout.com/tx/0xe01cd3b2fad0be96b89b249b790390d91eedecdc530360415802bb5f2e1fe231) |
+| **The registration needs the owner's signature, not the platform's** | the registrar only accepts an EIP-712 payload signed by the address that will own the name | `pnpm verify:local` proves it on a throwaway chain, digest against contract |
+| **A card is published on chain** | an ERC-8004 text record, signed by the owner, private by default | `pnpm --filter @musename/api test` · package [`@musename/core`](packages/core) |
+| **Records are anchored** | Robinhood Chain, block `75420865`, 2 records under one merkle root | tx [`0xad4c4d97…`](https://robinhoodchain.blockscout.com/tx/0xad4c4d9749329274a62f7b4a2744ab66c4cec62822c7e6f6ad3630ebd00429eb) |
+| **An AI can register by itself** | MCP over HTTPS, plus a self-signing path for agents that hold their own key | [MCP server](apps/mcp) · [`pnpm agent:probe`](scripts/agent-purchase-probe.mjs) |
 
-阶段 4 是门槛：两周数据不达标，阶段 5 之后不开发。
+`musepass.eth` is registered on mainnet and is being pointed at this deployment. Names
+resolve today under the earlier root; the root above resolves as soon as its two
+one-time transactions are signed by the name's owner.
 
----
+## What is deliberately not claimed yet
 
-## 一键验证
+A project that sells credibility has to be the first to say what it cannot do. These are
+on the [trust page](https://musepass.xyz/trust) as well, and `pnpm claims:check` fails
+the build if any published sentence outruns its evidence.
+
+| Not true today | Why it is written down |
+| --- | --- |
+<!-- claims-allow-block: name-not-modifiable — the sentence in quotes is the claim we refuse to make -->
+<!-- claims-allow-block: independent-verifier — same: the row exists to deny it -->
+| "The platform cannot change your name." | The registry admin is an operational key, and it can add a registrar. A watchdog ([`scripts/security-power-inventory.mjs`](scripts/security-power-inventory.mjs)) reports the moment that happens; moving the permission to a multisig is the fix, and it has not been done. |
+| "Independently verified." | The only verifier today is our own engine, from the same team. |
+| "Records cannot be changed." | The append-only record contract is written and tested, and is **not deployed**. What exists on chain is one zero-value self-transfer carrying a merkle root. |
+| "Audited." | No external audit has been done. Anything that touches money waits for one. |
+<!-- claims-allow-end: * -->
+
+## One NFT
+
+There is one kind of token in this project: the name, an ERC-721 that lives in its
+owner's wallet. Everything else people might call an NFT is not one.
+
+| Thing | What it actually is |
+| --- | --- |
+| Name | The ERC-721. One per name, free from five characters up |
+| Card | An on-chain record, not a token |
+| Passport stamps | Data on the name, not tokens |
+| Genesis cover | A planned trait on the first 1,000 names, not a second collection, and not built |
+| Invitation to claim a name | Planned as a whitelist plus a signature, not as a transferable token |
+| Notary seat | Planned, capped at 1,000, not issued |
+
+So there is no second collection, no invitation token and no seat sale. If something
+claims to be one of those and it is not in this repository, it is not ours.
+
+## Check it yourself
+
+No testnet money and no private key are needed for any of these.
 
 ```bash
-pnpm install                 # 一键安装
-pnpm check                   # 类型检查 + 单元测试 + 合约测试 + 对外文案检查（2026-09-29 实测 460 单元 + 65 合约）
-pnpm verify:local            # 起本地链 + API + MCP + 网页，跑通整条链路
-pnpm l1:resolver             # 主网解析器状态（只读）
-pnpm verify:vectors          # 用 ERC-8412 草案自带的 23 个一致性向量跑我们的验证器
-pnpm wallet:compat           # 17 项钱包兼容性检查（viem + ethers × 4 个 RPC + ERC-3668 全轮）
-pnpm health                  # 线上 15 项健康检查（外部视角）
-pnpm claims:check            # 对外文案是否说了链上不成立的话（会失败的那种检查）
-pnpm hygiene --history       # 私网地址 / 机器名 / 本机密钥是否进了仓库（含全部历史）
-pnpm snapshot:names          # 从链上导出全部名字 + sha256，用于「昨天的名单」可核对
-pnpm power:inventory         # 热钱包有没有被加成 registrar（是就退出码 1）
-pnpm review:package          # 生成评审用合集 docs/review/all-in-one.md
+pnpm install
+
+pnpm check            # typecheck · 492 tests · 65 contract tests · claim gates · English-only web
+pnpm verify:local     # deploys the contracts on a throwaway chain and walks the whole path:
+                      # sign off chain → mint on chain → API → MCP tools → the real pages
+pnpm l1:resolver      # reads the deployed resolver on mainnet and says what it points at
+pnpm verify:vectors   # runs our verifier against the ERC-8412 draft's own consistency vectors
+pnpm wallet:compat    # 17 machine checks: ENS resolution through viem and ethers across 4 RPCs
+pnpm health           # 15 checks against the live service, from outside
+pnpm claims:check     # every published sentence against the gate it depends on
+pnpm snapshot:names   # exports every name from the chain with a sha256 anyone can compare
 ```
 
-`pnpm verify:local` 会真的部署合约、铸造一个名字、起 API、起 MCP、起网页，然后断言：
+`pnpm verify:local` is the one to run first: it asserts that the EIP-712 digest computed
+off chain is byte-for-byte the digest the contract accepts, that the name is minted to
+the **signer** and never to the address paying the gas, and that both address records
+(ENSIP-11 and mainnet coinType) are written.
 
-- 链下算出的 EIP-712 摘要与链上 `hashRegister()` **逐字节一致**
-- 名字归属于**签名者本人**，代付 gas 的平台地址不是 owner
-- 平台地址不是 registrar（只说明它今天不在名单里；它同时是注册表 admin，可以把自己加进去 —— 见 [信任模型](docs/trust-model.md)）
-- 链上地址记录按 ENSIP-11 与 mainnet coinType 各写一条
-- 接着启动 API 与 MCP：AI 客户端通过 streamable HTTP 列出并调用 5 个工具，拿到一条待主人确认的注册链接
-- 最后启动网页：首页、领取页、名字主页、开发者页都能渲染，品牌与价格来自 API 配置
+## The card
 
-不需要任何测试网资金，也不需要私钥。
+A card follows ERC-8004 and answers three questions about an agent: what it is, what it
+runs on, and how to reach it. Two rules shape it.
 
-只看网页：
+- **Private by default.** Only the name and the address are public. Fields become public
+  one switch at a time, and the owner signs the result.
+- **The owner signs, the platform pays.** Publishing is one signature; we cover the gas
+  and never hold the name.
 
-```bash
-pnpm --filter @musename/core build
-pnpm --filter @musename/api build
-pnpm --filter @musename/web dev        # http://localhost:3000
-```
-
-网页向 `MUSENAME_API_URL`（默认 `http://localhost:3001`）取配置；API 没起也能渲染，用的是内置兜底配置。
-
----
-
-## 仓库结构
+## Repository map
 
 ```
-config/             品牌名、价格、限额、保留名单（全部配置化，代码零硬编码）
-packages/core/      归一化、易混淆检测、保留名单、价格、namehash、名片、签名校验
-packages/verify/    履历离线验证脚本（阶段 5）
-contracts/          Foundry 工程：发行合约 + 记录注册表（只增不改、无资金）+ 部署脚本 + 65 个测试
-apps/web/           网页：首页、领取页、确认页、名字主页（Next.js）
-apps/api/           查询 API + 注册后端 + 注册请求（已完成）
-apps/mcp/           MCP 服务：5 个工具（已完成）
-apps/gateway/       CCIP-Read 解析网关：ERC-3668、响应签名、指标、健康检查（已完成）
-scripts/            端到端验证脚本
-docs/               技术核实报告、参考资料
-TODO.md             后续所有阶段的工作清单
+contracts/          Foundry: the registrar that mints names, and the record contract
+packages/core/      Normalisation, confusable detection, reserved names, pricing, cards
+packages/verify/    Offline record verifier — one command, no dependencies on us
+apps/gateway/       CCIP-Read gateway: ERC-3668 responses, signing, metrics
+apps/api/           Public read API, registration backend, confirmation links
+apps/mcp/           MCP server: nine tools, so an AI can register and publish by itself
+apps/web/           The site: landing, claim, name pages, verify, anchors, developers
+config/             Brand, chain addresses, pricing, limits, reserved names — no code changes
+scripts/            One command per promise: local end to end, health, snapshots, probes
 ```
 
-## 关键设计决策
+The npm scope inside the monorepo is `@musename/*`; the product is MusePass. It is a
+leftover from the rename and is deliberate, because the on-chain identifiers that must
+never change (the resolver's gateway hostname, the ENS text key `musename.card`, the
+record digest tag) use the same name.
 
-### 名字是什么
+## Configuration
 
-根名字 `musepass.eth`（**已购买，2027-09-29 到期，owner `0x022Ce19a…`**）下的 ENS 子名字，部署在 Robinhood Chain 上，每个名字是一个 ERC-721。主网通过 CCIP-Read（ERC-3668 / ENSIP-10）解析回 L2，解析器是 `0x9Ea7A889…`。
+Nothing about the brand, the chain or the price list is hardcoded:
 
-链上部分全部使用现成方案：[`ensdomains/durin`](https://github.com/ensdomains/durin)（注册表、L1 解析器、网关）。我们只写中间的服务层和用户体验。
+| File | What it holds |
+| --- | --- |
+| `config/brand.json` | Product name, root name, canonical domain, support address |
+| `config/chains.json` | Chain ids, registry and registrar addresses, the previous deployment |
+| `config/pricing.json` | Free tier, premium tiers, certification fee |
+| `config/limits.json` | Free allowance, sponsorship caps, label rules, rate limits |
+| `config/reserved-names.json` | Reserved brand, platform, public-figure and system names |
 
-### 为什么有一个自写合约
+## Documentation
 
-见 [技术核实报告 F2](docs/tech-verification-report.md)。一句话：Durin 把 registrar 权限定义为「可改写任意节点记录」，如果把这权限给平台热钱包，平台就能改用户的名字 —— 那是产品信任的底线问题。
+The deeper documents are written in Chinese; the code, the site and the interfaces are
+in English. Start from these:
 
-`contracts/src/MusePassRegistrar.sol` 因此把 registrar 权限收进合约，只暴露一个 `register()`，且要求受益人本人的 EIP-712 签名。它不持有资金、不托管名字、无升级入口，但**阶段 6 涉及资金前必须完成外部审计**。
-
-### 资产归属
-
-- 名字的所有权在用户钱包里。注册表没有 burn、没有管理员转移，平台没有直接收回名字的接口。
-- 但**注册表 admin 是运营热钱包**：2026-09-29 链上实测，它可以调用 `addRegistrar`
-  把自己加进名单（不 revert），而 registrar 能改写任意名字的地址与文本记录。
-  这条权限没有转走（项目方决定先做检测而不是迁移），检测脚本是
-  `node scripts/security-power-inventory.mjs --watch`。完整说明见
-  [docs/trust-model.md](docs/trust-model.md)。
-- 平台今天能做的：代付 gas、按规则发放、在权限被滥用时被看门人发现。
-- 根名字由硬件钱包或多签持有，**服务端不持有该私钥**。
-
-### 长度与合规
-
-- ENSIP-15 规范化，不合规直接拒绝（不是注册后解析失败）
-- 长度按**显示宽度**计算：中文算 2 列，所以「阿光摄影」是普通免费名字而不是靓号（可配置切回码点）
-- 链上字节上限 255，中文名上限 85 字
-- 保留名单按归一化标签比对，并额外拦截 `g00gle`、`adm1n` 这类数字替换伪装
-
-### 代付与配额
-
-每个用户、每天、全平台三级上限，全部来自 `config/limits.json`。签名密钥与代付钱包分离，都不进代码仓库。
-
----
-
-## 配置
-
-所有品牌、价格、限额、名单都在 `config/`：
-
-| 文件 | 内容 |
-|---|---|
-| `brand.json` | 产品名、根名字、免责声明（改品牌名不需要改代码） |
-| `chains.json` | 链 ID、合约地址、USDC 地址 |
-| `pricing.json` | 免费档门槛、靓号分档价格、认证月费 |
-| `limits.json` | 免费额度、代付上限、长度规则、保留策略 |
-| `reserved-names.json` | 保留名单（品牌 / 平台 / 公众人物 / 敏感词 / 系统词） |
-
-环境变量只用来覆盖链上地址和密钥，模板见 `.env.example`。
-
-## 文档
-
-- **[评审包](docs/review/README.md)** — 给外部评审：现状、链上事实、信任模型、缺口，以及希望被判断的 15 个问题（合集版 `docs/review/all-in-one.md`）
-- [技术核实报告](docs/tech-verification-report.md) — Durin、ERC-8004、ERC-8412、ENSIP-15 的实际查证结果，以及必须调整的地方
-- [需求验证](docs/demand-validation.md) — 阶段 4 门槛的可证伪测试；以及"平台自己做"这条风险已经发生了的部分
-- [前端对接文档](docs/frontend-integration.md) — 冻结的后端契约：接口、EIP-712 签名、错误码、首页设计稿的状态映射
-- [决策记录](docs/decisions.md) — 官网域名、ENS 根名字、名字主页域名等产品边界决定
-- [网关运维手册](docs/runbook-gateway.md) — 协议细节、部署步骤、三种故障预案
-- [状态页](docs/status.md) — 还差什么，一页看完
-- [主网记录](docs/remaining-mainnet-steps.md) — 三笔交易的完整记录与自行复核方法
-- [钱包兼容性](docs/wallet-compat/README.md) — 机器证据 + 人工验证清单
-- [TODO.md](TODO.md) — 阶段 2–6 的工作清单
-- [contracts/README.md](contracts/README.md) — 合约与部署流程
-
-## 免责声明
-
-MusePass 是独立项目，与 Meta 及其任何产品无关。
+- [Review package](docs/review/README.md) — the state of the project for an outside
+  reviewer, including the fifteen questions we want to be judged on
+- [Trust model](docs/trust-model.md) — who can do what, and what is not true yet
+- [Technical verification report](docs/tech-verification-report.md) — what was checked
+  about Durin, ERC-8004, ERC-8412 and ENSIP-15, and what had to change
+- [Decisions](docs/decisions.md) — every product boundary that was decided, with reasons
+- [Gateway runbook](docs/runbook-gateway.md) — protocol, deployment, three failure plans
+- [Status](docs/status.md) — what is left, on one page
+- [CHANGELOG](CHANGELOG.md) — each entry carries a transaction hash or an endpoint, not
+  the word "done"
 
 ## Security
 
-报告安全问题请走 GitHub 的私密通道（**Security → Report a vulnerability**），见 [SECURITY.md](SECURITY.md)。
-那里也列出了我们**已知的弱点**（注册表管理员是热钱包、单机部署、网关签名者等）——重复报告这些不算发现，
-因为它们本来就写在 [信任模型页](https://musepass.xyz/trust) 上。
+Report a vulnerability through GitHub's private channel (**Security → Report a
+vulnerability**); see [SECURITY.md](SECURITY.md). That file also lists the weaknesses we
+already know about, so reporting those again is not a finding.
 
 ## Contributing
 
-见 [CONTRIBUTING.md](CONTRIBUTING.md)。三条硬规则：**不编造数据**、`pnpm claims:check` 必须通过
-（每句对外话都对应一个能力开关，开开关要附证据）、**网页必须全英文**（构建会拦）。核心合约不自写——
-注册表、解析器、验证器都是 Durin 的原版字节码，唯一自写的是无资金、无升级入口的发行合约。
+See [CONTRIBUTING.md](CONTRIBUTING.md). Three rules are not negotiable: **do not invent
+data**, `pnpm claims:check` must pass, and **the site is English only** (the build
+enforces it). Core contracts are not rewritten here — the registry, the resolver and the
+signature validator are Durin's published bytecode. The one contract we wrote mints
+names, holds no funds and has no upgrade path.
 
-## License
+## Licence and independence
 
-代码 MIT（见 [LICENSE](LICENSE)）。其中 vendored 的第三方部分保持各自许可：
-Durin 的字节码（MIT）、ERC-8412 草案正文与一致性向量（CC0）、forge-std（MIT）——
-逐条列在 [NOTICE](NOTICE)。
+Code is MIT ([LICENSE](LICENSE)); vendored third-party parts keep their own licences,
+listed in [NOTICE](NOTICE).
 
-## 变更记录
-
-[CHANGELOG.md](CHANGELOG.md) —— 每条重要变化都附上能核对的交易哈希或端点，而不是"已完成"三个字。
+MusePass is an independent project. It is not affiliated with, endorsed by, or sponsored
+by Meta Platforms, Inc. or any of its products.
