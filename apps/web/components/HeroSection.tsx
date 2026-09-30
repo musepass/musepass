@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ApiError, checkAvailability, type PublicConfig } from '@/lib/api';
 import { resolveAvailability, type AvailabilityView } from '@/lib/availability';
@@ -21,6 +21,8 @@ export function HeroSection({ config }: { config: PublicConfig }) {
   const [query, setQuery] = useState('');
   const [display, setDisplay] = useState(config.exampleLabel);
   const [status, setStatus] = useState<SearchStatus>({ kind: 'idle' });
+  // What the last run answered for, so typing does not re-ask the same question.
+  const answeredFor = useRef<string | null>(null);
 
   async function run(raw: string) {
     const value = raw.trim();
@@ -29,6 +31,7 @@ export function HeroSection({ config }: { config: PublicConfig }) {
       return;
     }
     setStatus({ kind: 'loading' });
+    answeredFor.current = value;
     try {
       const payload = await checkAvailability(value);
       setDisplay(payload.data?.label ?? value);
@@ -40,6 +43,23 @@ export function HeroSection({ config }: { config: PublicConfig }) {
       });
     }
   }
+
+  /**
+   * Check while the visitor types.
+   *
+   * Waiting for Enter is one decision too many for the first thing anyone does
+   * here, and the answer is cheap: a lookup that is already rate limited and
+   * cached. The pause is long enough that a fast typist makes one request rather
+   * than eight.
+   */
+  useEffect(() => {
+    const value = query.trim();
+    if (value.length < 2 || answeredFor.current === value) return;
+    const timer = setTimeout(() => {
+      void run(value);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   return (
     <section className="hero" id="top">

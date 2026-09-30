@@ -201,6 +201,19 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
             )}
           </div>
 
+          {/* Owner tools last, and labelled, so a visitor can stop reading here.
+              Everything above this line is what anybody can see; nothing below it
+              is usable without the wallet that holds the name. */}
+          <div className="panel">
+            <h2 className="faq-q" style={{ fontSize: 18 }}>
+              Owner tools
+            </h2>
+            <p className="body-2" style={{ fontSize: 15 }}>
+              Everything below only works for the wallet that holds this name. If that is not you, the
+              page above is the whole picture — and you can still look the name up from any AI.
+            </p>
+          </div>
+
           <CardEditor
             config={config}
             label={decoded}

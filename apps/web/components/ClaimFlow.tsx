@@ -199,6 +199,10 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         <p className="body-2" style={{ fontSize: 15 }}>
           The name is in your wallet. Even if we shut down, it stays and keeps working.
         </p>
+        <p className="body-2" style={{ fontSize: 15 }}>
+          Next, give it a card. A name on its own is an address; the card is what another person — or
+          another AI — actually reads before deciding whether to deal with it.
+        </p>
         {mode === 'confirm' ? (
           <CopyForAgent
             text={`${result.fullName} is registered to ${result.owner}${

@@ -21,7 +21,7 @@ export default async function ConfirmPage({
   return (
     <div className="page">
       <div className="container">
-        <SiteHeader config={config} />
+        <SiteHeader config={config} expectedChainIds={[config.chain.chainId, 1]} />
         <main className="narrow">
           <ClaimFlow
             config={config}
