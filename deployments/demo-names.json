@@ -1,0 +1,30 @@
+[
+  {
+    "label": "bruce",
+    "fullName": "bruce.musename.eth",
+    "owner": "0x6136b1EDfcD3de491Cef3a5a6259B9784DFED419",
+    "txHash": "0x7f6dbff43344bb58e038881702388e2d382f1d90f9790de4cf2fd621442e78a8",
+    "alreadyRegistered": false
+  },
+  {
+    "label": "alice",
+    "fullName": "alice.musename.eth",
+    "owner": "0x02520b24f79028eF56190d8A3Ef1730e560491Ea",
+    "txHash": "0x87e066e5ed453b25f41991cb70bffddf8801db286a4d51790f47422c1d069bc8",
+    "alreadyRegistered": false
+  },
+  {
+    "label": "david",
+    "fullName": "david.musename.eth",
+    "owner": "0x3f3f08073dbcb2f47EF000635CcE2b391128d16f",
+    "txHash": "0x544cfa3f5a8d43d6d6599f04fc5b18bd2ba24ee638a5d135edc01c7aa324b21c",
+    "alreadyRegistered": false
+  },
+  {
+    "label": "sarah",
+    "fullName": "sarah.musename.eth",
+    "owner": "0xCC5C8149E7001251118BfF03ed369a1C2d236A8a",
+    "txHash": "0xffdfc24832725f790706d1a5f5236c324a827e31ca13dfd044dc9b010f07957d",
+    "alreadyRegistered": false
+  }
+]

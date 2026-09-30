@@ -65,7 +65,7 @@ export function HeroSection({ config }: { config: PublicConfig }) {
               type="text"
               autoComplete="off"
               spellCheck={false}
-              placeholder="Type a name, for example xiaoming"
+              placeholder="Type a name, for example bruce"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => {

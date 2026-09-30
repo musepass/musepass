@@ -40,7 +40,7 @@ export default async function TrustPage() {
               name back or moves it.
             </li>
             <li>
-              Resolution works on real mainnet (<code className="mono">xiaoming.{config.rootName}</code>{' '}
+              Resolution works on real mainnet (<code className="mono">bruce.{config.rootName}</code>{' '}
               resolves to the owner&apos;s address), and when its RPC fails the gateway returns an error
               rather than signing an empty answer.
             </li>

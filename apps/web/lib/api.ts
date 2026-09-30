@@ -160,7 +160,7 @@ export const FALLBACK_CONFIG: PublicConfig = {
   legalDisclaimer: {
     en: 'MuseName is an independent project, not affiliated with Meta.',
   },
-  exampleLabel: 'xiaoming',
+  exampleLabel: 'bruce',
   // The product moved to Robinhood Chain on 2026-09-29; a stale fallback would
   // send an integrator to the wrong explorer whenever the API is unreachable.
   // `apps/web/test/wellKnown.test.ts` compares these against config/chains.json.
