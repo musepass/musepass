@@ -33,7 +33,12 @@ SCP=(scp -o ConnectTimeout=15 -i "$SSH_KEY")
 
 echo "== build"
 cd "$ROOT_DIR"
-pnpm --filter @musename/web build
+# Prerendered pages are rendered once, here, and the build machine has no API on
+# localhost — so anything the page reads from the API (the live counts, the price
+# ladder) silently falls back to the offline defaults and ships that way. Point
+# the build at the running deployment instead; if it is unreachable the same
+# fallbacks apply, and the page degrades rather than fails.
+MUSENAME_API_URL="${MUSEPASS_API_URL:-https://musepass.xyz}" pnpm --filter @musename/web build
 
 echo "== stage"
 STAGE="$(mktemp -d)"

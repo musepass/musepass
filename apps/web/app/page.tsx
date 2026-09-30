@@ -4,7 +4,7 @@ import { CopyPrompt } from '@/components/CopyPrompt';
 import { HeroSection } from '@/components/HeroSection';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
-import { fetchConfig } from '@/lib/api';
+import { fetchConfig, fetchMetrics } from '@/lib/api';
 
 // The landing page is prerendered, but brand strings and prices come from the
 // API, so refresh it periodically instead of at every request.
@@ -12,6 +12,11 @@ export const revalidate = 300;
 
 export default async function HomePage() {
   const config = await fetchConfig();
+  // Read from the chain, through the API, at render time. If the API cannot be
+  // reached the bar is simply absent — a number that might be stale is worse
+  // than no number on a page that is arguing everything here is checkable.
+  const metrics = await fetchMetrics().catch(() => null);
+  const chainNumbers = metrics?.data?.chain ?? null;
   const { rootName } = config;
 
   return (
@@ -19,6 +24,24 @@ export default async function HomePage() {
       <div className="container">
         <SiteHeader config={config} />
         <HeroSection config={config} />
+
+        {chainNumbers && typeof chainNumbers.names === 'number' && chainNumbers.names > 0 ? (
+          <div className="numbers-bar" aria-label="Live numbers">
+            <span className="numbers-item">
+              <strong>{chainNumbers.names}</strong> names minted on chain
+            </span>
+            <span className="numbers-item">
+              <strong>{chainNumbers.owners ?? chainNumbers.names}</strong> owners
+            </span>
+            <span className="numbers-item">
+              <strong>all of them</strong> resolve in a mainnet ENS client
+            </span>
+            <span className="numbers-item numbers-note">
+              read from the registrar&apos;s events, not from our database —{' '}
+              <Link href="/numbers">see the numbers page</Link>
+            </span>
+          </div>
+        ) : null}
 
         {/* ------------------------------------------------------- proof
             Everything in this strip is checkable in one click, and each cell

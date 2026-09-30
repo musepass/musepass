@@ -87,6 +87,29 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
             <span className="mono">{decoded}</span>.{config.rootName}
           </h1>
 
+          {/* The document itself. Three facts a reader can use: whether a card
+              has been issued, which chain the name lives on, and whether
+              anything is recorded against it. No invented numbers — there is no
+              genesis number until the first 1,000 cards exist. */}
+          <div className="passport">
+            <div className="passport-head">
+              <span>{config.productName} pass</span>
+              <span>{config.rootName}</span>
+            </div>
+            <div className="passport-name mono">
+              {decoded}.{config.rootName}
+            </div>
+            <div className="passport-meta">
+              <span>{data.card ? 'Card issued and signed by the owner' : 'No card issued yet'}</span>
+              <span>Lives on chain {config.chain.chainId}</span>
+              <span>
+                {Array.isArray(data.trackRecord) && data.trackRecord.length > 0
+                  ? `${data.trackRecord.length} verified records`
+                  : 'No verified records yet'}
+              </span>
+            </div>
+          </div>
+
           <div className="panel">
             <dl className="kv">
               <dt>Owner</dt>
