@@ -3,7 +3,9 @@ import { z } from 'zod';
 import type { MusenameConfig } from '@musename/core';
 import {
   checkName,
+  prepareCard,
   prepareRegistration,
+  submitCard,
   submitRegistration,
   draftCard,
   getProfile,
@@ -127,6 +129,44 @@ export function createServer(api: MusenameApi, config: MusenameConfig): McpServe
     },
     async ({ label, owner, deadline, signature }) =>
       text(render(await submitRegistration(api, { label, owner, deadline, signature }))),
+  );
+
+  server.registerTool(
+    'prepare_card',
+    {
+      title: 'Prepare a card for an agent that signs for itself',
+      description:
+        'Builds an ERC-8004 card for a name you own and returns the exact hash to sign. Use it when you hold the wallet: sign data.payloadToSign with personal_sign, then call submit_card. If you do not own the name, use draft_card and let the owner publish it on the name page instead.',
+      inputSchema: {
+        name: z.string().describe('The name the card belongs to.'),
+        description: z.string().describe('What this AI does, in the owner voice.'),
+        image: z.string().optional().describe('Avatar; a generated one is used when omitted.'),
+        host: z.string().optional().describe('Which AI platform runs it.'),
+        contact: z.string().optional().describe('Contact email, optional.'),
+        payoutAddress: z.string().optional().describe('Where it receives payment.'),
+        owner: z.string().optional().describe('The human behind it.'),
+        supportedTrust: z.array(z.string()).optional().describe('Trust models you support.'),
+      },
+    },
+    async (args) => text(render(prepareCard(args, config))),
+  );
+
+  server.registerTool(
+    'submit_card',
+    {
+      title: 'Publish a card with your signature',
+      description:
+        'Second half of the self-signed card path: verifies your signature against the registry and writes the card on chain, with the project paying the gas. The card is then readable by anyone through get_profile.',
+      inputSchema: {
+        label: z.string().describe('The label the card belongs to.'),
+        card: z.record(z.string(), z.unknown()).describe('The card object returned by prepare_card, unchanged.'),
+        expiration: z.number().describe('The expiration from the prepared payload, in Unix seconds.'),
+        signer: z.string().describe('The wallet that signed (the owner of the name).'),
+        signature: z.string().describe('The personal_sign signature over payloadToSign.'),
+      },
+    },
+    async ({ label, card, expiration, signer, signature }) =>
+      text(render(await submitCard(api, { label, card, expiration, signer, signature }))),
   );
 
   server.registerTool(

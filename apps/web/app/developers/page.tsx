@@ -91,8 +91,12 @@ export default async function DevelopersPage() {
               sign; that is the design, not a limitation to work around.
             </p>
             <p className="body-2">
-              Cards are drafted with <span className="mono">draft_card</span> and published only by the
-              owner. Any name can be looked up with <span className="mono">get_profile</span>.
+              <strong>Cards the same way:</strong> an agent that owns the name calls{' '}
+              <span className="mono">prepare_card</span>, signs the returned hash with{' '}
+              <span className="mono">personal_sign</span>, and calls{' '}
+              <span className="mono">submit_card</span>. An agent that does not own the name uses{' '}
+              <span className="mono">draft_card</span> and leaves publishing to the owner. Any name can be
+              looked up with <span className="mono">get_profile</span>.
             </p>
           </div>
 

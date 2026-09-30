@@ -7,6 +7,10 @@ import {
   buildEip712Domain,
   registerMessage,
   REGISTER_TYPES,
+  cardDataUri,
+  cardTextSignaturePayload,
+  CARD_TEXT_KEY,
+  namehash,
   validateCard,
   type AgentCard,
   type AgentService,
@@ -36,6 +40,13 @@ export interface MusenameApi {
     label: string;
     owner: string;
     deadline: number;
+    signature: string;
+  }): Promise<ToolResult>;
+  publishCard(input: {
+    label: string;
+    card: unknown;
+    expiration: number;
+    signer: string;
     signature: string;
   }): Promise<ToolResult>;
   createRequest(input: {
@@ -406,3 +417,156 @@ export async function submitRegistration(
 }
 
 const SITE_URL = 'https://musename.xyz';
+
+/**
+ * `prepare_card`: the payload an agent signs to publish its own card.
+ *
+ * `draft_card` could always build a card, but publishing needed a human on the
+ * name page — which made "an agent that acts on its own account" only half true.
+ * The card is authorised by the owner's signature over a hash built from the
+ * registry, the name, the key, the value and an expiry, so an agent that owns the
+ * name can produce that signature itself.
+ *
+ * Note what kind of signature this is: a personal_sign over 32 raw bytes, not
+ * EIP-712. That is the registry contract's choice, and it means the wallet shows
+ * the user a hash rather than readable fields.
+ */
+export function prepareCard(
+  input: {
+    name: string;
+    description: string;
+    image?: string;
+    host?: string;
+    contact?: string;
+    payoutAddress?: string;
+    owner?: string;
+    services?: AgentService[];
+    supportedTrust?: string[];
+  },
+  config: MusenameConfig,
+): ToolResult {
+  const label = (input.name ?? '').trim().toLowerCase();
+  if (!label) {
+    return {
+      summary: { zh: '先给我一个名字。', en: 'Give me a name first.' },
+      data: {},
+      errors: [{ code: 'BAD_INPUT', message: 'name is required' }],
+    };
+  }
+
+  const fullName = label.includes('.') ? label : `${label}.${config.brand.rootName}`;
+  const shortLabel = fullName.split('.')[0]!;
+  const registry = config.chains.l2.l2Registry;
+
+  if (!registry) {
+    return {
+      summary: { zh: '服务端没有配置注册表地址，暂时发不了名片。', en: 'The server has no registry address, so cards cannot be published.' },
+      data: {},
+      errors: [{ code: 'NOT_CONFIGURED', message: 'l2Registry is not configured' }],
+    };
+  }
+
+  const card: AgentCard = {
+    type: ERC8004_CARD_TYPE,
+    name: fullName,
+    description: input.description ?? '',
+    image: input.image ?? defaultAvatarDataUri(shortLabel),
+    services: input.services ?? [],
+    x402Support: false,
+    active: true,
+    registrations: [],
+    ...(input.supportedTrust ? { supportedTrust: input.supportedTrust } : {}),
+    musename: {
+      ensName: fullName,
+      ...(input.owner ? { owner: input.owner } : {}),
+      ...(input.host ? { host: input.host } : {}),
+      ...(input.contact ? { contact: input.contact } : {}),
+      ...(input.payoutAddress ? { payoutAddress: input.payoutAddress } : {}),
+      cardVersion: 1,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+
+  const validation = validateCard(card);
+  if (!validation.ok) {
+    return {
+      summary: {
+        zh: '这张名片还缺必填内容，补齐后我就能给你签名数据。',
+        en: 'The card is missing required fields; fill them in and I will hand you the payload.',
+      },
+      data: { missingOrInvalid: validation.errors },
+      errors: validation.errors.map((error) => ({ code: 'INVALID_CARD', message: error })),
+    };
+  }
+
+  const expiration = Math.floor(Date.now() / 1000) + 15 * 60;
+  const value = cardDataUri(card);
+  const payload = cardTextSignaturePayload({
+    registry: registry as `0x${string}`,
+    node: namehash(fullName),
+    key: CARD_TEXT_KEY,
+    value,
+    expiration,
+  });
+
+  return {
+    summary: {
+      zh: `用持有 ${fullName} 的钱包对 data.payloadToSign 做一次 personal_sign，然后把签名交给 submit_card；签名 15 分钟内有效。`,
+      en: `Sign data.payloadToSign with the wallet that owns ${fullName} using personal_sign, then hand the signature to submit_card. The signature is good for 15 minutes.`,
+    },
+    data: {
+      label: shortLabel,
+      fullName,
+      card,
+      value,
+      expiration,
+      payloadToSign: payload,
+      contentHash: cardContentHash(card),
+      howToSign: 'personal_sign over the 32 raw bytes of payloadToSign (not EIP-712)',
+      submitWith: 'submit_card',
+    },
+    errors: [],
+  };
+}
+
+/**
+ * `submit_card`: publish the card the agent just signed.
+ *
+ * The API verifies the signature against the registry's own hash and sponsors
+ * the gas; a card signed over anything else simply fails.
+ */
+export async function submitCard(
+  api: MusenameApi,
+  input: { label: string; card: unknown; expiration: number; signer: string; signature: string },
+): Promise<ToolResult> {
+  if (!input.label?.trim() || !input.card || !input.signature?.trim() || !input.signer?.trim()) {
+    return {
+      summary: {
+        zh: '需要 label、card、expiration、signer 和 signature 五个字段。',
+        en: 'I need label, card, expiration, signer and signature.',
+      },
+      data: {},
+      errors: [{ code: 'BAD_INPUT', message: 'label, card, expiration, signer and signature are required' }],
+    };
+  }
+
+  const result = await api.publishCard({
+    label: input.label.trim(),
+    card: input.card,
+    expiration: Number(input.expiration),
+    signer: input.signer.trim(),
+    signature: input.signature.trim(),
+  });
+
+  if (result.errors.length > 0) return result;
+
+  return {
+    ...result,
+    data: {
+      ...(result.data as object),
+      nextStep: 'primary-name',
+      nextStepEn:
+        'The card is readable by anyone now. If you want wallets to show the name instead of the address, the owner can set it as their primary name — that one is a mainnet transaction.',
+    },
+  };
+}

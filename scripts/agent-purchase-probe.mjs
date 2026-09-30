@@ -109,6 +109,35 @@ if (submitted.data.txHash) {
   process.exit(1);
 }
 
+// The agent owns the name now, so it can also publish its own card. That is the
+// rest of "acts on its own account": until this worked, every card needed a human
+// on a web page.
+const preparedCard = await callTool('prepare_card', {
+  name: label,
+  description: `An autonomous agent that registered itself to test MuseName.`,
+  host: 'agent-purchase-probe',
+});
+if (!preparedCard.data.payloadToSign) {
+  console.error('FAIL: prepare_card returned no payload');
+  console.error(preparedCard.text.slice(0, 400));
+  process.exit(1);
+}
+const cardSignature = await agent.signMessage({
+  message: { raw: preparedCard.data.payloadToSign },
+});
+const submittedCard = await callTool('submit_card', {
+  label,
+  card: preparedCard.data.card,
+  expiration: preparedCard.data.expiration,
+  signer: agent.address,
+  signature: cardSignature,
+});
+console.log(`  card   ${submittedCard.data.txHash ?? 'FAILED'}`);
+if (!submittedCard.data.txHash) {
+  console.error(submittedCard.text.slice(0, 600));
+  process.exit(1);
+}
+
 // And the half that matters: does a wallet find it?
 const client = createPublicClient({ chain: mainnet, transport: http('https://ethereum-rpc.publicnode.com') });
 const resolved = await getEnsAddress(client, { name: `${label}.musename.eth` });

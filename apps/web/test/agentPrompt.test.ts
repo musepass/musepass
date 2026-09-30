@@ -15,11 +15,18 @@ const TOOL_NAMES = [
   'get_profile',
   'prepare_registration',
   'submit_registration',
+  'prepare_card',
+  'submit_card',
 ];
 
 describe('the prompt a person pastes', () => {
-  it('names every tool the MCP server actually registers', () => {
-    for (const tool of TOOL_NAMES) expect(AGENT_PROMPT).toContain(tool);
+  it('names the tools that path needs, and points at the file with the rest', () => {
+    // The paste block is short on purpose: a task, not a spec. The catalogue
+    // lives in /ask.txt, which is where an agent reads it from.
+    for (const tool of ['check_name', 'prepare_registration', 'submit_registration', 'request_name', 'get_status']) {
+      expect(AGENT_PROMPT).toContain(tool);
+    }
+    expect(AGENT_PROMPT).toContain('/ask.txt');
   });
 
   it('tells the AI that the owner signs, and that nothing is registered yet', () => {
@@ -34,6 +41,10 @@ describe('the prompt a person pastes', () => {
 
   it('names the current broken case instead of letting the AI retry forever', () => {
     expect(AGENT_PROMPT).toContain('issuer wallet is not configured');
+  });
+
+  it('carries the whole catalogue in the file an agent reads', () => {
+    for (const tool of TOOL_NAMES) expect(ASK_TXT).toContain(tool);
   });
 });
 

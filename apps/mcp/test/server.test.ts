@@ -63,15 +63,17 @@ function textOf(result: unknown): string {
 }
 
 describe('tool registration over the MCP protocol', () => {
-  it('exposes the five tools from the task document, plus the self-signing pair', async () => {
+  it('exposes the five task-document tools plus the self-signing pair for names and cards', async () => {
     const { tools } = await client.listTools();
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'check_name',
       'draft_card',
       'get_profile',
       'get_status',
+      'prepare_card',
       'prepare_registration',
       'request_name',
+      'submit_card',
       'submit_registration',
     ]);
   });

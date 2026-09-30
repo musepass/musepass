@@ -96,6 +96,22 @@ export function createHttpApi(options: { baseUrl: string; fetchImpl?: typeof fet
       });
     },
 
+    async publishCard(input) {
+      const payload = await request(`/v1/names/${encodeURIComponent(input.label)}/card`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          card: input.card,
+          expiration: input.expiration,
+          signer: input.signer,
+          signature: input.signature,
+        }),
+      });
+      return normalise(payload, {
+        zh: '名片已经写到链上了。',
+        en: 'The card is on chain.',
+      });
+    },
+
     async getProfile(name) {
       const payload = await request(`/v1/names/${encodeURIComponent(name)}`);
       const data = payload.data ?? {};
