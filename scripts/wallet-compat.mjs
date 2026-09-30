@@ -11,7 +11,7 @@
  * What it cannot do is pretend to be a wallet app. The four human rows stay in
  * docs/wallet-compat/README.md.
  *
- *   node scripts/wallet-compat.mjs [--name xiaoming.musepass.eth] [--expect 0x…]
+ *   node scripts/wallet-compat.mjs [--name peter.musepass.eth] [--expect 0x…]
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -40,8 +40,11 @@ function arg(name, fallback) {
   return index === -1 ? fallback : process.argv[index + 1];
 }
 
-const name = arg('name', 'xiaoming.musepass.eth');
-const expected = arg('expect', '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d');
+// A name that exists under the root the product uses today. The earlier canary
+// was minted under the previous root, so every check reported "got null" while
+// resolution was working — the same stale-probe mistake the health report had.
+const name = arg('name', 'peter.musepass.eth');
+const expected = arg('expect', '0x2d319F9159e11ab729DFD510023E07e2C609BeF4');
 const MAINNET_COIN_TYPE = 60n;
 /** ENSIP-11: 0x80000000 | chainId, as BigInt so JS cannot sign-flip it. */
 const ROBINHOOD_COIN_TYPE = BigInt(0x80000000) | 4663n;
@@ -262,7 +265,8 @@ if (offchainLookup) {
     const signer = await recoverAddress({ hash, signature });
     // `result` is the resolver's return value, itself ABI-encoded bytes.
     const [inner] = decodeAbiParameters([{ type: 'bytes' }], result);
-    const decodedAddress = `0x${inner.slice(-40)}`;
+    const decodedAddress =
+      typeof inner === 'string' && inner.length >= 42 ? `0x${inner.slice(-40)}` : `${inner} (no address)`;
     add(
       'gateway signature',
       GATEWAY_SIGNER,
