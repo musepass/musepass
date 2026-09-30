@@ -35,8 +35,12 @@ const chains = JSON.parse(readFileSync(resolve(configDir, 'chains.json'), 'utf8'
 // which reports "all good" while the new one is broken.
 const brand = JSON.parse(readFileSync(resolve(configDir, 'brand.json'), 'utf8'));
 
-const NAME = 'xiaoming.musepass.eth';
-const EXPECTED_ADDRESS = '0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d';
+// The canary for "a name really resolves in a wallet". It has to be a name that
+// exists under the root the product uses today: the previous canary was minted
+// under the earlier root, so it reported a failure while resolution was working
+// — the worst kind of monitor, one that lies in the direction of alarm fatigue.
+const NAME = 'peter.musepass.eth';
+const EXPECTED_ADDRESS = '0x2d319F9159e11ab729DFD510023E07e2C609BeF4';
 const RESOLVER = '0x9eA7A8896a68717e587BC1EE17B6b0B80EEeb443';
 const SPONSOR = '0x66F499e8F0A92e44A0F9c59a305E73a12b5684e7';
 const MIN_SPONSOR_ETH = 0.0002;

@@ -48,7 +48,7 @@ explorers and check it rather than taking this file's word for it.
 
 | What | Where it is | Check it |
 | --- | --- | --- |
-| **A name resolves on Ethereum mainnet** | `abced.musename.eth` → `0x022Ce19a…85b7`, through the resolver below | [`pnpm l1:resolver`](scripts/l1-resolver.mjs) · registration tx [`0x44553d06…`](https://robinhoodchain.blockscout.com/tx/0x44553d06f720d01bb015a50d2d2a58535a347e49bd550ce89bce159048d95352) |
+| **Names resolve on Ethereum mainnet** | `peter.musepass.eth` → `0x2d319F91…`, and `abced.musename.eth` → `0x022Ce19a…85b7`, both through the resolver below | [`pnpm l1:resolver`](scripts/l1-resolver.mjs) · root pointed at the resolver, tx [`0xc423ffff…`](https://etherscan.io/tx/0xc423ffff8e475be73965b0293961ad116f431c2da39e6e2b4cbcc01d37df7664) |
 | **Our L1 resolver is deployed** | `0x9eA7A8896a68717e587BC1EE17B6b0B80EEeb443` — Durin's bytecode, our gateway URL and our signing key | deploy tx [`0xa7911098…`](https://etherscan.io/tx/0xa7911098244ea330923bd540ae3c3ffb18bd5c331ac74f6c2b97f72fbe0bcf0d) |
 | **Names are minted on Robinhood Chain** | registry `0x4b959e1Fb5567cAa7FE21D0D2a7F870Af705B792` · registrar `0xb1e8A90E5a9b1C8E69242BC70d928789D89c02b7` | registrar tx [`0xe01cd3b2…`](https://robinhoodchain.blockscout.com/tx/0xe01cd3b2fad0be96b89b249b790390d91eedecdc530360415802bb5f2e1fe231) |
 | **The registration needs the owner's signature, not the platform's** | the registrar only accepts an EIP-712 payload signed by the address that will own the name | `pnpm verify:local` proves it on a throwaway chain, digest against contract |
@@ -56,9 +56,10 @@ explorers and check it rather than taking this file's word for it.
 | **Records are anchored** | Robinhood Chain, block `75420865`, 2 records under one merkle root | tx [`0xad4c4d97…`](https://robinhoodchain.blockscout.com/tx/0xad4c4d9749329274a62f7b4a2744ab66c4cec62822c7e6f6ad3630ebd00429eb) |
 | **An AI can register by itself** | MCP over HTTPS, plus a self-signing path for agents that hold their own key | [MCP server](apps/mcp) · [`pnpm agent:probe`](scripts/agent-purchase-probe.mjs) |
 
-`musepass.eth` is registered on mainnet and is being pointed at this deployment. Names
-resolve today under the earlier root; the root above resolves as soon as its two
-one-time transactions are signed by the name's owner.
+`musepass.eth` is connected: its owner signed the two one-time transactions that point
+the root at this resolver and tell the resolver where the names live, so names under it
+resolve in any wallet that speaks ENS. Names minted under the earlier root keep
+resolving too — that is why both are listed above.
 
 ## What is deliberately not claimed yet
 
