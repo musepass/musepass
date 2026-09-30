@@ -1122,6 +1122,30 @@ textarea.field {
   padding-right: 24px;
 }
 
+.docs-search {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  margin-bottom: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--ink);
+}
+
+.docs-search:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.docs-search-empty {
+  font-size: 13px;
+  color: var(--ink-3);
+  margin: 0 0 22px;
+}
+
 .docs-side-title {
   display: block;
   font-size: 11px;
