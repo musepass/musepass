@@ -33,6 +33,7 @@ import {
 } from '@musename/core';
 import { isAddress } from 'viem';
 import type { ChainReader, MusenameDeps } from './deps.js';
+import { privyConfigured, verifyPrivyIdentity } from './auth/privy.js';
 import { createLogger, requestObservability, type Logger } from './observability.js';
 
 export interface ApiMeta {
@@ -643,10 +644,20 @@ export function createApp(deps: MusenameDeps) {
     }
     const invitation = ownerQuery ? await invitationFor(ownerQuery) : null;
 
-    const result = checkLabel(label ?? rawName, { config, reservedIndex, onChainFree, invitation });
+    // D17, the X side: an invitation can name an X handle instead of a wallet.
+    // This lookup is display-only — the authoritative check happens at claim
+    // time against a verified Privy access token.
+    const xQuery = (c.req.query('x') ?? '').trim().replace(/^@/, '').toLowerCase();
+    const handleInvitation =
+      !invitation && xQuery && /^[a-z0-9_]{1,30}$/.test(xQuery)
+        ? findInvitation(config.invitations.invitations, { xHandle: xQuery })
+        : null;
+    const effectiveInvitation = invitation ?? handleInvitation;
+
+    const result = checkLabel(label ?? rawName, { config, reservedIndex, onChainFree, invitation: effectiveInvitation });
     const invited =
-      ownerQuery && result.units !== null
-        ? invitedShortNameDecision(invitation, result.units).allowed
+      (ownerQuery || handleInvitation) && result.units !== null
+        ? invitedShortNameDecision(effectiveInvitation, result.units).allowed
         : null;
 
     let suggestions: string[] = [];
@@ -1405,6 +1416,96 @@ export function createApp(deps: MusenameDeps) {
   });
 
   /* ------------------------------------------------------------------ */
+  /* POST /v1/auth/privy/verify                                          */
+  /* ------------------------------------------------------------------ */
+  app.post('/v1/auth/privy/verify', async (c) => {
+    const ip = (c.req.header('x-forwarded-for') ?? 'local').split(',')[0].trim();
+    if (!rateLimit(c, `privy-verify:${ip}`, 60)) {
+      return c.json(
+        {
+          summary: {
+            zh: '验证太频繁了，请稍后再试。',
+            en: 'Too many verification attempts; please retry later.',
+          },
+          errors: [
+            boom('RATE_LIMITED', 'privy verify rate limit exceeded', {
+              zh: '验证太频繁了，请稍后再试。',
+              en: 'Too many verification attempts; please retry later.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        429,
+      );
+    }
+
+    if (!privyConfigured()) {
+      return c.json(
+        {
+          summary: {
+            zh: 'X 登录还没有配置。',
+            en: 'Signing in with X is not configured on this service.',
+          },
+          errors: [
+            boom('NOT_CONFIGURED', 'privy credentials are not set', {
+              zh: 'X 登录还没有配置。',
+              en: 'Signing in with X is not configured on this service.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        503,
+      );
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = (await c.req.json()) as Record<string, unknown>;
+    } catch {
+      return c.json(
+        {
+          summary: { zh: '请求格式不对。', en: 'The request body is not valid JSON.' },
+          errors: [boom('BAD_REQUEST', 'invalid JSON body', { zh: '请求格式不对。', en: 'The request body is not valid JSON.' })],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    const accessToken = typeof body.accessToken === 'string' ? body.accessToken : '';
+    try {
+      const identity = await verifyPrivyIdentity(accessToken);
+      return c.json({
+        summary: { zh: '登录已验证。', en: 'The sign-in was verified.' },
+        data: {
+          privyUserId: identity.privyUserId,
+          xHandle: identity.xHandle,
+          walletAddress: identity.walletAddress,
+        },
+        errors: [],
+        meta: meta(true),
+      });
+    } catch {
+      return c.json(
+        {
+          summary: {
+            zh: '登录凭证无效或已过期。',
+            en: 'That sign-in is not valid or has expired; sign in again.',
+          },
+          errors: [
+            boom('INVALID_TOKEN', 'privy access token did not verify', {
+              zh: '登录凭证无效或已过期。',
+              en: 'That sign-in is not valid or has expired; sign in again.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        401,
+      );
+    }
+  });
+
+  /* ------------------------------------------------------------------ */
   /* POST /v1/names/claim                                                */
   /* ------------------------------------------------------------------ */
   app.post('/v1/names/claim', async (c) => {
@@ -1574,7 +1675,26 @@ export function createApp(deps: MusenameDeps) {
     // 2b. D17, the authoritative check: a 3–4 unit name exists only through an
     //     invitation, and one invitation is ever worth one name. The signature
     //     above decided who `owner` is, so this cannot be spoofed by the body.
-    const invitation = await invitationFor(owner);
+    //     An invitation can name the wallet directly, or an X handle — in that
+    //     case the client attaches a Privy access token, which is verified here
+    //     so a bare "x=@anyone" in the body proves nothing.
+    let invitation = await invitationFor(owner);
+    const privyAccessToken =
+      typeof body.privyAccessToken === 'string' ? body.privyAccessToken : null;
+    if (!invitation && privyAccessToken) {
+      try {
+        const identity = await verifyPrivyIdentity(privyAccessToken);
+        if (identity.xHandle) {
+          const row = findInvitation(config.invitations.invitations, {
+            xHandle: identity.xHandle,
+          });
+          if (row) invitation = row;
+        }
+      } catch {
+        // A token that does not verify simply means: not invited. The claim
+        // continues under the ordinary rules instead of failing.
+      }
+    }
     const policy = checkLabel(label, { config, reservedIndex, onChainFree, invitation });
 
     // Idempotency: the same owner asking again is not an error.
@@ -1867,7 +1987,9 @@ export function createApp(deps: MusenameDeps) {
       // Only after the chain accepted the registration: a failed claim must not
       // spend the invitation. If the process dies between the two, the name
       // exists unindexed and the invitation reads unused — the reconciliation
-      // job is the place that catches it, same as the name index.
+      // job is the place that catches it, same as the name index. The spend is
+      // recorded under the claiming wallet, so an X-handle invitation cannot be
+      // replayed by the same embedded wallet either.
       await invitationClaims.markClaimed({
         wallet: owner,
         claimedLabel: label,

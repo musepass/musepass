@@ -15,14 +15,15 @@
   "dependencies": {
     "@hono/node-server": "^1.19.0",
     "@musename/core": "workspace:*",
+    "@privy-io/server-auth": "^1.32.4",
     "hono": "4.13.10",
     "pg": "8.23.0",
     "viem": "2.56.9"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
-    "@types/pg": "8.23.1",
     "@types/node": "^22.0.0",
+    "@types/pg": "8.23.1",
     "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "3.2.7"

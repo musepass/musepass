@@ -288,8 +288,12 @@ export function checkAvailability(
   name: string,
   owner?: string | null,
   options?: RequestOptions,
+  xHandle?: string | null,
 ) {
-  const query = owner ? `?owner=${encodeURIComponent(owner)}` : '';
+  const params = new URLSearchParams();
+  if (owner) params.set('owner', owner);
+  if (xHandle) params.set('x', xHandle);
+  const query = params.size > 0 ? `?${params.toString()}` : '';
   return request<AvailabilityData>(
     `/v1/names/${encodeURIComponent(name)}/available${query}`,
     {},
@@ -360,6 +364,8 @@ export interface ClaimPayload {
   via?: 'web' | 'mcp';
   requestId?: string | null;
   confirmToken?: string | null;
+  /** Proves the X login behind an X-handle invitation, when that is the path. */
+  privyAccessToken?: string | null;
 }
 
 export function submitClaim(payload: ClaimPayload, options?: RequestOptions) {

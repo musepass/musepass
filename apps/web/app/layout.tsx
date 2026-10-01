@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
+import { PrivyGate } from '@/components/PrivyGate';
 import { WalletProvider } from '@/components/WalletProvider';
 import { fetchConfig } from '@/lib/api';
 
@@ -51,7 +52,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               "try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('motion')}catch(e){}",
           }}
         />
-        <WalletProvider>{children}</WalletProvider>
+        <PrivyGate>
+          <WalletProvider>{children}</WalletProvider>
+        </PrivyGate>
       </body>
     </html>
   );

@@ -52,6 +52,12 @@ export const KNOWN_CHAINS: Record<number, ChainSpec> = {
     rpcUrls: ['http://127.0.0.1:8545'],
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   },
+  4663: {
+    name: 'Robinhood Chain',
+    rpcUrls: ['https://rpc.mainnet.chain.robinhood.com'],
+    explorer: 'https://robinhoodchain.blockscout.com',
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  },
 };
 
 export function getProvider(): Eip1193Provider {
@@ -132,11 +138,18 @@ export interface RegisterTypedData {
   message: { label: string; owner: Address; deadline: bigint };
 }
 
-export async function signRegister(
+/**
+ * The same signing as `signRegister`, against any EIP-1193 provider — the
+ * browser extension's `window.ethereum` or a Privy embedded wallet's
+ * `getEthereumProvider()`. The signature is identical from either, which is
+ * why the API never learns which kind of wallet signed.
+ */
+export async function signRegisterWithProvider(
   account: Address,
   typedData: RegisterTypedData,
+  provider: Eip1193Provider,
 ): Promise<Hex> {
-  const client = createWalletClient({ account, transport: custom(getProvider() as never) });
+  const client = createWalletClient({ account, transport: custom(provider as never) });
   try {
     return await client.signTypedData({
       account,
@@ -151,6 +164,13 @@ export async function signRegister(
     }
     throw new WalletError('SIGN_FAILED', 'The signature did not complete. You can try again.');
   }
+}
+
+export async function signRegister(
+  account: Address,
+  typedData: RegisterTypedData,
+): Promise<Hex> {
+  return signRegisterWithProvider(account, typedData, getProvider());
 }
 
 /**

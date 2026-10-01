@@ -15,7 +15,7 @@ import { resolveAvailability, type AvailabilityView } from '@/lib/availability';
 import {
   WalletError,
   deadlineInSeconds,
-  signRegister,
+  hasWallet,
 } from '@/lib/wallet';
 import { PrimaryNameCard } from './PrimaryNameCard';
 import { SharePass } from './SharePass';
@@ -52,8 +52,13 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
       setPhase('loading');
       try {
         // With the wallet connected the answer also says whether an invitation
-        // makes this short name free for this wallet (D17).
-        const payload = await checkAvailability(trimmed, wallet.address ?? undefined);
+        // (by wallet or by X handle, D17) makes this short name free here.
+        const payload = await checkAvailability(
+          trimmed,
+          wallet.address ?? undefined,
+          undefined,
+          wallet.xHandle ?? undefined,
+        );
         setAvailability(resolveAvailability(payload, trimmed));
       } catch (cause) {
         setAvailability(null);
@@ -62,7 +67,7 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         setPhase('ready');
       }
     },
-    [wallet.address],
+    [wallet.address, wallet.xHandle],
   );
 
   useEffect(() => {
@@ -100,23 +105,27 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
   }, [mode, requestId, check]);
 
   const isAvailable = availability?.kind === 'available';
-  const wrongChain = Boolean(wallet.address) && wallet.chainId !== config.chain.chainId;
+  // Only an injected wallet can sit on the wrong network; an embedded wallet
+  // just signs and never sends a transaction.
+  const wrongChain =
+    wallet.source === 'injected' &&
+    Boolean(wallet.address) &&
+    wallet.chainId !== config.chain.chainId;
   const busy = phase === 'signing' || phase === 'submitting';
 
   /**
-   * Whatever is still missing, in order: connect a wallet, switch it to the
-   * chain, then ask for the signature. Splitting these into separate buttons
-   * made the owner work out our state machine.
+   * Whatever is still missing, in order: connect a wallet (the browser
+   * extension, or an X login that creates one), switch it to the chain, then
+   * ask for the signature. Splitting these into separate buttons made the owner
+   * work out our state machine.
    */
   async function start() {
     setError(null);
     if (!isAvailable) return;
     try {
       if (!wallet.address) {
-        await wallet.connectWallet();
-      }
-      if (wallet.chainId !== config.chain.chainId) {
-        await wallet.switchTo(config.chain.chainId);
+        if (hasWallet()) await wallet.connectWallet();
+        else await wallet.loginWithX();
       }
     } catch {
       // The provider already stored a readable message; a second attempt is one
@@ -132,11 +141,17 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
 
     try {
       setPhase('signing');
-      const owner = wallet.address ?? (await wallet.connectWallet());
+      const owner =
+        wallet.address ??
+        (hasWallet() ? await wallet.connectWallet() : await wallet.loginWithX());
+      if (!owner) {
+        setPhase('failed');
+        return;
+      }
       await wallet.switchTo(config.chain.chainId);
 
       const deadline = deadlineInSeconds(config.limits.confirmTokenTtlMinutes);
-      const signature = await signRegister(owner as Address, {
+      const signature = await wallet.signRegister({
         domain: {
           name: config.productName,
           version: '1',
@@ -155,6 +170,9 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
       });
 
       setPhase('submitting');
+      // With an X login the API can also match an invitation written against
+      // the X handle instead of the wallet address.
+      const privyAccessToken = wallet.source === 'privy' ? await wallet.getAccessToken() : null;
       const payload = await submitClaim({
         label,
         owner,
@@ -163,6 +181,7 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         via: 'web',
         requestId: requestId ?? null,
         confirmToken: confirmToken ?? null,
+        privyAccessToken,
       });
 
       setResult(payload.data);
@@ -318,7 +337,12 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
 
         {wallet.address ? (
           <div className="notice notice-info">
-            Connected <span className="mono">{wallet.address}</span>
+            Connected{' '}
+            <span className="mono">
+              {wallet.source === 'privy' && wallet.xHandle
+                ? `@${wallet.xHandle} (${wallet.address})`
+                : wallet.address}
+            </span>
             {wrongChain ? ` · switch to ${config.chain.name}` : ''}
           </div>
         ) : null}
@@ -330,6 +354,17 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
           {/* One button, whatever is left: connect, switch networks, then sign.
               Two buttons here meant the owner had to guess the right order, and
               the second one only worked if the first had been pressed. */}
+          {wallet.privyEnabled && !wallet.address ? (
+            <button
+              type="button"
+              className="btn"
+              disabled={!isAvailable || busy || wallet.connecting || phase === 'loading'}
+              onClick={() => void wallet.loginWithX()}
+              title="No wallet needed — one is created for you"
+            >
+              Continue with X
+            </button>
+          ) : null}
           <button
             type="button"
             className="btn btn-primary"
