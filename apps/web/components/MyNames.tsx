@@ -6,6 +6,7 @@ import type { Address } from 'viem';
 
 import { fetchOwnedNames, type OwnedNamesData } from '@/lib/api';
 import { shortAddress } from '@/lib/wallet';
+import { ExportWalletPanel } from './ExportWalletPanel';
 import { useWallet } from './WalletProvider';
 
 /**
@@ -71,6 +72,12 @@ export function MyNames({ explorer }: { explorer: string | null }) {
 
       {loading ? <div className="notice notice-info">Reading the chain…</div> : null}
       {error ? <div className="notice notice-error">{error}</div> : null}
+
+      {/* X sign-in users hold their names in the Privy embedded wallet; this is
+          the only way out, so it belongs right next to the list. */}
+      {wallet.source === 'privy' ? (
+        <ExportWalletPanel address={wallet.address} explorer={explorer} />
+      ) : null}
 
       {!loading && names.length === 0 ? (
         <div className="panel">
