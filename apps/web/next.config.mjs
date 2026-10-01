@@ -10,6 +10,24 @@ const nextConfig = {
   // The monorepo root also has a pnpm-workspace.yaml higher up the tree; pin the
   // root explicitly so Turbopack does not have to guess.
   turbopack: { root: fileURLToPath(new URL('../../', import.meta.url)) },
+  // @privy-io/react-auth pulls wagmi/@walletconnect, whose logger uses pino.
+  // Next externalizes pino for the server runtime but does not trace it (it is
+  // never imported by our own server code), so the standalone bundle 500s on
+  // every server-rendered page unless the pino chain is copied in explicitly.
+  outputFileTracingIncludes: {
+    '/**': [
+      './node_modules/pino/**',
+      './node_modules/pino-std-serializers/**',
+      './node_modules/pino-abstract-transport/**',
+      './node_modules/thread-stream/**',
+      './node_modules/sonic-boom/**',
+      './node_modules/fast-redact/**',
+      './node_modules/safe-stable-stringify/**',
+      './node_modules/quick-format-unpred/**',
+      './node_modules/atomic-sleep/**',
+      './node_modules/real-require/**',
+    ],
+  },
   // Deliberately no `env` block. `next.config.env` inlines values into the
   // bundle at BUILD time, so a container started with a different
   // MUSENAME_API_URL would silently keep calling the build-time one. The server
