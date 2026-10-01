@@ -47,6 +47,17 @@
       "claimedAt": null,
       "claimedLabel": null,
       "txHash": null
+    },
+    {
+      "wallet": "",
+      "xHandle": "richard_buildai",
+      "label": "",
+      "issuedBy": "project",
+      "issuedAt": "2026-10-01",
+      "note": "first X invite test",
+      "claimedAt": null,
+      "claimedLabel": null,
+      "txHash": null
     }
   ]
 }
