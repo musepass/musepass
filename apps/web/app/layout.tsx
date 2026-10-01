@@ -43,6 +43,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={mono.variable}>
       <body>
+        {/* Signs JavaScript in before anything paints, so scroll-reveal CSS
+            only hides content on pages that can also show it again. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('motion')}catch(e){}",
+          }}
+        />
         <WalletProvider>{children}</WalletProvider>
       </body>
     </html>

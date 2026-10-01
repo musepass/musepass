@@ -1106,6 +1106,193 @@ textarea.field {
   vertical-align: 1px;
 }
 
+/* ----------------------------------------------------------------- motion
+   Deliberately quiet: short rises, one easing curve, no loops except a
+   slow drift on the hero card. Scroll reveals only hide content once JS
+   has signed in (html.motion, set by an inline script in the layout), so
+   a script that fails to load cannot leave the page blank. Everything
+   here is switched off by the prefers-reduced-motion block below. */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 96;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes genesis-sheen {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Hero entrance, plain CSS, runs once on load. */
+.hero {
+  background:
+    radial-gradient(60% 50% at 78% 18%, rgba(18, 62, 52, 0.05), transparent 70%),
+    radial-gradient(40% 36% at 12% 82%, rgba(216, 196, 143, 0.12), transparent 70%);
+}
+
+.hero-copy > * {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-copy > *:nth-child(1) { animation-delay: 0.05s; }
+.hero-copy > *:nth-child(2) { animation-delay: 0.15s; }
+.hero-copy > *:nth-child(3) { animation-delay: 0.25s; }
+.hero-copy > *:nth-child(4) { animation-delay: 0.35s; }
+
+.card-wrap {
+  animation:
+    rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both,
+    drift 7s ease-in-out 1.6s infinite;
+}
+
+/* Scroll reveals. `.reveal` hides and shows itself; `.reveal-children`
+   shows its direct children one after another. */
+html.motion .reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html.motion .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+html.motion .reveal-children > * {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html.motion .reveal-children.is-visible > * {
+  opacity: 1;
+  transform: none;
+}
+
+html.motion .reveal-children.is-visible > *:nth-child(2) { transition-delay: 90ms; }
+html.motion .reveal-children.is-visible > *:nth-child(3) { transition-delay: 180ms; }
+html.motion .reveal-children.is-visible > *:nth-child(4) { transition-delay: 270ms; }
+html.motion .reveal-children.is-visible > *:nth-child(5) { transition-delay: 360ms; }
+html.motion .reveal-children.is-visible > *:nth-child(6) { transition-delay: 450ms; }
+
+/* Micro-interactions. */
+.btn {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 10px 22px -12px rgba(18, 62, 52, 0.6);
+}
+
+.three-item,
+.pricing-cell,
+.faq-item,
+.record-step {
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.three-item:hover,
+.pricing-cell:hover {
+  transform: translateY(-3px);
+}
+
+.three-item:hover {
+  border-top-color: var(--accent);
+}
+
+.pricing-cell:hover {
+  border-left-color: var(--ink);
+}
+
+/* The header sticks and frosts as the page scrolls under it. */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(242, 243, 239, 0.86);
+  backdrop-filter: saturate(1.3) blur(10px);
+  -webkit-backdrop-filter: saturate(1.3) blur(10px);
+}
+
+/* The brand mark draws itself once. */
+.brand svg rect,
+.brand svg path {
+  stroke-dasharray: 96;
+  animation: draw 0.9s ease-out 0.15s both;
+}
+
+/* The passport document on a name page rises in; a genesis cover carries
+   a slow sheen along its gold band. */
+.passport {
+  animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.share-pass-image:hover {
+  transform: translateY(-3px);
+}
+
+.passport-genesis-band {
+  background: linear-gradient(
+    90deg,
+    #fdf6e3 0%,
+    #f5e6b8 38%,
+    #fffdf3 50%,
+    #f5e6b8 62%,
+    #fdf6e3 100%
+  );
+  background-size: 200% 100%;
+  animation: genesis-sheen 7s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

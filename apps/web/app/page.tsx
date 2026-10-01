@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { CardMock } from '@/components/CardMock';
+import { CountUp } from '@/components/CountUp';
 import { HeroSection } from '@/components/HeroSection';
+import { Reveal } from '@/components/Reveal';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig, fetchMetrics } from '@/lib/api';
@@ -27,10 +29,16 @@ export default async function HomePage() {
         {chainNumbers && typeof chainNumbers.names === 'number' && chainNumbers.names > 0 ? (
           <div className="numbers-bar" aria-label="Live numbers">
             <span className="numbers-item">
-              <strong>{chainNumbers.names}</strong> names minted on chain
+              <strong>
+                <CountUp value={chainNumbers.names} />
+              </strong>{' '}
+              names minted on chain
             </span>
             <span className="numbers-item">
-              <strong>{chainNumbers.owners ?? chainNumbers.names}</strong> owners
+              <strong>
+                <CountUp value={chainNumbers.owners ?? chainNumbers.names} />
+              </strong>{' '}
+              owners
             </span>
             <span className="numbers-item">
               <strong>every one</strong> resolves on Ethereum mainnet — the root&apos;s resolver
@@ -48,14 +56,16 @@ export default async function HomePage() {
             chain cannot: who is behind this address, and have they delivered
             before. Without it, the counterparty sees a hex string and guesses. */}
         <section className="section" id="problem">
-          <h2 className="h2" style={{ maxWidth: '22em' }}>
-            The other side of the transaction is also an AI.
-          </h2>
-          <p className="body-2" style={{ maxWidth: '44em' }}>
-            Your AI will hire people, buy things and collect payments. What it meets is often another
-            agent at another address. All either side sees is a hex string: no name, no history, no
-            one responsible. MusePass is what an AI carries so it does not have to be guessed at.
-          </p>
+          <Reveal>
+            <h2 className="h2" style={{ maxWidth: '22em' }}>
+              The other side of the transaction is also an AI.
+            </h2>
+            <p className="body-2" style={{ maxWidth: '44em' }}>
+              Your AI will hire people, buy things and collect payments. What it meets is often another
+              agent at another address. All either side sees is a hex string: no name, no history, no
+              one responsible. MusePass is what an AI carries so it does not have to be guessed at.
+            </p>
+          </Reveal>
         </section>
 
         {/* -------------------------------------------------- what you get
@@ -63,10 +73,12 @@ export default async function HomePage() {
             mechanism: what is live, what is in development, what is only being
             designed. Nothing on this row may say more than that. */}
         <section className="section" id="passport">
-          <h2 className="h2" style={{ maxWidth: '16em' }}>
-            One passport, three things inside.
-          </h2>
-          <div className="three-grid">
+          <Reveal>
+            <h2 className="h2" style={{ maxWidth: '16em' }}>
+              One passport, three things inside.
+            </h2>
+          </Reveal>
+          <Reveal stagger className="three-grid">
             <div className="three-item three-item-accent">
               <span className="tag tag-live">Live</span>
               <span className="three-title three-title-accent">Pass</span>
@@ -96,7 +108,7 @@ export default async function HomePage() {
                 seriously. Not built yet either.
               </p>
             </div>
-          </div>
+          </Reveal>
         </section>
 
         {/* ------------------------------------------------------ use cases
@@ -104,10 +116,12 @@ export default async function HomePage() {
             what MusePass contributes — no scenario may claim a feature that is
             not live (the vault and the bond stay out of these sentences). */}
         <section className="section" id="use-cases">
-          <h2 className="h2" style={{ maxWidth: '18em' }}>
-            Three situations it is for.
-          </h2>
-          <div className="three-grid">
+          <Reveal>
+            <h2 className="h2" style={{ maxWidth: '18em' }}>
+              Three situations it is for.
+            </h2>
+          </Reveal>
+          <Reveal stagger className="three-grid">
             <div className="three-item">
               <span className="three-title">Hiring a service</span>
               <p className="body-2">
@@ -131,12 +145,12 @@ export default async function HomePage() {
                 in the middle.
               </p>
             </div>
-          </div>
+          </Reveal>
         </section>
 
         {/* ------------------------------------------------ how it works */}
         <section className="how" id="how">
-          <div className="chat">
+          <Reveal stagger className="chat">
             <div className="bubble-me">Register a name for yourself. Call it atlas.</div>
             <div className="bubble-ai">
               <span>
@@ -154,15 +168,17 @@ export default async function HomePage() {
             <div className="bubble-ai">
               Registered. I also drafted a card for you — take a look before it goes public.
             </div>
-          </div>
+          </Reveal>
 
           <div className="how-copy">
-            <h2 className="h2">
-              Two ways
-              <br />
-              to claim it.
-            </h2>
-            <ol className="steps">
+            <Reveal>
+              <h2 className="h2">
+                Two ways
+                <br />
+                to claim it.
+              </h2>
+            </Reveal>
+            <Reveal as="ol" stagger className="steps">
               <li className="step">
                 <span className="step-num">1</span>
                 <div>
@@ -197,7 +213,7 @@ export default async function HomePage() {
                   </div>
                 </div>
               </li>
-            </ol>
+            </Reveal>
           </div>
         </section>
 
@@ -207,10 +223,12 @@ export default async function HomePage() {
             verifiability cannot argue with adjectives; it shows the things
             that already work while the visitor is reading. */}
         <section className="section" id="proof">
-          <h2 className="h2" style={{ maxWidth: '20em' }}>
-            Not a mock-up. Four things work while you read this.
-          </h2>
-          <div className="pricing-grid">
+          <Reveal>
+            <h2 className="h2" style={{ maxWidth: '20em' }}>
+              Not a mock-up. Four things work while you read this.
+            </h2>
+          </Reveal>
+          <Reveal stagger className="pricing-grid">
             <div className="pricing-cell pricing-cell-featured">
               <span className="pricing-name pricing-name-accent">Resolves in your wallet</span>
               <span className="pricing-amount mono">peter.{rootName}</span>
@@ -263,12 +281,12 @@ export default async function HomePage() {
                 <Link href="/trust">The trust model says both halves out loud</Link>.
               </span>
             </div>
-          </div>
+          </Reveal>
         </section>
 
         {/* ----------------------------------------------------- record */}
         <section className="record" id="record">
-          <div className="record-head">
+          <Reveal className="record-head">
             <h2 className="h2">A track record holds only what can be proven.</h2>
             <p>
               No self-assessment, and no “they said it went well”. The design: the acceptance criteria
@@ -280,8 +298,8 @@ export default async function HomePage() {
               </Link>
               .)
             </p>
-          </div>
-          <ol className="record-steps">
+          </Reveal>
+          <Reveal as="ol" stagger className="record-steps">
             {[
               ['Register the criteria', 'Before any work, write down what counts as done'],
               ['Deliver', 'The AI, or its owner, does the work'],
@@ -298,8 +316,8 @@ export default async function HomePage() {
                 <span className="record-body">{body}</span>
               </li>
             ))}
-          </ol>
-          <div className="record-sample">
+          </Reveal>
+          <Reveal className="record-sample">
             <div>
               <div className="record-sample-label">What one record will look like — example</div>
               <div className="record-sample-claim">Deliver 20 wedding photos within 48 hours</div>
@@ -316,13 +334,15 @@ export default async function HomePage() {
                 </span>
               )}
             </div>
-          </div>
+          </Reveal>
         </section>
 
         {/* ---------------------------------------------------- pricing */}
         <section className="section" id="pricing">
-          <h2 className="h2">Names are free. Trust is earned.</h2>
-          <div className="pricing-grid">
+          <Reveal>
+            <h2 className="h2">Names are free. Trust is earned.</h2>
+          </Reveal>
+          <Reveal stagger className="pricing-grid">
             <div className="pricing-cell">
               <span className="pricing-name">Name</span>
               <span className="pricing-amount">Free</span>
@@ -373,7 +393,7 @@ export default async function HomePage() {
                 Issue names to your AIs in bulk and show their records in one place.
               </span>
             </div>
-          </div>
+          </Reveal>
         </section>
 
         {/* ------------------------------------------------------- trust
@@ -381,10 +401,11 @@ export default async function HomePage() {
             wants the weaknesses knows exactly where to look, and a visitor who
             does not is not asked to read them twice. */}
         <section className="section" id="trust-line">
-          <h2 className="h2" style={{ maxWidth: '18em' }}>
-            We publish what we cannot do yet.
-          </h2>
-          <p className="body-2" style={{ maxWidth: '44em' }}>
+          <Reveal>
+            <h2 className="h2" style={{ maxWidth: '18em' }}>
+              We publish what we cannot do yet.
+            </h2>
+            <p className="body-2" style={{ maxWidth: '44em' }}>
             What is not true today is written down while it is still not true:{' '}
             <Link className="record-link" href="/trust">
               the trust model
@@ -395,16 +416,18 @@ export default async function HomePage() {
             </Link>{' '}
             publishes the public numbers, including the zeroes.
           </p>
+          </Reveal>
         </section>
 
         {/* --------------------------------------------------- developers
             Entry points only. The paste block itself moved to the developer
             docs so this page stays readable for the people it is written for. */}
         <section className="section" id="developers">
-          <h2 className="h2" style={{ maxWidth: '18em' }}>
-            Building with agents?
-          </h2>
-          <p className="body-2" style={{ marginBottom: 20 }}>
+          <Reveal>
+            <h2 className="h2" style={{ maxWidth: '18em' }}>
+              Building with agents?
+            </h2>
+            <p className="body-2" style={{ marginBottom: 20 }}>
             The documentation is organised by who is reading — people, agents, merchants,
             developers:{' '}
             <Link className="record-link" href="/docs">
@@ -412,7 +435,8 @@ export default async function HomePage() {
             </Link>
             .
           </p>
-          <div className="three-grid">
+          </Reveal>
+          <Reveal stagger className="three-grid">
             <div className="three-item">
               <span className="three-title">MCP</span>
               <p className="body-2">
@@ -446,12 +470,13 @@ export default async function HomePage() {
                 .
               </p>
             </div>
-          </div>
+          </Reveal>
         </section>
 
         {/* -------------------------------------------------------- faq */}
-        <section className="faq" id="faq">
-          {[
+        <section id="faq">
+          <Reveal stagger className="faq">
+            {[
             [
               'Who owns the name?',
               `You do. It is an asset in your wallet: even if ${config.productName} shuts down, ownership stays with you and cannot be taken back. Wallet resolution runs through our gateway — if the gateway went down, the name would still be yours but wallets would stop resolving it until it returned. The trust model page keeps this honest.`,
@@ -474,6 +499,7 @@ export default async function HomePage() {
               <p className="faq-a">{answer}</p>
             </div>
           ))}
+          </Reveal>
         </section>
 
         <SiteFooter config={config} />

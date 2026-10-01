@@ -36,7 +36,8 @@ export function SharePass({
         alt={`Passport image for ${fullName}`}
         width={132}
         height={132}
-        style={{ borderRadius: 10, border: '1px solid var(--line)' }}
+        style={{ borderRadius: 10, border: '1px solid var(--line)', transition: 'transform .3s cubic-bezier(.22,1,.36,1)' }}
+        className="share-pass-image"
         unoptimized
       />
       <div>
