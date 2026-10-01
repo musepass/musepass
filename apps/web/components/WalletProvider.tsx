@@ -226,6 +226,35 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const clearError = useCallback(() => setState((prev) => ({ ...prev, error: null })), []);
 
+  // Stable identity on purpose: PrivySync's effect depends on this callback, so
+  // an inline arrow here re-runs the effect on every render — and because the
+  // effect calls setPrivyState with a fresh object, that is a render loop. A
+  // pending React transition never commits inside that loop, which silently
+  // killed every client-side <Link> navigation while Privy was enabled.
+  const handlePrivyChange = useCallback((snapshot: PrivySnapshot) => {
+    const hadWallet = privyRef.current?.wallet != null;
+    // Nothing meaningful moved (Privy can hand out fresh object identities on
+    // every render) — skip the state write or the tree renders in a circle.
+    const prev = privyRef.current;
+    if (
+      prev &&
+      prev.authenticated === snapshot.authenticated &&
+      prev.wallet?.address === snapshot.wallet?.address &&
+      prev.xHandle === snapshot.xHandle
+    ) {
+      return;
+    }
+    privyRef.current = snapshot;
+    setPrivyState(snapshot);
+    // A restored or fresh Privy session takes over the active wallet —
+    // unless the user has since explicitly connected an extension.
+    if (snapshot.authenticated && snapshot.wallet && !hadWallet) {
+      setActiveSource((prev) => (prev === 'injected' ? prev : 'privy'));
+    } else if (!snapshot.authenticated) {
+      setActiveSource((prev) => (prev === 'privy' ? null : prev));
+    }
+  }, []);
+
   const value = useMemo<WalletContextValue>(
     () => ({
       address,
@@ -264,22 +293,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     <WalletContext.Provider value={value}>
       {/* Rendered only when Privy is configured, and must stay inside
           <PrivyGate>; it mirrors Privy's state into this context. */}
-      {privyEnabled ? (
-        <PrivySync
-          onChange={(snapshot) => {
-            const hadWallet = privyRef.current?.wallet != null;
-            privyRef.current = snapshot;
-            setPrivyState(snapshot);
-            // A restored or fresh Privy session takes over the active wallet —
-            // unless the user has since explicitly connected an extension.
-            if (snapshot.authenticated && snapshot.wallet && !hadWallet) {
-              setActiveSource((prev) => (prev === 'injected' ? prev : 'privy'));
-            } else if (!snapshot.authenticated) {
-              setActiveSource((prev) => (prev === 'privy' ? null : prev));
-            }
-          }}
-        />
-      ) : null}
+      {privyEnabled ? <PrivySync onChange={handlePrivyChange} /> : null}
       {children}
     </WalletContext.Provider>
   );
