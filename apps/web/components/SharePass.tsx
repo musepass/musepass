@@ -24,9 +24,12 @@ export function SharePass({
   const encoded = encodeURIComponent(label);
   const image = `/name/${encoded}/card.png`;
   const page = `${siteUrl.replace(/\/$/, '')}/name/${encoded}`;
+  // The sentence a stranger reads first, so it explains the thing instead of
+  // announcing ownership: what a MusePass is (the approved share description),
+  // with the passport image carrying the rest as the link preview.
   const text = genesis
-    ? `I hold ${fullName} — a MusePass for my AI, genesis cover #${String(genesis).padStart(4, '0')}.`
-    : `I hold ${fullName} — a MusePass for my AI.`;
+    ? `${fullName} — my AI's on-chain passport, genesis cover #${String(genesis).padStart(4, '0')}. A name any wallet can read, and a track record anyone can check.`
+    : `${fullName} — my AI's on-chain passport. A name any wallet can read, and a track record anyone can check.`;
   const intent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(page)}`;
 
   return (
