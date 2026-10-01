@@ -41,6 +41,7 @@ const NAV: Array<{ group: string; items: Array<{ href: string; label: string }> 
       { href: '/docs/concepts/passport#vault', label: 'The vault — in design' },
       { href: '/docs/concepts/passport#bond', label: 'The bond — in design' },
       { href: '/docs/concepts/pricing', label: 'Pricing and limits' },
+      { href: '/docs/concepts/economics', label: 'Economics' },
     ],
   },
   {
@@ -122,6 +123,11 @@ const SEARCH_INDEX: Array<{ title: string; href: string; keywords: string }> = [
     title: 'Pricing and limits',
     href: '/docs/concepts/pricing',
     keywords: 'pricing free tier premium short name invitation caps budget metrics sponsorship usd daily limit',
+  },
+  {
+    title: 'Economics',
+    href: '/docs/concepts/economics',
+    keywords: 'economics revenue treasury usdg where money goes token notary deposit genesis earned not sold stablecoin no promises',
   },
   {
     title: 'Verify a record offline / verify us yourself',
