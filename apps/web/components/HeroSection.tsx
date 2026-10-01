@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ApiError, checkAvailability, type PublicConfig } from '@/lib/api';
 import { resolveAvailability, type AvailabilityView } from '@/lib/availability';
 import { CardMock } from './CardMock';
+import { useWallet } from './WalletProvider';
 
 type SearchStatus =
   | { kind: 'idle' }
@@ -18,6 +19,10 @@ type SearchStatus =
  * value. Everything it renders is still server-rendered on first paint.
  */
 export function HeroSection({ config }: { config: PublicConfig }) {
+  // The lookup carries the visitor's identity when they have one, so an
+  // invited X user sees "available, free" for a 3–4 character name here too,
+  // not just on the claim page.
+  const wallet = useWallet();
   const [query, setQuery] = useState('');
   const [display, setDisplay] = useState(config.exampleLabel);
   const [status, setStatus] = useState<SearchStatus>({ kind: 'idle' });
@@ -33,7 +38,12 @@ export function HeroSection({ config }: { config: PublicConfig }) {
     setStatus({ kind: 'loading' });
     answeredFor.current = value;
     try {
-      const payload = await checkAvailability(value);
+      const payload = await checkAvailability(
+        value,
+        wallet.address ?? undefined,
+        undefined,
+        wallet.xHandle ?? undefined,
+      );
       setDisplay(payload.data?.label ?? value);
       setStatus({ kind: 'result', view: resolveAvailability(payload, value) });
     } catch (error) {
@@ -43,6 +53,12 @@ export function HeroSection({ config }: { config: PublicConfig }) {
       });
     }
   }
+
+  // Identity can arrive after the first lookup (Privy loads async), and it
+  // changes the answer for short names — let the query re-run for it.
+  useEffect(() => {
+    answeredFor.current = null;
+  }, [wallet.address, wallet.xHandle]);
 
   /**
    * Check while the visitor types.
@@ -59,7 +75,8 @@ export function HeroSection({ config }: { config: PublicConfig }) {
       void run(value);
     }, 400);
     return () => clearTimeout(timer);
-  }, [query]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, wallet.address, wallet.xHandle]);
 
   return (
     <section className="hero" id="top">
@@ -116,6 +133,7 @@ export function HeroSection({ config }: { config: PublicConfig }) {
             <StatusLine
               status={status}
               config={config}
+              signedIn={Boolean(wallet.address)}
               onPick={(next) => {
                 setQuery(next);
                 void run(next);
@@ -134,10 +152,12 @@ function StatusLine({
   status,
   config,
   onPick,
+  signedIn,
 }: {
   status: SearchStatus;
   config: PublicConfig;
   onPick: (next: string) => void;
+  signedIn: boolean;
 }) {
   if (status.kind === 'idle') {
     return <span className="status-idle">Or just tell your AI: “register a name for yourself”.</span>;
@@ -167,7 +187,7 @@ function StatusLine({
             {view.label}.{config.rootName} is available, free.
           </span>
           <Link className="status-link" href={`/claim?label=${encodeURIComponent(view.label)}`}>
-            Connect a wallet to claim it
+            {signedIn ? 'Claim it' : 'Connect a wallet to claim it'}
           </Link>
           <span className="status-note">
             We pay the gas. Or tell your AI: “register a name for yourself”.
