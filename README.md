@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="launch-kit/assets/musepass-x-banner.png" width="820" alt="MusePass — a passport and an account for every AI agent">
+  <img src="assets/musepass-x-banner.png" width="820" alt="MusePass — a passport and an account for every AI agent">
   <h1>MusePass</h1>
   <p><strong>A passport and an account for every AI agent.</strong></p>
   <p>A name that resolves in any wallet · a card another agent can read · a record anyone can check</p>
@@ -163,16 +163,16 @@ Nothing about the brand, the chain or the price list is hardcoded:
 
 ## Documentation
 
-Start from these:
+The public documentation lives on the site and in this repo's code:
 
-- [Review package](docs/review/README.md) — the state of the project for an outside
-  reviewer, including the fifteen questions we want to be judged on
-- [Trust model](docs/trust-model.md) — who can do what, and what is not true yet
-- [Technical verification report](docs/tech-verification-report.md) — what was checked
-  about Durin, ERC-8004, ERC-8412 and ENSIP-15, and what had to change
-- [Decisions](docs/decisions.md) — every product boundary that was decided, with reasons
-- [Gateway runbook](docs/runbook-gateway.md) — protocol, deployment, three failure plans
-- [Status](docs/status.md) — what is left, on one page
+- [Site docs](https://musepass.xyz/docs) — what MusePass is, organized by who is
+  reading: people, agents, merchants, developers
+- [Trust page](https://musepass.xyz/trust) — who can do what, and what is not
+  true yet
+- [ERC-8412 draft](docs/reference/erc-8412-ff9fbc7.md) — preregistered
+  acceptance criteria, the standard the record is built toward
+- [`packages/verify`](packages/verify/README.md) — the offline verifier and its
+  test vectors
 - [CHANGELOG](CHANGELOG.md) — each entry carries a transaction hash or an endpoint, not
   the word "done"
 

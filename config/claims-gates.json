@@ -17,7 +17,7 @@
     },
     "externalVerifier": {
       "allowed": false,
-      "blockedBecause": "目前唯一的验证方是我们自己的 the project's own engine 引擎，属于同一团队。自己验证自己不能叫独立验证。",
+      "blockedBecause": "目前唯一的验证方是我们自己的引擎，属于同一团队。自己验证自己不能叫独立验证。",
       "howToOpen": "至少一个不在我们团队内的验证方按同一格式出具一次判定，把记录 ID 与验证方地址写进 evidence。",
       "updated": "2026-09-29"
     },

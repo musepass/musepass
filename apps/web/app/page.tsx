@@ -288,7 +288,7 @@ export default async function HomePage() {
               ['Submit evidence', 'Deliverables, payment records, the other side’s confirmation'],
               [
                 'Verify',
-                'Judged against the registered criteria, with a signed receipt (today the verifier is the project's own engine, not yet a third party)',
+                'Judged against the registered criteria, with a signed receipt (today the verifier is our own engine, not yet a third party)',
               ],
               ['Anchor it', 'The digest goes on chain, so it can be checked offline'],
             ].map(([title, body], index) => (

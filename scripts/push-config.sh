@@ -19,7 +19,11 @@ if [ -z "$HOST" ]; then
   echo "error: no deploy host. Set MUSEPASS_HOST or put it in .secrets/host (gitignored)." >&2
   exit 1
 fi
-SSH_KEY="${MUSEPASS_SSH_KEY:-$HOME/.ssh/musename_deploy}"
+SSH_KEY="${MUSEPASS_SSH_KEY:-$(cat "$ROOT_DIR/.secrets/ssh_key" 2>/dev/null || true)}"
+if [ -z "$SSH_KEY" ]; then
+  echo "error: no SSH key path. Set MUSEPASS_SSH_KEY or put one in .secrets/ssh_key (gitignored)." >&2
+  exit 1
+fi
 UNITS=(musename-api musename-mcp musename-signer musename-health)
 RESTART=(musename-api musename-mcp musename-signer)
 

@@ -196,7 +196,7 @@ export const ASK_TXT = [
   // claims-allow-block: independent-verifier — this section exists to deny the claim
   '- There is no record contract in production. The record contract is written and',
   '  tested, but not deployed, so no verdicts exist on chain yet.',
-  '- The only verifier today is the project engine (the project's own engine), so nothing is',
+  '- The only verifier today is the project engine, so nothing is',
   '  independently verified. Never call it independent.',
   // claims-allow-end: independent-verifier
   '- The operator behind a name is not identity-checked.',

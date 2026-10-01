@@ -35,7 +35,7 @@ const GAP_COPY: Record<string, { title: string; why: string }> = {
   },
   external_verifier_records: {
     title: 'Records issued by a verifier outside our team',
-    why: 'The only verifier today is our own engine (the project's own engine). Calling that independent verification would be false.',
+    why: 'The only verifier today is our own engine. Calling that independent verification would be false.',
   },
   unique_users: {
     title: 'Distinct users',

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// another project-adjacent, same project: name registry power inventory + escalation alarm.
+// Name registry power inventory + escalation alarm.
 //
 //   node scripts/security-power-inventory.mjs            # human readable
 //   node scripts/security-power-inventory.mjs --json     # for a monitor

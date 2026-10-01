@@ -90,8 +90,8 @@ describe('claim register', () => {
   it('flags a draft being sold as a formal standard', () => {
     const report = checkClaims(
       [
-        { path: 'docs/pitch.md', text: '我们提出的正式 ERC-8412 已经在用了。' },
-        { path: 'docs/pitch.md', text: 'ERC-8412 已合并。' },
+        { path: 'README.md', text: '我们提出的正式 ERC-8412 已经在用了。' },
+        { path: 'README.md', text: 'ERC-8412 已合并。' },
       ],
       closedGates,
     );
@@ -104,7 +104,7 @@ describe('claim register', () => {
 
   it('lets the honest version of the same sentence through', () => {
     const report = checkClaims(
-      [{ path: 'docs/pitch.md', text: '我们提交了 PR #2002，开放中，尚未合并。' }],
+      [{ path: 'README.md', text: '我们提交了 PR #2002，开放中，尚未合并。' }],
       closedGates,
     );
     expect(report.violations).toHaveLength(0);
@@ -112,13 +112,13 @@ describe('claim register', () => {
 
   it('flags a registration flow that is called live while the sponsor key is missing', () => {
     const report = checkClaims(
-      [{ path: 'docs/pitch.md', text: '一句话注册已经做好。' }],
+      [{ path: 'README.md', text: '一句话注册已经做好。' }],
       closedGates,
     );
     expect(report.violations[0]?.ruleId).toBe('registration-live');
 
     const honest = checkClaims(
-      [{ path: 'docs/pitch.md', text: '流程已实现，线上发放暂时不可用。' }],
+      [{ path: 'README.md', text: '流程已实现，线上发放暂时不可用。' }],
       closedGates,
     );
     expect(honest.violations).toHaveLength(0);

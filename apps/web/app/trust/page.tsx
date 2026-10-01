@@ -85,7 +85,7 @@ export default async function TrustPage() {
             </li>
             <li>
               <strong>&ldquo;Independently verified.&rdquo;</strong> The only verifier today is our own
-              the project's own engine engine, from the same team. We do not say independent.
+              engine, from the same team. We do not say independent.
             </li>
             <li>
               <strong>&ldquo;Records cannot be changed.&rdquo;</strong> The append-only record contract is

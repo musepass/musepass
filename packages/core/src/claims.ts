@@ -399,9 +399,6 @@ export const PUBLISHING_SURFACES = [
   'README.md',
   'config/brand.json',
   'contracts/README.md',
-  'docs/integration.md',
-  'docs/status.md',
-  'docs/pitch.md',
 ] as const;
 
-export const PUBLISHING_DIRECTORIES = ['launch-kit', 'apps/web/app', 'apps/web/components', 'apps/web/lib'] as const;
+export const PUBLISHING_DIRECTORIES = ['apps/web/app', 'apps/web/components', 'apps/web/lib'] as const;

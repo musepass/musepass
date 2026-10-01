@@ -57,7 +57,7 @@ pnpm dev
 
 - `sql/001_init.sql`：完整数据模型（names / cards / criteria / records / anchor_batches / subscriptions / sponsorship_ledger / abuse_reports / api_usage）
 - `src/repositories/memory.ts`：当前使用的内存索引（测试与本地）
-- Postgres 实现见 `TODO.md`「工程债」一节
+- Postgres 实现见私有工作区笔记（不入库）
 
 ## 测试
 
