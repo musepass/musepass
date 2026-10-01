@@ -26,7 +26,7 @@ export function SiteHeader({
         <Link href="/#how">How it works</Link>
         <Link href="/#use-cases">Use cases</Link>
         <Link href="/#pricing">Pricing</Link>
-        <Link href="/developers">Developers</Link>
+        <Link href="/docs/start/developers">Developers</Link>
         <Link href="/trust">Trust</Link>
         <Link href="/my">My names</Link>
         <Link className="btn btn-sm btn-primary" href="/claim">

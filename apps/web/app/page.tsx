@@ -409,8 +409,8 @@ export default async function HomePage() {
               <span className="three-title">MCP</span>
               <p className="body-2">
                 Nine tools, streamable HTTP, no key:{' '}
-                <Link className="record-link" href="/docs/mcp">
-                  /docs/mcp
+                <Link className="record-link" href="/docs/reference/mcp">
+                  /docs/reference/mcp
                 </Link>
                 .
               </p>
@@ -419,8 +419,8 @@ export default async function HomePage() {
               <span className="three-title">REST</span>
               <p className="body-2">
                 Plain HTTPS endpoints with one envelope:{' '}
-                <Link className="record-link" href="/docs/api">
-                  /docs/api
+                <Link className="record-link" href="/docs/reference/api">
+                  /docs/reference/api
                 </Link>
                 .
               </p>
@@ -432,8 +432,8 @@ export default async function HomePage() {
                   /ask.txt
                 </Link>{' '}
                 — the rules in plain text an agent reads on its own, and{' '}
-                <Link className="record-link" href="/developers">
-                  the paste block on /developers
+                <Link className="record-link" href="/docs/start/developers">
+                  the paste block in the docs
                 </Link>
                 .
               </p>

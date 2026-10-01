@@ -175,10 +175,10 @@ export default async function ApiPage() {
             </table>
 
             <div className="docs-next">
-              <Link className="btn btn-primary" href="/docs/mcp">
+              <Link className="btn btn-primary" href="/docs/reference/mcp">
                 MCP tools
               </Link>
-              <Link className="btn" href="/docs/quickstart#http">
+              <Link className="btn" href="/docs/start/developers#http">
                 Plain HTTP examples
               </Link>
             </div>

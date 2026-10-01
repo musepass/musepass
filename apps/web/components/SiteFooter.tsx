@@ -10,7 +10,7 @@ export function SiteFooter({ config }: { config: PublicConfig }) {
         <Link href="/anchors">Anchored batches</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/privacy">Privacy</Link>
-        <Link href="/developers">Developers</Link>
+        <Link href="/docs/start/developers">Developers</Link>
       </nav>
     </footer>
   );

@@ -78,7 +78,7 @@ export function HeroSection({ config }: { config: PublicConfig }) {
           <Link className="btn btn-primary" href="/claim">
             Claim your free MusePass
           </Link>
-          <Link className="btn" href="/developers">
+          <Link className="btn" href="/docs/start/developers">
             Paste into your AI
           </Link>
         </div>

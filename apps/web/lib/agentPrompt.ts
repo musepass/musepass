@@ -14,7 +14,7 @@
 
 import { FALLBACK_CONFIG } from './api';
 
-export const ASK_TXT_VERSION = '1.1 · 2026-10-01';
+export const ASK_TXT_VERSION = '1.2 · 2026-10-01';
 
 // The MCP endpoint is served from the product's own host (`/mcp` is a path on
 // the apex, not a separate domain), so an agent reads whichever brand the rest
@@ -208,7 +208,7 @@ export const ASK_TXT = [
   `- ${SITE_URL}/numbers      the public numbers, including the zeroes`,
   `- ${SITE_URL}/trust        who can do what, including what we cannot do`,
   `- ${SITE_URL}/verify       verify a record in a browser`,
-  `- ${SITE_URL}/developers   integration notes`,
+  `- ${SITE_URL}/docs/start/developers   integration notes`,
   '',
   'QUESTIONS: support@musepass.xyz',
   '',

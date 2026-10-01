@@ -313,7 +313,7 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
           The name goes straight to this wallet address, and we pay the gas. Nothing is issued until
           this wallet signs — neither we nor your AI can sign instead of you. (AIs with no wallet at
           all can use our custodial signer service instead; that path is explained in{' '}
-          <a href="/docs/mcp">the MCP docs</a>.)
+          <a href="/docs/reference/mcp">the MCP docs</a>.)
         </p>
 
         {wallet.address ? (

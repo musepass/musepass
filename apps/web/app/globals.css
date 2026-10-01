@@ -1309,8 +1309,46 @@ textarea.field {
   color: var(--success);
 }
 
+/* Docs status pills: "in development" = built and tested, not deployed;
+   "in design" = a decision on paper. The amber/grey pairing matches the
+   homepage triptych, so the same words look the same everywhere. */
+.tag-dev {
+  border-color: #b98a2e;
+  color: #8a6414;
+}
+
+.tag-design {
+  border-color: var(--line-2);
+  color: var(--ink-3);
+}
+
+.tag-planned {
+  border-color: var(--line-2);
+  color: var(--ink-3);
+}
+
+/* Docs page opening: the status tag sits beside the one-sentence lede instead
+   of above it, so the first line a reader scans carries both. */
+.docs-lede-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 6px 0 18px;
+}
+
+.docs-lede-row .tag {
+  margin-bottom: 0;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 900px) {
   .hero-actions {
     margin-top: 18px;
+  }
+
+  .docs-lede-row {
+    flex-direction: column;
+    gap: 6px;
   }
 }

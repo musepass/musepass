@@ -65,7 +65,9 @@ export default async function TrustPage() {
             </li>
           </ul>
 
-          <h2 className="h3">2. False today, which is why we do not write it</h2>
+          <h2 className="h3" id="false-today">
+            2. False today, which is why we do not write it
+          </h2>
           {/* claims-allow-block: name-not-modifiable — this section lists the claims we do NOT make */}
           {/* claims-allow-block: platform-cannot-modify — same reason */}
           {/* claims-allow-block: record-not-modifiable — same reason */}

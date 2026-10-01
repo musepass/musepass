@@ -8,32 +8,70 @@ import { useState } from 'react';
  * reason: the search box. The index is a short list of titles and keywords
  * shipped with the page — no third-party service, no index endpoint, nothing
  * sent anywhere. Typing filters it locally and the results link straight to
- * the section, on whichever page it lives.
+ * the page (or section) it names.
+ *
+ * The groups mirror the 2026-10-01 review's documentation tree: overview,
+ * audience entrances, concepts, guides, reference, trust, policies. Pages
+ * that live outside /docs (the trust model, terms) are linked, not copied —
+ * a sentence that exists in two places will drift, and the claims checker
+ * scans the copy it can see.
  */
 
 const NAV: Array<{ group: string; items: Array<{ href: string; label: string }> }> = [
   {
-    group: 'Start',
+    group: 'Overview',
     items: [
-      { href: '/docs', label: 'What this is' },
-      { href: '/docs#concepts', label: 'Concepts' },
-      { href: '/docs/quickstart', label: 'Quickstart' },
+      { href: '/docs', label: 'What is MusePass' },
+      { href: '/docs#where-to-start', label: 'Where to start' },
+    ],
+  },
+  {
+    group: 'Get started',
+    items: [
+      { href: '/docs/start/people', label: 'For people' },
+      { href: '/docs/start/agents', label: 'For AI agents' },
+      { href: '/docs/start/merchants', label: 'For merchants' },
+      { href: '/docs/start/developers', label: 'For developers' },
+    ],
+  },
+  {
+    group: 'Concepts',
+    items: [
+      { href: '/docs/concepts/passport', label: 'The passport (Pass)' },
+      { href: '/docs/concepts/passport#vault', label: 'The vault — in design' },
+      { href: '/docs/concepts/passport#bond', label: 'The bond — in design' },
+      { href: '/docs/concepts/pricing', label: 'Pricing and limits' },
+    ],
+  },
+  {
+    group: 'Guides',
+    items: [
+      { href: '/docs/guides/verify', label: 'Verify a record offline' },
     ],
   },
   {
     group: 'Reference',
     items: [
-      { href: '/docs/api', label: 'REST API' },
-      { href: '/docs/mcp', label: 'MCP tools' },
-      { href: '/docs/mcp#signer', label: 'Agent signer' },
+      { href: '/docs/reference/api', label: 'REST API' },
+      { href: '/docs/reference/mcp', label: 'MCP tools' },
+      { href: '/docs/reference/mcp#signer', label: 'Agent signer' },
     ],
   },
   {
     group: 'Trust',
     items: [
-      { href: '/docs/verify', label: 'Verify us yourself' },
-      { href: '/docs/verify#rules', label: 'Rules and limits' },
-      { href: '/docs/verify#not-true', label: 'Not true yet' },
+      { href: '/trust', label: 'Trust model' },
+      { href: '/trust#false-today', label: 'Not true yet' },
+      { href: '/docs/guides/verify#not-true', label: 'Verify us yourself' },
+      { href: '/numbers', label: 'The public numbers' },
+      { href: '/anchors', label: 'Anchored batches' },
+    ],
+  },
+  {
+    group: 'Policies',
+    items: [
+      { href: '/terms', label: 'Terms' },
+      { href: '/privacy', label: 'Privacy' },
     ],
   },
 ];
@@ -41,63 +79,78 @@ const NAV: Array<{ group: string; items: Array<{ href: string; label: string }> 
 /** Titles and the words a reader is likely to type for them. */
 const SEARCH_INDEX: Array<{ title: string; href: string; keywords: string }> = [
   {
-    title: 'What this is',
+    title: 'What is MusePass',
     href: '/docs',
-    keywords: 'overview ens subname erc-721 ccip-read erc-3668 resolver durin gateway l2 registry robinhood mainnet',
+    keywords: 'overview passport account pass vault bond name card record live design what is',
   },
   {
-    title: 'Concepts (name, card, stamps, anchor)',
-    href: '/docs#concepts',
-    keywords: 'name card stamps anchor primary reverse record erc-8004 token transfer reputation merkle',
+    title: 'For people: give your AI a passport',
+    href: '/docs/start/people',
+    keywords: 'claim browser wallet free five characters primary name mainnet gas card publish human owner',
   },
   {
-    title: 'Quickstart: a person in a browser',
-    href: '/docs/quickstart#browser',
-    keywords: 'claim connect wallet sign free gas browser five characters card publish',
+    title: 'For AI agents',
+    href: '/docs/start/agents',
+    keywords: 'agent ask.txt rules eip-712 request_name prepare_registration submit_registration owner sign mcp paths',
   },
   {
-    title: 'Quickstart: an agent with its own wallet',
-    href: '/docs/quickstart#own-wallet',
-    keywords: 'agent mcp check_name prepare_registration submit_registration prepare_card submit_card eip-712 self-signing',
+    title: 'For merchants: check an AI',
+    href: '/docs/start/merchants',
+    keywords: 'merchant order customer check deal record stamp identity not identity-checked trust verify',
   },
   {
-    title: 'Quickstart: an agent without a wallet',
-    href: '/docs/quickstart#no-wallet',
-    keywords: 'request_name confirmation link owner token no key get_status',
+    title: 'For developers: five minutes in',
+    href: '/docs/start/developers',
+    keywords: 'developer quickstart rest curl mcp config envelope http post requests five minutes api key',
   },
   {
-    title: 'Quickstart: plain HTTP, no MCP',
-    href: '/docs/quickstart#http',
-    keywords: 'curl http rest available requests post endpoint without mcp',
+    title: 'The passport (Pass)',
+    href: '/docs/concepts/passport',
+    keywords: 'passport name card stamps anchor registry erc-721 erc-8004 ccip-read durin gateway robinhood transfer genesis',
+  },
+  {
+    title: 'The vault (in design)',
+    href: '/docs/concepts/passport#vault',
+    keywords: 'vault wallet erc-6551 account payment design not running audit',
+  },
+  {
+    title: 'The bond (in design)',
+    href: '/docs/concepts/passport#bond',
+    keywords: 'bond escrow margin deposit release criteria design not running audit',
+  },
+  {
+    title: 'Pricing and limits',
+    href: '/docs/concepts/pricing',
+    keywords: 'pricing free tier premium short name invitation caps budget metrics sponsorship usd daily limit',
+  },
+  {
+    title: 'Verify a record offline / verify us yourself',
+    href: '/docs/guides/verify',
+    keywords: 'verify cast call owner bytes32 text record recompute hash anchor merkle offline independent',
   },
   {
     title: 'REST API',
-    href: '/docs/api',
+    href: '/docs/reference/api',
     keywords: 'rest api envelope summary data errors meta verified config available names card versions requests claim metrics invitations genesis owner',
   },
   {
     title: 'MCP tools',
-    href: '/docs/mcp',
+    href: '/docs/reference/mcp',
     keywords: 'mcp tools streamable http endpoint check_name get_profile draft_card request_name nine tools',
   },
   {
     title: 'Agent signer',
-    href: '/docs/mcp#signer',
+    href: '/docs/reference/mcp#signer',
     keywords: 'signer bearer token wallet_address sign_registration sign_card hosted key trust blast radius policy deadline',
   },
   {
-    title: 'Verify us yourself',
-    href: '/docs/verify',
-    keywords: 'verify cast call owner bytes32 text record recompute hash anchor merkle verify:local throwaway chain independent',
-  },
-  {
     title: 'Rules and limits',
-    href: '/docs/verify#rules',
+    href: '/docs/guides/verify#rules',
     keywords: 'rules limits free names per wallet short names price tiers reserved rate limit confirmation minutes cjk',
   },
   {
     title: 'Not true yet',
-    href: '/docs/verify#not-true',
+    href: '/docs/guides/verify#not-true',
     keywords: 'not true yet audit multisig admin verifier independent altered records honest limitations',
   },
 ];
@@ -159,7 +212,7 @@ export function DocsSidebar() {
         <>
           <span className="docs-side-title">Elsewhere</span>
           <nav className="docs-nav" aria-label="Elsewhere">
-            <Link href="/name/peter">A real name page</Link>
+            <Link href="/name/abcde">A name an AI registered</Link>
             <Link href="/verify">Verify a record</Link>
             <a href="https://github.com/musepass/musepass">Source</a>
           </nav>
