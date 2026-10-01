@@ -40,9 +40,9 @@
       "updated": "2026-10-01"
     },
     "paidPurchase": {
-      "allowed": false,
-      "blockedBecause": "D19 的付费购买已实现但 config/pricing.json 的 purchase.enabled 仍是 false：购买路由 503，站点上任何「可以购买」的句子都不成立。代码合并 ≠ 线上可买。",
-      "howToOpen": "翻 enabled:true 并 push:config 后，用真实钱包在 Robinhood Chain 上完整买一个 4 字名字：把 USDG Transfer txHash、register txHash、treasury 到账数额写进 evidence，再翻 allowed:true。",
+      "allowed": true,
+      "evidence": "2026-10-01 live acceptance on musepass.xyz at the temporary test price of $0.1: agent wallet 0xAf975bEf…1A75 bought bybe.musepass.eth. USDG Transfer 0x8e0a2b855a8c1b5cb06dd8d031c9b9a9c4d57a857786c6b949744bff094d814c (100000 base units to treasury 0x6BD854c3…E335, balance checked on chain = exactly 100000), issuer-sponsored register 0x6d6791b8b1717950eafdd9a79b910f0307224a3b84e2108317c33bb777ce8e97 (scripts/purchase-e2e.mjs --live PASS). Price restored to $5 in the same config push that ships this gate.",
+      "howToOpen": "已开。复测用 scripts/purchase-e2e.mjs --live --buyer-key <USDG-funded key>（真实花费）。若 purchase.enabled 翻回 false，把 allowed 一起改回 false。",
       "updated": "2026-10-01"
     }
   }

@@ -196,7 +196,7 @@ async function runLive() {
     id: chains.l2.chainId,
     name: chains.l2.name,
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-    rpcUrls: { default: { http: [chains.l2.rpcUrls[0]] } },
+    rpcUrls: { default: { http: [chains.l2.rpcDefault] } },
   };
   const publicClient = createPublicClient({ chain, transport: http() });
   const walletClient = createWalletClient({ account: buyer, chain, transport: http() });
