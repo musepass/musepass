@@ -295,8 +295,9 @@ export async function draftCard(
       contentHash: cardContentHash(validation.card),
       visibility,
       warnings: validation.warnings,
-      nextStepZh: '让主人在名字页面上签名发布，发布后草稿才会写入链上文本记录。',
-      nextStepEn: 'The owner publishes it by signing on the name page; only then is it written on chain.',
+      nextStepZh: '让主人在名字页面上签名发布；写入链上的只有公开字段和整卡哈希。',
+      nextStepEn:
+        'The owner publishes it by signing on the name page; what goes on chain is the public fields plus a hash of the whole card.',
     },
     errors: [],
   };
@@ -565,7 +566,7 @@ export async function submitCard(
       ...(result.data as object),
       nextStep: 'primary-name',
       nextStepEn:
-        'The card is readable by anyone now. If you want wallets to show the name instead of the address, the owner can set it as their primary name — that one is a mainnet transaction.',
+        'The card is published: anyone can read the fields you marked public, and the record carries the whole-card hash. To make wallets show the name instead of the address, the owner can set it as their primary name — that one is a mainnet transaction.',
     },
   };
 }

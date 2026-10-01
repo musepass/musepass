@@ -3,7 +3,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'Trust model' };
+export const metadata = {
+  title: 'Trust model',
+  description: 'Who can do what to a name, what depends on us today, and the claims we do not make.',
+};
 export const revalidate = 3600;
 
 /**
@@ -45,6 +48,15 @@ export default async function TrustPage() {
               rather than signing an empty answer.
             </li>
             <li>
+              Ownership does not depend on us; resolution currently does. Mainnet wallets resolve these
+              names through our CCIP-Read gateway at{' '}
+              <code className="mono">gw.musename.xyz</code>{' '}
+              — an address frozen inside the L1 resolver, and a domain from the project&apos;s earlier
+              MuseName era. If that gateway is down, every name stays owned but wallets stop resolving
+              until it returns. The gateway is stateless, so it can be redeployed and its signing key
+              replaced without touching any name.
+            </li>
+            <li>
               Exactly one thing is issued today: the name, an ERC-721 that sits in your wallet. The card
               is an on-chain record, not a token, and the stamps on a passport are not tokens either.
               There is no second collection, no invitation token and no seat sale. If something claims
@@ -58,6 +70,8 @@ export default async function TrustPage() {
           {/* claims-allow-block: platform-cannot-modify — same reason */}
           {/* claims-allow-block: record-not-modifiable — same reason */}
           {/* claims-allow-block: independent-verifier — same reason: the sentence says we do not claim it */}
+          {/* claims-allow-block: cannot-be-changed — same reason */}
+          {/* claims-allow-block: blanket-audit — same reason */}
           <ul className="body-2">
             <li>
               <strong>&ldquo;The platform cannot change your name.&rdquo;</strong> Measured on chain on

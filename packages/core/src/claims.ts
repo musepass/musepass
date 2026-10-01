@@ -146,6 +146,55 @@ export const CLAIM_RULES: ClaimRule[] = [
     gate: null,
     patterns: [/保证收益/, /保本/, /稳赚/, /guaranteed\s+(?:return|profit|yield)/i],
   },
+  {
+    // The 2026-09-30 review found these exact sentences alive on the site after
+    // the facts under them had changed. They are banned outright: if one becomes
+    // true, write the new sentence and open a gate for it, with evidence.
+    id: 'survival-independence',
+    asserts: 'the product keeps working without our servers (false today: wallet resolution goes through our gateway)',
+    gate: null,
+    patterns: [
+      /not\s+need\s+our\s+server/i,
+      /without\s+our\s+(?:server|infrastructure)/i,
+      /works?\s+if\s+we\s+(?:disappear|shut\s+down)/i,
+      /works?\s+without\s+us/i,
+      /不需要我们的服务器/,
+      /我们关了(?:也|照样)/,
+      /没有我们(?:也)?能(?:用|运行)/,
+    ],
+  },
+  {
+    id: 'cannot-touch-names',
+    asserts: 'nobody, including the platform, can touch names you hold (false while the registry admin is a hot wallet)',
+    gate: 'nameImmutability',
+    patterns: [/cannot\s+touch\s+(?:the|your)\s+names?/i, /碰不到你(?:的)?名字/, /动不了你(?:的)?名字/],
+  },
+  {
+    id: 'blanket-audit',
+    asserts: 'an audit happened, stated without the auditor or the scope',
+    gate: 'externalAudit',
+    patterns: [/(?:externally|fully|professionally)\s+audited/i, /审计通过/, /(?:已|已经)审计/],
+  },
+  {
+    id: 'cannot-be-changed',
+    asserts: 'something "cannot be changed" without naming the mechanism that makes it so',
+    gate: null,
+    patterns: [/cannot\s+be\s+changed/, /无法更改/, /不能更改/],
+  },
+  {
+    // The P1 slogan table (2026-09-30 review) fixed the brand sentence. The old
+    // slogans keep creeping back through copy-paste, so they are banned as
+    // strings: the replacement is on the table, not in this rule.
+    id: 'retired-slogan',
+    asserts: 'a slogan retired by the 2026-09-30 review',
+    gate: null,
+    patterns: [
+      /a\s+name\s+every\s+AI\s+can\s+carry/i,
+      /name\s+worth\s+trusting/i,
+      /Give\s+it\s+a\s+name/i,
+      /Names\s+are\s+free\.\s+Reputation/i,
+    ],
+  },
 ];
 
 export interface ClaimFinding {
@@ -355,4 +404,4 @@ export const PUBLISHING_SURFACES = [
   'docs/pitch.md',
 ] as const;
 
-export const PUBLISHING_DIRECTORIES = ['launch-kit', 'apps/web/app', 'apps/web/components'] as const;
+export const PUBLISHING_DIRECTORIES = ['launch-kit', 'apps/web/app', 'apps/web/components', 'apps/web/lib'] as const;

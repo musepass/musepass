@@ -37,6 +37,10 @@ export function PrimaryNameCard({ fullName, ownerAddress }: { fullName: string; 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  // Gas warning (P2): this one transaction is on mainnet and the user pays it.
+  // Reading the balance lets the page warn before the wallet throws, instead of
+  // after. Unknown balance (RPC unreadable) is not treated as zero.
+  const [noEth, setNoEth] = useState(false);
 
   const client = useMemo(
     () => createPublicClient({ chain: MAINNET, transport: http(MAINNET.rpcUrls.default.http[0]) }),
@@ -76,6 +80,15 @@ export function PrimaryNameCard({ fullName, ownerAddress }: { fullName: string; 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setNoEth(false);
+    if (!wallet.address) return;
+    void client
+      .getBalance({ address: wallet.address as Address })
+      .then((balance) => setNoEth(balance === 0n))
+      .catch(() => setNoEth(false));
+  }, [client, wallet.address]);
 
   const prompt = describePrimaryName({
     connected: wallet.address,
@@ -133,14 +146,25 @@ export function PrimaryNameCard({ fullName, ownerAddress }: { fullName: string; 
       </h2>
       <p className="body-2">{checking ? 'Reading the reverse record from the chain…' : prompt.message}</p>
       {prompt.actionable ? (
-        <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void setName()}>
-          {busy ? 'Waiting for your wallet…' : 'Make this my primary name'}
-        </button>
+        <>
+          {noEth ? (
+            <div className="notice notice-warn" style={{ marginTop: 8 }}>
+              This wallet holds no ETH on Ethereum mainnet. The transaction needs a small amount for
+              gas — send it roughly 0.001 ETH, or skip this step: the name already resolves, this
+              only changes what wallets display.
+            </div>
+          ) : null}
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void setName()}>
+            {busy ? 'Waiting for your wallet…' : 'Make this my primary name'}
+          </button>
+        </>
       ) : null}
       {error ? <div className="notice notice-error" style={{ marginTop: 8 }}>{error}</div> : null}
       {note ? <div className="notice notice-ok" style={{ marginTop: 8 }}>{note}</div> : null}
       <p className="body-2" style={{ fontSize: 13, marginTop: 8 }}>
-        The reverse record lives in the <span className="mono">addr.reverse</span> namespace on Ethereum
+        A mainnet transaction: it needs a small amount of ETH for gas, and unlike registering the
+        name, this one is yours to pay. The reverse record lives in the{' '}
+        <span className="mono">addr.reverse</span> namespace on Ethereum
         mainnet, and only the address itself can write it. Once it is set, wallets and block explorers
         show the name instead of a hex address.
       </p>

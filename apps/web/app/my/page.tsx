@@ -3,7 +3,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'My names' };
+export const metadata = {
+  title: 'My names',
+  description: 'The names this wallet holds, their cards, and the tools that only the owner can use.',
+};
 
 export default async function MyNamesPage() {
   const config = await fetchConfig();

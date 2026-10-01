@@ -1,0 +1,115 @@
+{
+  "$comment": "Read from the chain, not from our database. Compare sha256(names.json) with the published hash. See docs/trust-model.md.",
+  "generatedAt": "2026-10-01T03:26:49.030Z",
+  "chainId": 4663,
+  "rpc": "https://rpc.mainnet.chain.robinhood.com",
+  "scan": {
+    "lastBlock": 77051877,
+    "chunkBlocks": 1000000,
+    "chunksScanned": 4,
+    "emptyChunksAtStop": 3,
+    "earliestEventBlock": 76360278,
+    "howToRead": "Events were read newest-first in chunks. The scan stopped after this many consecutive chunks with no events, so a name minted before that point would be missed — and the count is printed instead of assumed."
+  },
+  "registry": "0x4B959e1FB5567Caa7Fe21d0D2A7f870AF705b792",
+  "registrar": "0xB1E8A90e5a9B1c8e69242BC70D928789D89C02B7",
+  "rootName": "musepass.eth",
+  "previousRoot": {
+    "rootName": "musepass.eth",
+    "l2Registry": "0x0ca717398428bcae7fae24e656e8444ecd9ba5a5",
+    "registrar": "0x093919fd8a200a1a2cbc0e5f7ade88b4dd557ab1",
+    "note": "改名前的部署。链上仍然有效，已经注册的名字照常解析；不再接收新注册。"
+  },
+  "coverage": "Names minted through this registrar. A name created by a different registrar would not appear; security-power-inventory.mjs is what watches for one. Names minted under the earlier root (previousRoot above) are in that registry, not this one.",
+  "count": 8,
+  "names": [
+    {
+      "name": "abcde.musepass.eth",
+      "label": "abcde",
+      "node": "0x20ee82f27940412ca9c90351889c6de106b3bd670d0cfe0860f482b40dfcbd07",
+      "ownerAtMint": "0xC320C50C6dDC89C2be93133BE25C8Bfe43cA2401",
+      "ownerNow": "0xC320C50C6dDC89C2be93133BE25C8Bfe43cA2401",
+      "mintedInBlock": 76463952,
+      "mintTx": "0xd8916b6476e18daeab1dce3775eaa3390bb58a8a4339beb9482b0fbede1f7d86",
+      "hasCard": true,
+      "cardBytes": 1565
+    },
+    {
+      "name": "agentprobe.musepass.eth",
+      "label": "agentprobe",
+      "node": "0x5d3638262adedf52b26e13135e7668673f0617f64d2ad2cf48511dc6f58dd558",
+      "ownerAtMint": "0xc754b8e8eA8bb2C1bfC5de9fAb1cB1a05a0E95FE",
+      "ownerNow": "0xc754b8e8eA8bb2C1bfC5de9fAb1cB1a05a0E95FE",
+      "mintedInBlock": 76468764,
+      "mintTx": "0x846ce3da44debe93273ceed56ac16f48119ba8040aba284223c1b82786a58094",
+      "hasCard": true,
+      "cardBytes": 1373
+    },
+    {
+      "name": "alice.musepass.eth",
+      "label": "alice",
+      "node": "0x8f7a61d2ce7a0cc21704ad5cb93406f294fedc003dd9372e3398d7b05cac4ad6",
+      "ownerAtMint": "0x02520b24f79028eF56190d8A3Ef1730e560491Ea",
+      "ownerNow": "0x02520b24f79028eF56190d8A3Ef1730e560491Ea",
+      "mintedInBlock": 76360356,
+      "mintTx": "0x621ed95eeee02dd9c70fcad9807cf3e74d60aac1ded24894dc60bb2ca2f19134",
+      "hasCard": false,
+      "cardBytes": 0
+    },
+    {
+      "name": "bruce.musepass.eth",
+      "label": "bruce",
+      "node": "0x6c20536d3ae73116e439b48f089068b7dbb6a99fa005162caea2c2429fadab6f",
+      "ownerAtMint": "0x6136b1EDfcD3de491Cef3a5a6259B9784DFED419",
+      "ownerNow": "0x6136b1EDfcD3de491Cef3a5a6259B9784DFED419",
+      "mintedInBlock": 76360316,
+      "mintTx": "0x8be3b23f7167c293a8625c76125536cd65233d4136fb5b54e928300a600a1dee",
+      "hasCard": false,
+      "cardBytes": 0
+    },
+    {
+      "name": "david.musepass.eth",
+      "label": "david",
+      "node": "0x7b3f35f190c59886b56a06116e3e8387dad3c26b68bfc88e31d1943988b1d858",
+      "ownerAtMint": "0x3f3f08073dbcb2f47EF000635CcE2b391128d16f",
+      "ownerNow": "0x3f3f08073dbcb2f47EF000635CcE2b391128d16f",
+      "mintedInBlock": 76360388,
+      "mintTx": "0xba7435e8da97c07eb9c9ebdf38043057098010b55de3e6da4b43d5e858e786dd",
+      "hasCard": false,
+      "cardBytes": 0
+    },
+    {
+      "name": "peter.musepass.eth",
+      "label": "peter",
+      "node": "0x81be085b0b322baaf79ae244400e573b890f370991211c34d1664fe99d45ed4a",
+      "ownerAtMint": "0x2d319F9159e11ab729DFD510023E07e2C609BeF4",
+      "ownerNow": "0x2d319F9159e11ab729DFD510023E07e2C609BeF4",
+      "mintedInBlock": 76360278,
+      "mintTx": "0xa216852842a2144bfa6ffb34b0e0fd5b25c6bbe603905b30f690e055259fcee3",
+      "hasCard": false,
+      "cardBytes": 0
+    },
+    {
+      "name": "sarah.musepass.eth",
+      "label": "sarah",
+      "node": "0x57081523eacbb7d27e2ab605cd66810f6a0f25921ca87573a768975b2bb44626",
+      "ownerAtMint": "0xCC5C8149E7001251118BfF03ed369a1C2d236A8a",
+      "ownerNow": "0xCC5C8149E7001251118BfF03ed369a1C2d236A8a",
+      "mintedInBlock": 76360425,
+      "mintTx": "0x5318c66f9b28987e09f26346591c8c2e59f9c2902da52ef2f7af81f5a242fed6",
+      "hasCard": false,
+      "cardBytes": 0
+    },
+    {
+      "name": "tst1.musepass.eth",
+      "label": "tst1",
+      "node": "0xd2228b9eb443a664c0eea4d6c43a7dd9d379a3e80a567aaec528ba0b1cf46768",
+      "ownerAtMint": "0xD2B294fbe4b6710cF00C4D15A3E8857de12BE344",
+      "ownerNow": "0xD2B294fbe4b6710cF00C4D15A3E8857de12BE344",
+      "mintedInBlock": 76675659,
+      "mintTx": "0xe67b3c585917d40889570d2c341c855332e536da702f84dac03fa3e5d363e4ff",
+      "hasCard": true,
+      "cardBytes": 701
+    }
+  ]
+}

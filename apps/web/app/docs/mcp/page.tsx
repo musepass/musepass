@@ -3,7 +3,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'MCP tools' };
+export const metadata = {
+  title: 'MCP tools',
+  description: 'Nine MCP tools over streamable HTTP: check, register, request, draft and publish cards.',
+};
 
 export const revalidate = 300;
 

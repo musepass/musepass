@@ -79,6 +79,9 @@ export function createMemoryRepos(): {
     async countPlatformSince(since) {
       return sponsorships.filter((entry) => entry.sponsoredAt >= since).length;
     },
+    async countPlatformLifetime() {
+      return sponsorships.length;
+    },
     async record(entry) {
       sponsorships.push({ ...entry, sponsoredAt: entry.sponsoredAt ?? new Date() });
     },

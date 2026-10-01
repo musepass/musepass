@@ -1,6 +1,7 @@
 {
   "$comment": "Rule 6: every quota and limit is configuration. Phase 1 acceptance tests read these values.",
   "freeNamesPerWallet": 1,
+  "freeNamesTotalCap": 10000,
   "lengthMetric": "display-width",
   "minLabelUnitsPremium": 1,
   "maxLabelBytes": 255,
@@ -24,6 +25,7 @@
   "rateLimits": {
     "availabilityPerMinutePerIp": 60,
     "claimPerHourPerWallet": 5,
+    "claimPerHourPerIp": 12,
     "mcpRequestsPerHourPerHost": 120
   }
 }

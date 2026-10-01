@@ -194,6 +194,7 @@ describe('checkClaimQuota', () => {
     walletSponsoredToday: 0,
     walletSponsoredLifetime: 0,
     platformSponsoredToday: 0,
+    platformSponsoredLifetime: 0,
   };
 
   it('passes a fresh wallet', () => {
@@ -213,6 +214,24 @@ describe('checkClaimQuota', () => {
   it('enforces the platform daily budget', () => {
     const issues = checkClaimQuota({ ...empty, platformSponsoredToday: 500 }, config);
     expect(issues.map((issue) => issue.code)).toContain('SPONSORSHIP_EXCEEDED');
+  });
+
+  it('pauses free claims when the first-stage total is used up', () => {
+    const issues = checkClaimQuota(
+      { ...empty, platformSponsoredLifetime: config.limits.freeNamesTotalCap },
+      config,
+    );
+    expect(issues.map((issue) => issue.code)).toContain('QUOTA_EXCEEDED');
+    expect(issues.map((issue) => issue.field)).toContain('freeNamesTotalCap');
+  });
+
+  it('pauses free claims when the estimated USD bill reaches the total cap', () => {
+    const capCount = Math.ceil(
+      config.limits.sponsorship.platformTotalCapUsd /
+        config.limits.sponsorship.estimatedGasUsdPerName,
+    );
+    const issues = checkClaimQuota({ ...empty, platformSponsoredLifetime: capCount }, config);
+    expect(issues.map((issue) => issue.field)).toContain('platformTotalCapUsd');
   });
 });
 

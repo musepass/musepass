@@ -1,5 +1,5 @@
 import { serve } from '@hono/node-server';
-import { buildReservedIndex, loadConfig } from '@musename/core';
+import { buildReservedIndex, loadConfig, normalizeLabel } from '@musename/core';
 
 import { createApp } from './app.js';
 import { createChainReader } from './chain/registry.js';
@@ -79,7 +79,59 @@ const server = serve({ fetch: app.fetch, port }, (info) => {
       hint: 'read endpoints still work',
     });
   }
+  // The chain is the source of truth and the index is a cache, so boot is the
+  // moment to repair the cache: any name the chain knows but the index does
+  // not — registered before this database was attached, or while the index
+  // lived in memory — is backfilled from the registrar's own events. A
+  // failure logs and leaves serving untouched; the next boot tries again.
+  void backfillIndexFromChain();
 });
+
+async function backfillIndexFromChain(): Promise<void> {
+  try {
+    const onChain = await chain.listNames();
+    let added = 0;
+    for (const entry of onChain) {
+      const { normalized } = normalizeLabel(entry.label);
+      const existing = await names.findByNormalized(normalized);
+      if (existing) {
+        // The reconciliation rule the index already follows: when the chain
+        // disagrees about ownership, the chain wins.
+        if (existing.ownerAddress.toLowerCase() !== entry.owner.toLowerCase()) {
+          await names.updateOwner(normalized, entry.owner);
+          logger.log('info', 'backfill updated owner from chain', { label: entry.label });
+        }
+        continue;
+      }
+      await names.insert({
+        label: entry.label,
+        fullName: `${entry.label}.${config.brand.rootName}`,
+        normalized,
+        ownerAddress: entry.owner,
+        // The chain event cannot say which channel asked or what tier was
+        // granted, and today every issued name is free, so free/web is what
+        // the index can honestly record for a backfilled row.
+        tier: 'free',
+        status: 'active',
+        registeredVia: 'web',
+        agentHost: null,
+        txHash: entry.txHash,
+      });
+      added += 1;
+    }
+    if (added > 0 || onChain.length > 0) {
+      logger.log('info', 'index backfilled from chain', {
+        onChain: onChain.length,
+        added,
+        indexKind,
+      });
+    }
+  } catch (error) {
+    logger.log('warn', 'chain backfill failed; the index serves what it has', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
 
 /**
  * Stop accepting new work and let in-flight requests finish. Without this a

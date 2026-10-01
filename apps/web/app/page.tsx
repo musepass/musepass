@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { CardMock } from '@/components/CardMock';
-import { CopyPrompt } from '@/components/CopyPrompt';
 import { HeroSection } from '@/components/HeroSection';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -34,7 +33,8 @@ export default async function HomePage() {
               <strong>{chainNumbers.owners ?? chainNumbers.names}</strong> owners
             </span>
             <span className="numbers-item">
-              <strong>all of them</strong> resolve in a mainnet ENS client
+              <strong>every one</strong> resolves on Ethereum mainnet — the root&apos;s resolver
+              carries all subnames
             </span>
             <span className="numbers-item numbers-note">
               read from the registrar&apos;s events, not from our database —{' '}
@@ -43,11 +43,169 @@ export default async function HomePage() {
           </div>
         ) : null}
 
+        {/* ------------------------------------------------------- problem
+            The reason this exists at all. A name service answers a question the
+            chain cannot: who is behind this address, and have they delivered
+            before. Without it, the counterparty sees a hex string and guesses. */}
+        <section className="section" id="problem">
+          <h2 className="h2" style={{ maxWidth: '22em' }}>
+            The other side of the transaction is also an AI.
+          </h2>
+          <p className="body-2" style={{ maxWidth: '44em' }}>
+            Your AI will hire people, buy things and collect payments. What it meets is often another
+            agent at another address. All either side sees is a hex string: no name, no history, no
+            one responsible. MusePass is what an AI carries so it does not have to be guessed at.
+          </p>
+        </section>
+
+        {/* -------------------------------------------------- what you get
+            One passport, three things inside. The status tags are the honesty
+            mechanism: what is live, what is in development, what is only being
+            designed. Nothing on this row may say more than that. */}
+        <section className="section" id="passport">
+          <h2 className="h2" style={{ maxWidth: '16em' }}>
+            One passport, three things inside.
+          </h2>
+          <div className="three-grid">
+            <div className="three-item three-item-accent">
+              <span className="tag tag-live">Live</span>
+              <span className="three-title three-title-accent">Pass</span>
+              <p className="body-2">
+                The name and the card. A name built on ENS, so wallets, exchanges and apps already
+                recognise it, held as an asset in your wallet. The card is written to the ERC-8004
+                standard so another AI can read it directly: who this is, what it does, how to reach
+                it — you decide what is public, and by default only the name is.{' '}
+                <span className="tag" style={{ marginBottom: 0 }}>
+                  Stamps: in development
+                </span>
+              </p>
+            </div>
+            <div className="three-item">
+              <span className="tag">In design</span>
+              <span className="three-title">Vault</span>
+              <p className="body-2">
+                An account the name can hold: payments that sit until the work is verified, then
+                move. Not built yet — it appears here because it is what the pass is for.
+              </p>
+            </div>
+            <div className="three-item">
+              <span className="tag">In design</span>
+              <span className="three-title">Bond</span>
+              <p className="body-2">
+                A guarantee a service provider can post, so a stranger&apos;s AI can take its promise
+                seriously. Not built yet either.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ------------------------------------------------------ use cases
+            Three situations the product is actually for. One sentence each on
+            what MusePass contributes — no scenario may claim a feature that is
+            not live (the vault and the bond stay out of these sentences). */}
+        <section className="section" id="use-cases">
+          <h2 className="h2" style={{ maxWidth: '18em' }}>
+            Three situations it is for.
+          </h2>
+          <div className="three-grid">
+            <div className="three-item">
+              <span className="three-title">Hiring a service</span>
+              <p className="body-2">
+                You ask your AI to book a photographer. MusePass lets it prefer the one whose card
+                and track record it can actually check — not the one that shouted loudest.
+              </p>
+            </div>
+            <div className="three-item">
+              <span className="three-title">Taking an AI&apos;s order</span>
+              <p className="body-2">
+                An order arrives from a wallet you have never seen. Look up the name: who owns it,
+                what it has delivered, whether the record is certified. MusePass turns a hex string
+                into a decision you can defend.
+              </p>
+            </div>
+            <div className="three-item">
+              <span className="three-title">One AI hiring another</span>
+              <p className="body-2">
+                Two agents that have never met, closing a deal between themselves. MusePass is how
+                each reads the other&apos;s card and record before the work starts, with no platform
+                in the middle.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ------------------------------------------------ how it works */}
+        <section className="how" id="how">
+          <div className="chat">
+            <div className="bubble-me">Register a name for yourself. Call it atlas.</div>
+            <div className="bubble-ai">
+              <span>
+                <span className="mono">
+                  atlas.{rootName}
+                </span>{' '}
+                is available. I need you to confirm it — the link is good for{' '}
+                {config.limits.confirmTokenTtlMinutes} minutes.
+              </span>
+              <Link className="bubble-cta" href={`/claim?label=${config.exampleLabel}`}>
+                Open the confirmation page
+              </Link>
+            </div>
+            <div className="bubble-me">Confirmed.</div>
+            <div className="bubble-ai">
+              Registered. I also drafted a card for you — take a look before it goes public.
+            </div>
+          </div>
+
+          <div className="how-copy">
+            <h2 className="h2">
+              Two ways
+              <br />
+              to claim it.
+            </h2>
+            <ol className="steps">
+              <li className="step">
+                <span className="step-num">1</span>
+                <div>
+                  <div className="step-title">In your AI: one sentence</div>
+                  <div className="step-body">
+                    Works with Muse, Grok, Claude, OpenClaw — any AI that can use tools. It reads{' '}
+                    <span className="mono">/ask.txt</span>, checks the name and starts it.
+                  </div>
+                </div>
+              </li>
+              <li className="step">
+                <span className="step-num">2</span>
+                <div>
+                  <div className="step-title">On the web: one form</div>
+                  <div className="step-body">
+                    No AI at hand?{' '}
+                    <Link className="record-link" href="/claim">
+                      Claim it on this site
+                    </Link>{' '}
+                    — connect a wallet, pick a name, we pay the gas.
+                  </div>
+                </div>
+              </li>
+              <li className="step">
+                <span className="step-num step-num-accent">3</span>
+                <div>
+                  <div className="step-title">Then one signature makes it real</div>
+                  <div className="step-body">
+                    Two paths: an AI with its own wallet signs for itself and holds the name; an AI
+                    without one hands you a confirmation link, and registering, transferring or changing
+                    the payout address needs your signature.
+                  </div>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </section>
+
         {/* ------------------------------------------------------- proof
             Everything in this strip is checkable in one click, and each cell
             names the transaction that backs it. A product that sells
-            verifiability cannot open with adjectives; it opens with the four
-            things that already work while the visitor is reading. */}
+            verifiability cannot argue with adjectives; it shows the things
+            that already work while the visitor is reading. */}
         <section className="section" id="proof">
           <h2 className="h2" style={{ maxWidth: '20em' }}>
             Not a mock-up. Four things work while you read this.
@@ -79,12 +237,12 @@ export default async function HomePage() {
               </span>
             </div>
             <div className="pricing-cell">
-              <span className="pricing-name">The card is on chain, not on our server</span>
+              <span className="pricing-name">The card is on chain, signed by its owner</span>
               <span className="pricing-amount mono">ERC-8004</span>
               <span className="pricing-note">
-                The owner signs the card and it is written into the name&apos;s own record. Private
-                fields stay private — only the name and the address are public until a switch is turned
-                on.{' '}
+                The owner signs the card and it is written into the name&apos;s own record. Fields the
+                owner keeps private are never written on chain — the chain copy carries the public
+                fields and the card&apos;s hash.{' '}
                 <a
                   href="https://robinhoodchain.blockscout.com/tx/0xa804185a6ecf7b0f00884f602600ecba42c7f413e8244b2ed11717ddb02b6316"
                   target="_blank"
@@ -96,107 +254,14 @@ export default async function HomePage() {
               </span>
             </div>
             <div className="pricing-cell">
-              <span className="pricing-name">It keeps working if we disappear</span>
-              <span className="pricing-amount mono">no vendor lock-in</span>
+              <span className="pricing-name">Ownership does not depend on us; resolution does</span>
+              <span className="pricing-amount mono">no vendor lock-in on the name</span>
               <span className="pricing-note">
-                The name is an ERC-721 in your wallet on a public chain, and the resolution path is ENS
-                plus a deployed resolver. Nothing here needs our server to stay up for the name to remain
-                yours.
+                The name is an ERC-721 in your wallet on a public chain — ownership cannot be taken
+                back. Wallet resolution runs through our gateway today: if we went away, the name
+                stayed yours, though wallets would stop resolving it until the gateway returned.{' '}
+                <Link href="/trust">The trust model says both halves out loud</Link>.
               </span>
-            </div>
-          </div>
-        </section>
-
-        {/* ------------------------------------------------ how it works */}
-        <section className="how" id="how">
-          <div className="chat">
-            <div className="bubble-me">Register a name for yourself. Call it xiaoming.</div>
-            <div className="bubble-ai">
-              <span>
-                <span className="mono">
-                  xiaoming.{rootName}
-                </span>{' '}
-                is available. I need you to confirm it — the link is good for{' '}
-                {config.limits.confirmTokenTtlMinutes} minutes.
-              </span>
-              <Link className="bubble-cta" href={`/claim?label=${config.exampleLabel}`}>
-                Open the confirmation page
-              </Link>
-            </div>
-            <div className="bubble-me">Confirmed.</div>
-            <div className="bubble-ai">
-              Registered. I also drafted a card for you — take a look before it goes public.
-            </div>
-          </div>
-
-          <div className="how-copy">
-            <h2 className="h2">
-              One sentence
-              <br />
-              in your AI.
-            </h2>
-            <ol className="steps">
-              <li className="step">
-                <span className="step-num">1</span>
-                <div>
-                  <div className="step-title">You say one sentence</div>
-                  <div className="step-body">
-                    Works with Muse, Grok, Claude, OpenClaw — any AI that can use tools.
-                  </div>
-                </div>
-              </li>
-              <li className="step">
-                <span className="step-num">2</span>
-                <div>
-                  <div className="step-title">The AI checks the name and starts it</div>
-                  <div className="step-body">If the name is taken, it offers a few alternatives.</div>
-                </div>
-              </li>
-              <li className="step">
-                <span className="step-num step-num-accent">3</span>
-                <div>
-                  <div className="step-title">You sign, and only then it counts</div>
-                  <div className="step-body">
-                    The AI can only prepare. Transferring, selling or changing the payout address always
-                    needs your own signature.
-                  </div>
-                </div>
-              </li>
-            </ol>
-          </div>
-        </section>
-
-        {/* ------------------------------------------------- three things */}
-        <section className="section">
-          <h2 className="h2" style={{ maxWidth: '16em' }}>
-            One name, three things attached.
-          </h2>
-          <div className="three-grid">
-            <div className="three-item">
-              <span className="three-title">Name</span>
-              <p className="body-2">
-                Built on ENS, so wallets, exchanges and apps already recognise it. It is an asset in your
-                wallet, and only your wallet can move it. What the platform can and cannot do is written
-                down in the{' '}
-                <Link className="record-link" href="/trust">
-                  trust model
-                </Link>
-                .
-              </p>
-            </div>
-            <div className="three-item">
-              <span className="three-title">Card</span>
-              <p className="body-2">
-                Written to the ERC-8004 standard so another AI can read it directly: who it is, what it
-                does, how to reach it. You decide what is public; by default, only the name.
-              </p>
-            </div>
-            <div className="three-item three-item-accent">
-              <span className="three-title three-title-accent">Track record</span>
-              <p className="body-2">
-                What it has delivered, and how well. Every entry carries evidence anyone can check
-                independently. It is how another AI decides whether to work with it.
-              </p>
             </div>
           </div>
         </section>
@@ -206,10 +271,10 @@ export default async function HomePage() {
           <div className="record-head">
             <h2 className="h2">A track record holds only what can be proven.</h2>
             <p>
-              No self-assessment, and no “they said it went well”. The acceptance criteria are registered
-              and anchored before the work starts and cannot be changed afterwards; the result and the
-              evidence digest are anchored together, so anyone can check them offline. (The record
-              contract is not deployed yet — see the{' '}
+              No self-assessment, and no “they said it went well”. The design: the acceptance criteria
+              are registered before the work starts, and the result and the evidence digest are
+              anchored together, so anyone can check them offline and nothing can be quietly edited
+              after the fact. (The record contract is not deployed yet — see the{' '}
               <Link className="record-link" href="/trust">
                 trust model
               </Link>
@@ -236,7 +301,7 @@ export default async function HomePage() {
           </ol>
           <div className="record-sample">
             <div>
-              <div className="record-sample-label">What one record looks like</div>
+              <div className="record-sample-label">What one record will look like — example</div>
               <div className="record-sample-claim">Deliver 20 wedding photos within 48 hours</div>
             </div>
             <div className="record-sample-right">
@@ -256,7 +321,7 @@ export default async function HomePage() {
 
         {/* ---------------------------------------------------- pricing */}
         <section className="section" id="pricing">
-          <h2 className="h2">Names are free. Reputation is what costs.</h2>
+          <h2 className="h2">Names are free. Trust is earned.</h2>
           <div className="pricing-grid">
             <div className="pricing-cell">
               <span className="pricing-name">Name</span>
@@ -311,19 +376,68 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ----------------------------------------------------- prompt */}
-        <section className="section" id="prompt">
+        {/* ------------------------------------------------------- trust
+            One line here; the long lists live on their own pages. A visitor who
+            wants the weaknesses knows exactly where to look, and a visitor who
+            does not is not asked to read them twice. */}
+        <section className="section" id="trust-line">
           <h2 className="h2" style={{ maxWidth: '18em' }}>
-            No URL to remember: paste this into your AI.
+            We publish what we cannot do yet.
           </h2>
-          <p className="body-2" style={{ maxWidth: '46em' }}>
-            Works with Muse, ChatGPT, Claude, Cursor — anything that can connect to MCP or make HTTP
-            requests. Once pasted, it reads the full rules from <span className="mono">/ask.txt</span>,
-            checks the name, starts the registration, and hands the confirmation link back to you. Claiming
-            a name always needs your own signature.
+          <p className="body-2" style={{ maxWidth: '44em' }}>
+            What is not true today is written down while it is still not true:{' '}
+            <Link className="record-link" href="/trust">
+              the trust model
+            </Link>{' '}
+            says who can do what, and{' '}
+            <Link className="record-link" href="/numbers">
+              the numbers page
+            </Link>{' '}
+            publishes the public numbers, including the zeroes.
           </p>
-          <div className="panel" style={{ marginTop: 18 }}>
-            <CopyPrompt askTxtUrl={`${config.siteUrl.replace(/\/$/, '')}/ask.txt`} />
+        </section>
+
+        {/* --------------------------------------------------- developers
+            Entry points only. The paste block itself moved to /developers so
+            this page stays readable for the people it is now written for. */}
+        <section className="section" id="developers">
+          <h2 className="h2" style={{ maxWidth: '18em' }}>
+            Building with agents?
+          </h2>
+          <div className="three-grid">
+            <div className="three-item">
+              <span className="three-title">MCP</span>
+              <p className="body-2">
+                Nine tools, streamable HTTP, no key:{' '}
+                <Link className="record-link" href="/docs/mcp">
+                  /docs/mcp
+                </Link>
+                .
+              </p>
+            </div>
+            <div className="three-item">
+              <span className="three-title">REST</span>
+              <p className="body-2">
+                Plain HTTPS endpoints with one envelope:{' '}
+                <Link className="record-link" href="/docs/api">
+                  /docs/api
+                </Link>
+                .
+              </p>
+            </div>
+            <div className="three-item">
+              <span className="three-title">For the AI itself</span>
+              <p className="body-2">
+                <Link className="record-link" href="/ask.txt">
+                  /ask.txt
+                </Link>{' '}
+                — the rules in plain text an agent reads on its own, and{' '}
+                <Link className="record-link" href="/developers">
+                  the paste block on /developers
+                </Link>
+                .
+              </p>
+            </div>
           </div>
         </section>
 
@@ -332,11 +446,11 @@ export default async function HomePage() {
           {[
             [
               'Who owns the name?',
-              `You do. It is an asset in your wallet. Even if ${config.productName} shuts down, the name is still yours and still works.`,
+              `You do. It is an asset in your wallet: even if ${config.productName} shuts down, ownership stays with you and cannot be taken back. Wallet resolution runs through our gateway — if the gateway went down, the name would still be yours but wallets would stop resolving it until it returned. The trust model page keeps this honest.`,
             ],
             [
               'Can my AI move my name on its own?',
-              'No. It can start a registration and draft a card; registering, transferring, selling or changing the payout address all need your own signature.',
+              'If the AI holds its own wallet, yes — it signs for itself and moves what it owns. If you hold the name, no: registering, transferring, selling or changing the payout address needs your signature.',
             ],
             [
               'Can a track record be faked?',

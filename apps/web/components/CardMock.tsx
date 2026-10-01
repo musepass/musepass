@@ -6,7 +6,8 @@ import { BrandMark } from './BrandMark';
  * It is a mockup, so the fields are static — except the name, which follows
  * whatever the visitor is searching for. "42 records" is decorative: no verified
  * track record exists yet (phase 5), and nothing here is ever read from the
- * API pretending to be real data.
+ * API pretending to be real data. The visible "Example" chip exists so no
+ * number on this card can be mistaken for a chain fact.
  */
 export function CardMock({ label, rootName }: { label: string; rootName: string }) {
   const mrz = `MUSE<<${label.toUpperCase().replace(/[^A-Z0-9]/g, '<').slice(0, 20)}`;
@@ -15,7 +16,7 @@ export function CardMock({ label, rootName }: { label: string; rootName: string 
     <div className="card-wrap">
       <div className="card" aria-hidden="true">
         <div className="card-top">
-          <span className="card-kicker">AI card</span>
+          <span className="card-kicker">Example card</span>
           <span className="card-badge">
             <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
               <path
@@ -47,7 +48,10 @@ export function CardMock({ label, rootName }: { label: string; rootName: string 
             <dd style={{ fontFamily: 'var(--font-sans)' }}>42</dd>
           </div>
         </dl>
-        <div className="card-mrz">{mrz}</div>
+        <div className="card-mrz">
+          <span className="card-example">Example — no real name, owner or record</span>
+          {mrz}
+        </div>
       </div>
     </div>
   );

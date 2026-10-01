@@ -504,6 +504,16 @@ textarea.field {
   overflow: hidden;
 }
 
+.card-example {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dark-muted);
+  margin-bottom: 4px;
+}
+
 /* ---------------------------------------------------------------- sections */
 
 .how {
@@ -1264,5 +1274,43 @@ textarea.field {
     border-right: 0;
     border-bottom: 1px solid var(--line);
     padding: 0 0 18px;
+  }
+}
+
+/* ---------------------------------------------------------- rework 2026-10 */
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 22px 0 4px;
+}
+
+/* Status tag for the passport triptych and the use cases: what is live, what is
+   still being designed. The words carry the honesty; the pill just makes them
+   impossible to skim past. */
+.tag {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  color: var(--ink-3);
+  background: var(--white);
+  margin-bottom: 10px;
+}
+
+.tag-live {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+@media (max-width: 900px) {
+  .hero-actions {
+    margin-top: 18px;
   }
 }

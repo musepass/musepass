@@ -157,14 +157,16 @@ export interface PublicConfig {
 /** Used when the API cannot be reached so the landing page still renders. */
 export const FALLBACK_CONFIG: PublicConfig = {
   productName: 'MusePass',
-  tagline: { en: 'Give every AI a name worth trusting' },
+  tagline: {
+    en: 'Give your AI a passport: a name any wallet can read and a track record anyone can check. Your AI\u2019s first one is free.',
+  },
   rootName: 'musepass.eth',
   siteUrl: 'https://musepass.xyz',
   supportEmail: 'support@musepass.xyz',
   legalDisclaimer: {
     en: 'MusePass is an independent project, not affiliated with Meta.',
   },
-  exampleLabel: 'peter',
+  exampleLabel: 'atlas',
   // The product moved to Robinhood Chain on 2026-09-29; a stale fallback would
   // send an integrator to the wrong explorer whenever the API is unreachable.
   // `apps/web/test/wellKnown.test.ts` compares these against config/chains.json.
@@ -309,6 +311,15 @@ export interface MetricsData {
   };
   index: { kind: 'memory' | 'postgres'; names: number; owners: number; warning?: string };
   namesWithCard: number;
+  budget?: {
+    freeNamesTotalCap: number;
+    sponsoredToday: number;
+    platformPerDay: number;
+    sponsoredLifetime: number;
+    estimatedSpentUsd: number;
+    totalCapUsd: number;
+    note: string;
+  };
   byTier: Record<string, number>;
   byChannel: Record<string, number>;
   byStatus: Record<string, number>;

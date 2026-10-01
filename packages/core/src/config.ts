@@ -52,6 +52,8 @@ export interface PricingConfig {
 
 export interface LimitsConfig {
   freeNamesPerWallet: number;
+  /** First-stage allocation: free claims stop when this many names are issued. */
+  freeNamesTotalCap: number;
   /** 'display-width' counts East Asian wide characters as two columns. */
   lengthMetric: 'display-width' | 'code-points';
   minLabelUnitsPremium: number;
@@ -76,6 +78,7 @@ export interface LimitsConfig {
   rateLimits: {
     availabilityPerMinutePerIp: number;
     claimPerHourPerWallet: number;
+    claimPerHourPerIp: number;
     mcpRequestsPerHourPerHost: number;
   };
 }

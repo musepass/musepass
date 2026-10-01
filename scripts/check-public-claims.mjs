@@ -92,6 +92,41 @@ const REQUIRED = [
     needle: 'legalDisclaimer',
     because: 'the disclaimer has to reach the page, not just live in config',
   },
+  // The slogan whitelist (2026-09-30 review): <title>, the share description
+  // and the hero heading may only use the approved sentences, so the check is
+  // inverted — the approved sentence must be present in the file that renders
+  // it, and the retired slogans are banned as phrases everywhere.
+  {
+    id: 'slogan-title',
+    file: 'apps/web/app/layout.tsx',
+    needle: 'a passport and an account for every AI agent',
+    because: 'the page title must use the approved brand sentence',
+  },
+  {
+    id: 'slogan-share-description',
+    file: 'config/brand.json',
+    needle: 'Give your AI a passport: a name any wallet can read and a track record anyone can check',
+    because: 'meta/og/twitter descriptions must use the approved share description',
+  },
+  {
+    id: 'slogan-hero',
+    file: 'apps/web/components/HeroSection.tsx',
+    needle: 'a passport.',
+    because: 'the hero heading must be the approved "Give your AI a passport."',
+  },
+  // Example-labelling: every demo card or demo record must say it is an example.
+  {
+    id: 'example-card',
+    file: 'apps/web/components/CardMock.tsx',
+    needle: 'Example — no real name',
+    because: 'the hero card shows invented data; the label is what keeps it honest',
+  },
+  {
+    id: 'example-record',
+    file: 'apps/web/app/page.tsx',
+    needle: '— example',
+    because: 'the homepage record sample shows an invented record; it must say so',
+  },
 ];
 
 const missing = [];

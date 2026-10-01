@@ -66,7 +66,9 @@ const OWNER_ABI = [
   parseAbiItem('function text(bytes32 node, string key) view returns (string)'),
 ];
 
-const CARD_KEY = 'erc8004:card';
+// The real on-chain key is `musename.card` (CARD_TEXT_KEY in packages/core):
+// frozen from the MuseName era, part of every signed card payload.
+const CARD_KEY = 'musename.card';
 
 const client = createPublicClient({ transport: http(rpcUrl) });
 

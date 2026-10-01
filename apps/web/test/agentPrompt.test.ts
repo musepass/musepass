@@ -58,7 +58,7 @@ describe('the file an AI reads itself', () => {
 
   it('carries a client config that parses as JSON', () => {
     const parsed = JSON.parse(MCP_CONFIG_JSON) as { mcpServers: Record<string, { url: string }> };
-    expect(parsed.mcpServers.musename.url).toBe(MCP_URL);
+    expect(parsed.mcpServers.musepass.url).toBe(MCP_URL);
     expect(ASK_TXT).toContain(MCP_CONFIG_JSON);
   });
 
@@ -75,7 +75,7 @@ describe('the file an AI reads itself', () => {
   it('tells the agent how to check us without trusting us', () => {
     expect(ASK_TXT).toContain('HOW TO CHECK US WITHOUT TRUSTING US');
     expect(ASK_TXT).toContain(L2_REGISTRY_ADDRESS);
-    expect(ASK_TXT).toContain(`${SITE_URL}/.well-known/musename.json`);
+    expect(ASK_TXT).toContain(`${SITE_URL}/.well-known/musepass.json`);
   });
 
   it('matches the live registry address in the deployment record', async () => {

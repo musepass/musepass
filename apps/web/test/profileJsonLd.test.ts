@@ -23,7 +23,7 @@ describe('name page structured data', () => {
       name: 'xiaoming.musepass.eth',
       identifier: 'eip155:4663:0x603b8B1f7a0Bc152b7D0Dcd7bFfBF1f2Af115f6d',
     });
-    expect(jsonLd.isBasedOn).toBe(`${site}/.well-known/musename.json`);
+    expect(jsonLd.isBasedOn).toBe(`${site}/.well-known/musepass.json`);
   });
 
   it('only carries fields the card already publishes', () => {

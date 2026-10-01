@@ -47,6 +47,7 @@ export function AnchorList() {
           <div key={anchor.tx} className="card" style={{ display: 'grid', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span className="chip">{anchor.count} records</span>
+              <span className="tag" style={{ marginBottom: 0 }}>Test batch</span>
               <span className="body-2">{new Date(anchor.anchoredAt * 1000).toISOString().slice(0, 10)}</span>
               <span className="body-2">
                 {anchor.chainName} · block {anchor.block}

@@ -246,15 +246,20 @@ export interface ClaimQuotaState {
   walletSponsoredToday: number;
   walletSponsoredLifetime: number;
   platformSponsoredToday: number;
+  /** Every sponsored registration since the beginning, for the total caps. */
+  platformSponsoredLifetime: number;
 }
 
 /**
  * Rule: sponsorship is capped per wallet, per day and platform-wide so that a
- * scripted caller cannot drain the sponsoring wallet.
+ * scripted caller cannot drain the sponsoring wallet. Free names are a finite
+ * first-stage allocation: the count cap stops the giveaway at freeNamesTotalCap
+ * and the USD cap stops it when the estimated gas bill reaches
+ * platformTotalCapUsd — whichever comes first.
  */
 export function checkClaimQuota(state: ClaimQuotaState, config: MusenameConfig): LabelIssue[] {
   const issues: LabelIssue[] = [];
-  const { sponsorship, freeNamesPerWallet } = config.limits;
+  const { sponsorship, freeNamesPerWallet, freeNamesTotalCap } = config.limits;
 
   if (state.walletFreeNames >= freeNamesPerWallet) {
     issues.push({
@@ -282,6 +287,21 @@ export function checkClaimQuota(state: ClaimQuotaState, config: MusenameConfig):
       code: 'SPONSORSHIP_EXCEEDED',
       message: `the platform sponsorship budget for today (${sponsorship.platformPerDay}) is used up`,
       field: 'platformSponsoredToday',
+    });
+  }
+  if (state.platformSponsoredLifetime >= freeNamesTotalCap) {
+    issues.push({
+      code: 'QUOTA_EXCEEDED',
+      message: `the first-stage free-name allocation of ${freeNamesTotalCap} is used up; free claims are paused`,
+      field: 'freeNamesTotalCap',
+    });
+  }
+  const estimatedUsd = state.platformSponsoredLifetime * sponsorship.estimatedGasUsdPerName;
+  if (estimatedUsd >= sponsorship.platformTotalCapUsd) {
+    issues.push({
+      code: 'SPONSORSHIP_EXCEEDED',
+      message: `the estimated sponsorship bill (~$${estimatedUsd.toFixed(2)}) reached the total cap of $${sponsorship.platformTotalCapUsd}; free claims are paused`,
+      field: 'platformTotalCapUsd',
     });
   }
 

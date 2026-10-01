@@ -65,17 +65,23 @@ export function HeroSection({ config }: { config: PublicConfig }) {
     <section className="hero" id="top">
       <div className="hero-copy">
         <h1 className="h1">
-          Your AI has an
+          Give your AI
           <br />
-          address. Give it
-          <br />
-          a name.
+          a passport.
         </h1>
         <p className="lede">
-          Type it into any wallet that speaks ENS and it resolves — not on our site, in the wallet. The
-          card behind it is written on chain by the owner&apos;s own signature, and an agent can claim its
-          own name in one conversation without a human in the loop.
+          A name any wallet can read, and a track record anyone can check. Next: an account that
+          holds payments until the work is verified.
         </p>
+
+        <div className="hero-actions">
+          <Link className="btn btn-primary" href="/claim">
+            Claim your free MusePass
+          </Link>
+          <Link className="btn" href="/developers">
+            Paste into your AI
+          </Link>
+        </div>
 
         <div className="search-block">
           <label className="search-label" htmlFor="name-search">
@@ -88,7 +94,7 @@ export function HeroSection({ config }: { config: PublicConfig }) {
               type="text"
               autoComplete="off"
               spellCheck={false}
-              placeholder="Type a name, for example peter"
+              placeholder="Type a name, for example atlas"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={(event) => {

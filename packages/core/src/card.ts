@@ -287,18 +287,47 @@ export function cardContentHash(card: AgentCard): Hex {
 /* On-chain text record                                                */
 /* ------------------------------------------------------------------ */
 
-/** The ENS text record key the card lives under. Namespaced so it cannot clash. */
+/**
+ * The ENS text record key the card lives under. Namespaced so it cannot clash.
+ * The domain is from the project's earlier MuseName era and is frozen: the key
+ * is part of every signed card payload and cannot be renamed after the fact.
+ */
 export const CARD_TEXT_KEY = 'musename.card';
 
 /**
- * A card is stored as a self-contained data URI rather than only as an IPFS
- * pointer. ERC-8004 explicitly allows this, and it means the record cannot rot
- * when a pinning service disappears — which matters because the whole pitch is
- * that a name outlives the platform that issued it.
+ * What actually goes on chain: the public view of the card, never the card.
+ *
+ * A text record is world-readable and permanent, so a private field written
+ * into it would be both public and undeletable. This envelope therefore
+ * carries only the fields the owner marked public (plus `type`, which is just
+ * the standard URL), the visibility map so a reader can see what was withheld,
+ * and the content hash of the whole card so anyone holding the full card can
+ * still prove it is the one that was signed.
+ *
+ * The owner signs exactly this envelope — `cardTextSignaturePayload` is built
+ * over the value returned here — so the signature can never be mistaken for
+ * covering a private field: there is none in the bytes.
+ *
+ * Records published before 2026-10-01 contain the whole card as submitted.
+ * That could not be undone; it is also not repeated.
  */
 export function cardDataUri(card: AgentCard): string {
-  const json = canonicalJson(card);
-  return `data:application/json;base64,${encodeBase64(json)}`;
+  const visibility: VisibilityMap = { ...defaultVisibility(), ...(card.musename?.visibility ?? {}) };
+  const { address: _address, ...publicView } = applyVisibility(
+    { card, ensName: card.name, ownerAddress: '' },
+    visibility,
+    'public',
+  );
+  const envelope = {
+    type: card.type,
+    ...publicView,
+    musename: {
+      contentHash: cardContentHash(card),
+      visibility,
+      note: 'fields marked private are never written on chain; contentHash covers the whole card',
+    },
+  };
+  return `data:application/json;base64,${encodeBase64(canonicalJson(envelope))}`;
 }
 
 export function parseCardDataUri(value: string): AgentCard | null {
@@ -310,6 +339,17 @@ export function parseCardDataUri(value: string): AgentCard | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * The content hash inside a published envelope, or null for a legacy record
+ * (which carries the whole card and no envelope marker).
+ */
+export function envelopeContentHash(parsed: unknown): Hex | null {
+  const extension = (parsed as { musename?: { contentHash?: unknown } } | null)?.musename;
+  return typeof extension?.contentHash === 'string' && /^0x[0-9a-fA-F]{64}$/.test(extension.contentHash)
+    ? (extension.contentHash as Hex)
+    : null;
 }
 
 /** Works in Node and in a browser, so the front end can reuse this later. */

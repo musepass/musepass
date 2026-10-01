@@ -69,6 +69,8 @@ the build if any published sentence outruns its evidence.
 
 <!-- claims-allow-block: name-not-modifiable — the sentence in quotes is the claim we refuse to make -->
 <!-- claims-allow-block: independent-verifier — same: the row exists to deny it -->
+<!-- claims-allow-block: cannot-be-changed — same: the row exists to deny it -->
+<!-- claims-allow-block: blanket-audit — same: the row exists to deny it -->
 
 | Not true today | Why it is written down |
 | --- | --- |
@@ -88,7 +90,7 @@ owner's wallet. Everything else people might call an NFT is not one.
 | Name | The ERC-721. One per name, free from five characters up |
 | Card | An on-chain record, not a token |
 | Passport stamps | Data on the name, not tokens |
-| Genesis cover | A planned trait on the first 1,000 names, not a second collection, and not built |
+| Genesis cover | The list is live — the first 1,000 names get genesis numbers served by `/v1/genesis`. The cover art itself is not built |
 | Invitation to claim a name | Planned as a whitelist plus a signature, not as a transferable token |
 | Notary seat | Planned, capped at 1,000, not issued |
 
@@ -161,8 +163,7 @@ Nothing about the brand, the chain or the price list is hardcoded:
 
 ## Documentation
 
-The deeper documents are written in Chinese; the code, the site and the interfaces are
-in English. Start from these:
+Start from these:
 
 - [Review package](docs/review/README.md) — the state of the project for an outside
   reviewer, including the fifteen questions we want to be judged on

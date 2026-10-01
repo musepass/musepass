@@ -40,6 +40,8 @@ export interface SponsorshipRepo {
   countForWalletSince(wallet: Address, since: Date): Promise<number>;
   countForWalletLifetime(wallet: Address): Promise<number>;
   countPlatformSince(since: Date): Promise<number>;
+  /** Every sponsored registration ever, for the total count and USD caps. */
+  countPlatformLifetime(): Promise<number>;
   record(entry: SponsorshipEntry): Promise<void>;
 }
 

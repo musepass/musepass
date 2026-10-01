@@ -4,7 +4,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'Verify' };
+export const metadata = {
+  title: 'Verify',
+  description: 'How to check a name, a card or an anchored batch without trusting this server.',
+};
 
 export const revalidate = 300;
 
@@ -31,7 +34,7 @@ export default async function VerifyPage() {
 cast call ${registry} 'owner(bytes32)(address)' <node> --rpc-url https://rpc.mainnet.chain.robinhood.com
 
 # that a card is the card: read the text record, recompute the hash, compare
-cast call ${registry} 'text(bytes32,string)(string)' <node> "erc8004:card" --rpc-url …
+cast call ${registry} 'text(bytes32,string)(string)' <node> "musename.card" --rpc-url …
 
 # that a batch of records existed at a point in time
 node packages/verify/dist/cli.js --anchor-data <tx input> --records <records.json>

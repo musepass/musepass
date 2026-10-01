@@ -4,6 +4,52 @@ Newest first. Dates are when the work landed, not when it was planned. Where a
 claim matters, the transaction hash or endpoint that backs it is named, because a
 changelog that cannot be checked is marketing.
 
+## 2026-10-01
+
+The 2026-09-30 external review of the site, worked through in its order (P0 →
+P3). The checker `pnpm claims:check` gates every sentence below; the deploy is
+live on `musepass.xyz`.
+
+- **What goes on chain is the envelope, not the card.** A card publication now
+  writes the fields the owner marked public, the visibility map, and a hash of
+  the whole card — private fields are never in the signed bytes. Proven live:
+  `tst1.musepass.eth` republished with two canary private fields, card tx
+  `0x736b4a4d…`; read back with `text(node, "musename.card")` on the registry,
+  the canaries are absent (`scripts/p0-6-card-envelope-check.mjs`, repeatable).
+  Cards published before this change keep their old whole-card record; the API
+  serves the public view for those too.
+- **The site says "Give your AI a passport."** Retired slogans ("a name every AI
+  can carry", "name worth trusting", "give it a name") are gone from every page
+  and are now banned by the claims checker, along with survival claims ("works
+  if we disappear"), blanket-audit claims and "cannot be changed". The homepage
+  was rebuilt around the approved copy: problem → passport (name live, vault and
+  bond in design) → use cases → how → proof → record → pricing → trust →
+  developers → FAQ.
+- **Example data is labelled.** The homepage card and record samples say
+  "Example — no real name, owner or record"; the example label is `atlas`, a
+  name that is not registered.
+- **Anti-abuse caps are public.** `/v1/metrics` publishes the total cap (10,000
+  free names), the daily platform cap (500), today's spend and the USD ceiling
+  (`budget` block), so a pause is visible rather than mysterious.
+- **The index survives a restart.** On boot the API rebuilds the name index from
+  the registrar's events when postgres is empty or behind; after this deploy
+  `/v1/metrics` reports chain 8 / index 8 without manual backfill.
+- **The signing story is one story.** `/ask.txt` v1.1, the claim page and the
+  name page all say the same two paths: an agent with its own wallet signs for
+  itself (`prepare_registration` → EIP-712 → `submit_registration`); an agent
+  without one hands the owner a 15-minute link and never claims the name exists
+  before the owner signs.
+- **Every page has a title, a description and a share image.** `/og.png`
+  (1200×630) for the site, `/name/<label>/card.png` for names; the name page
+  carries a passport block with the genesis band and a "Share this pass" panel.
+  `/terms` and `/privacy` are real pages, and `/anchors` labels every batch a
+  test batch. `/v1/config` is the one place the tagline comes from.
+- **The claims checker grew teeth.** Five new rule families (survival
+  independence, touching names, blanket audit, immutability, retired slogans),
+  `apps/web/lib` is scanned so `/ask.txt` cannot drift, and the approved
+  sentences (title, share description, hero) are required to be present, not
+  just permitted. 16 waivers, each a denial that says why.
+
 ## 2026-09-30
 
 - **The root name resolves.** `musepass.eth` points at our resolver and the

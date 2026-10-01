@@ -3,8 +3,11 @@ import {
   applyVisibility,
   canonicalJson,
   cardContentHash,
+  cardDataUri,
   defaultVisibility,
+  envelopeContentHash,
   ERC8004_CARD_TYPE,
+  parseCardDataUri,
   validateCard,
   type AgentCard,
 } from '../src/card.js';
@@ -167,5 +170,51 @@ describe('canonicalJson and cardContentHash', () => {
 
   it('returns a bytes32 hex string', () => {
     expect(cardContentHash(validCard)).toMatch(/^0x[0-9a-f]{64}$/);
+  });
+});
+
+describe('cardDataUri — the on-chain record is the public view, never the card', () => {
+  it('writes no private field into the record', () => {
+    const record = JSON.parse(
+      Buffer.from(cardDataUri(validCard).split(',')[1] ?? '', 'base64').toString('utf8'),
+    ) as Record<string, unknown>;
+    // Everything except name (and type) is private by default.
+    expect(record.name).toBe(validCard.name);
+    expect(record.type).toBe(ERC8004_CARD_TYPE);
+    expect(record.description).toBeUndefined();
+    expect(record.image).toBeUndefined();
+    expect(record.contact).toBeUndefined();
+    expect(record.payoutAddress).toBeUndefined();
+    expect(JSON.stringify(record)).not.toContain(validCard.description);
+    expect(JSON.stringify(record)).not.toContain(validCard.musename?.contact ?? '');
+    expect(JSON.stringify(record)).not.toContain(validCard.musename?.payoutAddress ?? '');
+  });
+
+  it('carries the public fields the owner opted into', () => {
+    const card: AgentCard = {
+      ...validCard,
+      musename: { ...validCard.musename, visibility: { ...defaultVisibility(), description: 'public' } },
+    };
+    const record = JSON.parse(
+      Buffer.from(cardDataUri(card).split(',')[1] ?? '', 'base64').toString('utf8'),
+    ) as Record<string, unknown>;
+    expect(record.description).toBe(validCard.description);
+    // Still no private ones.
+    expect(record.image).toBeUndefined();
+  });
+
+  it('carries the hash of the whole card and round-trips', () => {
+    const parsed = parseCardDataUri(cardDataUri(validCard));
+    expect(parsed).not.toBeNull();
+    expect(envelopeContentHash(parsed)).toBe(cardContentHash(validCard));
+  });
+
+  it('reports null for a legacy record with no envelope marker', () => {
+    const legacy = `data:application/json;base64,${Buffer.from(
+      canonicalJson(validCard),
+    ).toString('base64')}`;
+    const parsed = parseCardDataUri(legacy);
+    expect(parsed).not.toBeNull();
+    expect(envelopeContentHash(parsed)).toBeNull();
   });
 });

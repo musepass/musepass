@@ -168,6 +168,13 @@ export function createPostgresRepos(sql: Sql): {
       return Number(rows[0]?.count ?? 0);
     },
 
+    async countPlatformLifetime() {
+      const { rows } = await sql.query<{ count: string }>(
+        'select count(*)::text as count from sponsorship_ledger',
+      );
+      return Number(rows[0]?.count ?? 0);
+    },
+
     async record(entry: SponsorshipEntry) {
       await sql.query(
         `insert into sponsorship_ledger

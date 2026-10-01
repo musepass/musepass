@@ -3,7 +3,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'Turn on name resolution' };
+export const metadata = {
+  title: 'Turn on name resolution',
+  description: 'The one-time setup for the root name: point the resolver and check what wallets see.',
+};
 export const dynamic = 'force-dynamic';
 
 /**

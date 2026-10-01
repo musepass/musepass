@@ -26,7 +26,7 @@ export function buildProfileJsonLd(data: NameData, config: PublicConfig) {
     '@type': 'ProfilePage',
     name: data.fullName,
     url,
-    isBasedOn: `${site}/.well-known/musename.json`,
+    isBasedOn: `${site}/.well-known/musepass.json`,
     mainEntity: entity,
   };
 }

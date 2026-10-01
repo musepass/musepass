@@ -4,7 +4,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'REST API' };
+export const metadata = {
+  title: 'REST API',
+  description: 'Plain HTTPS endpoints, one response envelope, no API key: names, requests, cards, metrics.',
+};
 
 export const revalidate = 300;
 

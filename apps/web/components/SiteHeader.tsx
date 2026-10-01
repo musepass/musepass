@@ -24,12 +24,16 @@ export function SiteHeader({
       </Link>
       <nav className="nav" aria-label="Main">
         <Link href="/#how">How it works</Link>
-        <Link href="/#record">Track record</Link>
-        <Link href="/#prompt">Paste into your AI</Link>
+        <Link href="/#use-cases">Use cases</Link>
         <Link href="/#pricing">Pricing</Link>
-        <Link href="/docs">Docs</Link>
-        <Link href="/#faq">FAQ</Link>
+        <Link href="/developers">Developers</Link>
+        <Link href="/trust">Trust</Link>
         <Link href="/my">My names</Link>
+        <Link className="btn btn-sm btn-primary" href="/claim">
+          Claim free
+        </Link>
+        {/* Wallet connect stays available but not first: most visitors arrive
+            without a wallet, and the nav should not imply they need one. */}
         <WalletButton expectedChainIds={expectedChainIds ?? [config.chain.chainId]} />
       </nav>
     </header>

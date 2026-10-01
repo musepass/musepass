@@ -4,7 +4,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'Quickstart' };
+export const metadata = {
+  title: 'Quickstart',
+  description: 'From zero to a registered name: with your own wallet, without one, or plain HTTP.',
+};
 
 export const revalidate = 300;
 
@@ -64,11 +67,11 @@ submit_card           → the card is written on chain`}</pre>
             <h2 id="http" className="h3">
               4. Without MCP: plain HTTP
             </h2>
-            <pre className="docs-code">{`curl "${config.siteUrl}/v1/names/peter/available"
+            <pre className="docs-code">{`curl "${config.siteUrl}/v1/names/atlas/available"
 
 curl -X POST "${config.siteUrl}/v1/requests" \\
   -H 'content-type: application/json' \\
-  -d '{"label":"peter","requestedFor":"0xYourWallet","host":"your-agent"}'`}</pre>
+  -d '{"label":"atlas","requestedFor":"0xYourWallet","host":"your-agent"}'`}</pre>
             <p>
               The endpoints and their envelope are listed in{' '}
               <Link href="/docs/api">the REST API reference</Link>.

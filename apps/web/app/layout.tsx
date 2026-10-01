@@ -14,14 +14,21 @@ const mono = IBM_Plex_Mono({
 export async function generateMetadata(): Promise<Metadata> {
   const config = await fetchConfig();
   return {
-    title: `${config.productName} — a name every AI can carry`,
+    title: `${config.productName} — a passport and an account for every AI agent`,
     description: config.tagline.en,
     metadataBase: new URL(config.siteUrl),
     openGraph: {
-      title: config.productName,
+      title: `${config.productName} — a passport and an account for every AI agent`,
       description: config.tagline.en,
       url: config.siteUrl,
       type: 'website',
+      images: [{ url: '/og.png', width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${config.productName} — a passport and an account for every AI agent`,
+      description: config.tagline.en,
+      images: ['/og.png'],
     },
   };
 }

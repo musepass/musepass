@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CardEditor } from '@/components/CardEditor';
 import { PrimaryNameCard } from '@/components/PrimaryNameCard';
+import { SharePass } from '@/components/SharePass';
 import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { ApiError, fetchConfig, fetchName, type NameData } from '@/lib/api';
@@ -9,7 +10,17 @@ import { buildProfileJsonLd, serializeJsonLd } from '@/lib/profileJsonLd';
 export async function generateMetadata({ params }: { params: Promise<{ label: string }> }) {
   const { label } = await params;
   const config = await fetchConfig();
-  return { title: `${decodeURIComponent(label)}.${config.rootName}` };
+  const decoded = decodeURIComponent(label);
+  const title = `${decoded}.${config.rootName}`;
+  const image = `/name/${encodeURIComponent(label)}/card.png`;
+  // The share image is the passport card, rendered from chain facts at request
+  // time — so what a social network previews is what the chain actually says.
+  return {
+    title,
+    description: `${title} — a MusePass name: who owns it, and what the owner published.`,
+    openGraph: { title, images: [{ url: image, width: 600, height: 600 }] },
+    twitter: { card: 'summary_large_image', title, images: [image] },
+  };
 }
 
 export default async function NamePage({ params }: { params: Promise<{ label: string }> }) {
@@ -126,6 +137,15 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
           ) : null}
 
           <div className="panel">
+            <SharePass
+              label={decoded}
+              fullName={data.fullName}
+              genesis={data.genesis?.number ?? null}
+              siteUrl={config.siteUrl}
+            />
+          </div>
+
+          <div className="panel">
             <dl className="kv">
               <dt>Owner</dt>
               <dd className="mono-break">
@@ -232,8 +252,9 @@ export default async function NamePage({ params }: { params: Promise<{ label: st
               <pre className="mono-break">{JSON.stringify(data.trackRecord, null, 2)}</pre>
             ) : (
               <div className="notice notice-info">
-                No track record yet. A record only holds what evidence can prove, and the criteria are
-                registered before the work starts and cannot be changed afterwards.
+                No track record yet. By design a record only holds what evidence can prove: the
+                criteria are registered before the work starts, and the result and the evidence are
+                anchored together so nothing can be quietly edited after the fact.
                 {config.features.trackRecord ? '' : ' (Certified records are not open yet.)'}
               </div>
             )}

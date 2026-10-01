@@ -18,6 +18,7 @@ import {
   signRegister,
 } from '@/lib/wallet';
 import { PrimaryNameCard } from './PrimaryNameCard';
+import { SharePass } from './SharePass';
 import { useWallet } from './WalletProvider';
 
 type Phase = 'loading' | 'ready' | 'signing' | 'submitting' | 'done' | 'failed';
@@ -206,7 +207,9 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
           ) : null}
         </dl>
         <p className="body-2" style={{ fontSize: 15 }}>
-          The name is in your wallet. Even if we shut down, it stays and keeps working.
+          The name is an ERC-721 in this wallet — ownership cannot be taken back. If we shut down, the
+          name stays yours; wallet resolution runs through our gateway, and the{' '}
+          <a href="/trust">trust model</a> says both halves out loud.
         </p>
         <p className="body-2" style={{ fontSize: 15 }}>
           Next, give it a card. A name on its own is an address; the card is what another person — or
@@ -226,6 +229,9 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
           <a className="btn" href="/">
             Back to the home page
           </a>
+        </div>
+        <div className="panel">
+          <SharePass label={result.label} fullName={result.fullName} siteUrl={config.siteUrl} />
         </div>
         <PrimaryNameCard fullName={result.fullName} ownerAddress={result.owner} />
       </div>
@@ -304,8 +310,10 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
           Step 2: connect a wallet and sign
         </h3>
         <p className="body-2" style={{ fontSize: 15 }}>
-          The name goes straight to this wallet address, and we pay the gas. Nothing is issued until you
-          sign — neither we nor your AI can sign for you, or touch the names you already hold.
+          The name goes straight to this wallet address, and we pay the gas. Nothing is issued until
+          this wallet signs — neither we nor your AI can sign instead of you. (AIs with no wallet at
+          all can use our custodial signer service instead; that path is explained in{' '}
+          <a href="/docs/mcp">the MCP docs</a>.)
         </p>
 
         {wallet.address ? (

@@ -4,7 +4,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'Docs' };
+export const metadata = {
+  title: 'Docs',
+  description: 'How names, cards and records work under MusePass — and how to check every claim yourself.',
+};
 
 // Rendered from the API's own config so the addresses and endpoints below are
 // the ones the running deployment actually answers with, not a copy that ages.
@@ -36,7 +39,8 @@ export default async function DocsPage() {
               What this is
             </h2>
             <p>
-              MusePass is a naming and identity layer for AI agents. A name is an ENS subname under{' '}
+              MusePass is a passport and an account for AI agents: a name, a card, a verifiable
+              record, and, in design, a vault and a bond. A name is an ENS subname under{' '}
               <code className="mono">{rootName}</code>, minted as an ERC-721 on Robinhood Chain (chainId{' '}
               {config.chain.chainId}) and resolved on Ethereum mainnet through a CCIP-Read resolver. The
               card is written to the name&apos;s own on-chain record by the owner&apos;s signature.
@@ -49,7 +53,9 @@ export default async function DocsPage() {
               The split is deliberate. The name has to be readable by every wallet, so it lives in ENS on
               mainnet. Minting has to be cheap, so the registry lives on an L2. The resolver is a deployed
               copy of <a href="https://github.com/ensdomains/durin">ensdomains/durin</a>; we did not write a
-              name system, we run one.
+              name system, we run one. The gateway host <code className="mono">gw.musename.xyz</code> is the
+              project&apos;s earlier MuseName domain, baked into the resolver&apos;s constructor arguments —
+              an on-chain address cannot be renamed, so the old host stays.
             </p>
 
             <h2 id="concepts" className="h3">

@@ -13,6 +13,7 @@ import {
   checkClaimQuota,
   checkLabel,
   defaultVisibility,
+  envelopeContentHash,
   findInvitation,
   invitedShortNameDecision,
   INVITED_MAX_UNITS,
@@ -312,6 +313,16 @@ export function createApp(deps: MusenameDeps) {
     const indexedOwners = new Set(rows.map((row) => row.ownerAddress.toLowerCase()));
     const ownersOnChain = new Set(chainNames.map((entry) => entry.owner.toLowerCase()));
 
+    // The giveaway budget, published: the caps are rules, and the usage is one
+    // query against the sponsorship ledger. If a cap is near, this is where a
+    // stranger can see it before the claim endpoint starts refusing.
+    const startOfDay = new Date(clock());
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const [sponsoredToday, sponsoredLifetime] = await Promise.all([
+      sponsorship.countPlatformSince(startOfDay),
+      sponsorship.countPlatformLifetime(),
+    ]);
+
     return c.json(
       {
         summary: {
@@ -344,6 +355,18 @@ export function createApp(deps: MusenameDeps) {
               : {}),
           },
           namesWithCard: withCard,
+          /** The free-name giveaway: caps and how much of them is spent. */
+          budget: {
+            freeNamesTotalCap: config.limits.freeNamesTotalCap,
+            sponsoredToday,
+            platformPerDay: config.limits.sponsorship.platformPerDay,
+            sponsoredLifetime,
+            estimatedSpentUsd: Number(
+              (sponsoredLifetime * config.limits.sponsorship.estimatedGasUsdPerName).toFixed(2),
+            ),
+            totalCapUsd: config.limits.sponsorship.platformTotalCapUsd,
+            note: 'free claims pause when the count cap or the USD cap is reached; both are published here',
+          },
           byTier,
           byChannel,
           byStatus,
@@ -855,7 +878,9 @@ export function createApp(deps: MusenameDeps) {
     }
 
     // The record value is self-contained, so it cannot rot when a pinning
-    // service disappears (ERC-8004 explicitly allows a base64 data URI).
+    // service disappears (ERC-8004 explicitly allows a base64 data URI). It
+    // is the public view of the card plus the hash of the whole card — private
+    // fields are not in the bytes the owner signs and never reach the chain.
     const value = cardDataUri(validation.card);
     const node = namehash(validation.card.name);
     const payload = cardTextSignaturePayload({
@@ -956,8 +981,8 @@ export function createApp(deps: MusenameDeps) {
       return c.json(
         {
           summary: {
-            zh: `名片已经写进链上了，${label}.${config.brand.rootName} 的任何访问者都能读到。`,
-            en: `The card is on chain; anyone reading ${label}.${config.brand.rootName} can see it.`,
+            zh: `名片的公开部分已经写进链上了，${label}.${config.brand.rootName} 的任何访问者都能读到；私密字段没有上链。`,
+            en: `The public part of the card is on chain, readable by anyone visiting ${label}.${config.brand.rootName}; private fields were never written.`,
           },
           data: {
             label,
@@ -1049,26 +1074,35 @@ export function createApp(deps: MusenameDeps) {
     }
 
     // The card lives on chain, so it is read from there rather than from our
-    // index — the index can lag, the registry cannot lie.
+    // index — the index can lag, the registry cannot lie. Since the envelope
+    // change, the chain record is already the public view (private fields are
+    // never written); records from before the change carry the whole card and
+    // are still redacted here on read.
     let card: unknown = null;
     if (owner) {
       try {
         const record = await chain.readText(label, CARD_TEXT_KEY);
         const parsed = record ? parseCardDataUri(record) : null;
         if (parsed) {
-          const visibility = {
-            ...defaultVisibility(),
-            ...((parsed.musename as { visibility?: Partial<VisibilityMap> } | undefined)?.visibility ??
-              {}),
-          };
-          card = {
-            ...applyVisibility(
-              { card: parsed, ensName: `${label}.${config.brand.rootName}`, ownerAddress: owner },
-              visibility,
-              'public',
-            ),
-            contentHash: cardContentHash(parsed),
-          };
+          const envelopeHash = envelopeContentHash(parsed);
+          if (envelopeHash) {
+            const { musename: _envelope, ...publicView } = parsed as unknown as Record<string, unknown>;
+            card = { ...publicView, address: owner, contentHash: envelopeHash };
+          } else {
+            const visibility = {
+              ...defaultVisibility(),
+              ...((parsed.musename as { visibility?: Partial<VisibilityMap> } | undefined)?.visibility ??
+                {}),
+            };
+            card = {
+              ...applyVisibility(
+                { card: parsed, ensName: `${label}.${config.brand.rootName}`, ownerAddress: owner },
+                visibility,
+                'public',
+              ),
+              contentHash: cardContentHash(parsed),
+            };
+          }
         }
       } catch {
         // A missing or unreadable record is not an error: it means no card yet.
@@ -1718,16 +1752,23 @@ export function createApp(deps: MusenameDeps) {
     // 4. sponsorship budget.
     const startOfDay = new Date(clock());
     startOfDay.setUTCHours(0, 0, 0, 0);
-    const [walletFreeNames, walletSponsoredToday, walletSponsoredLifetime, platformSponsoredToday] =
+    const [walletFreeNames, walletSponsoredToday, walletSponsoredLifetime, platformSponsoredToday, platformSponsoredLifetime] =
       await Promise.all([
         names.listByOwner(owner).then((rows) => rows.length),
         sponsorship.countForWalletSince(owner, startOfDay),
         sponsorship.countForWalletLifetime(owner),
         sponsorship.countPlatformSince(startOfDay),
+        sponsorship.countPlatformLifetime(),
       ]);
 
     const quotaIssues = checkClaimQuota(
-      { walletFreeNames, walletSponsoredToday, walletSponsoredLifetime, platformSponsoredToday },
+      {
+        walletFreeNames,
+        walletSponsoredToday,
+        walletSponsoredLifetime,
+        platformSponsoredToday,
+        platformSponsoredLifetime,
+      },
       config,
     );
     if (quotaIssues.length > 0) {
@@ -1752,6 +1793,30 @@ export function createApp(deps: MusenameDeps) {
             boom('RATE_LIMITED', 'claim rate limit exceeded', {
               zh: '领取太频繁了，请稍后再试。',
               en: 'Too many claims; please retry later.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        429,
+      );
+    }
+
+    // A wallet limit does not stop a script that mints a wallet per claim, so
+    // external traffic is also limited per originating IP. Calls without a
+    // forwarded client address are server-to-server (the MCP app) and are left
+    // to the wallet and budget quotas above.
+    const clientIp = (c.req.header('x-forwarded-for') ?? '').split(',')[0].trim();
+    if (clientIp && !rateLimit(c, `claim-ip:${clientIp}`, config.limits.rateLimits.claimPerHourPerIp)) {
+      return c.json(
+        {
+          summary: {
+            zh: '这个网络地址的领取次数太多了，请稍后再试。',
+            en: 'Too many claims from this network address; please retry later.',
+          },
+          errors: [
+            boom('RATE_LIMITED', 'claim rate limit exceeded for this address', {
+              zh: '这个网络地址的领取次数太多了，请稍后再试。',
+              en: 'Too many claims from this network address; please retry later.',
             }),
           ],
           meta: meta(true),

@@ -1,8 +1,8 @@
 {
   "productName": "MusePass",
   "tagline": {
-    "en": "Give every AI a name worth trusting",
-    "zh": "给每个 AI 一个可信的名字"
+    "en": "Give your AI a passport: a name any wallet can read and a track record anyone can check. Your AI's first one is free.",
+    "zh": "给你的 AI 一本护照：任何钱包都能读的名字，任何人都能查的履历。第一个免费。"
   },
   "siteUrl": "https://musepass.xyz",
   "supportEmail": "support@musepass.xyz",
@@ -13,7 +13,7 @@
   },
   "naming": {
     "subnameSuffix": "eth",
-    "exampleLabel": "peter"
+    "exampleLabel": "atlas"
   },
   "backupBrand": {
     "$comment": "改名前用的名字。品牌与根名字都是配置驱动，改回来只需要改这里。",

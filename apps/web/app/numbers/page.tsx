@@ -3,7 +3,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { ApiError, fetchConfig, fetchInvitations, fetchMetrics, type InvitationsData, type MetricsData } from '@/lib/api';
 
-export const metadata = { title: 'Numbers' };
+export const metadata = {
+  title: 'Numbers',
+  description: 'The public numbers, including the zeroes: names on chain, cards published, invitations, the free-name budget.',
+};
 /**
  * Rendered per request, not prerendered.
  *
@@ -128,6 +131,28 @@ export default async function NumbersPage() {
                 Check it yourself: read the registrar&apos;s <span className="mono">NameRegistered</span>{' '}
                 events, or run <span className="mono">pnpm snapshot:names</span> in this repository.
               </p>
+
+              {metrics.budget ? (
+                <>
+                  <h2 className="faq-q" style={{ fontSize: 18, marginTop: 24 }}>
+                    Free-name budget
+                  </h2>
+                  <p className="body-2" style={{ fontSize: 14 }}>
+                    Free names are paid for by the platform, so the giveaway is finite. These are the
+                    caps and how much of each is spent; when a cap is reached, free claims pause and
+                    the claim endpoint says so.
+                  </p>
+                  {row(
+                    'Free names issued (first-stage allocation)',
+                    `${metrics.budget.sponsoredLifetime} / ${metrics.budget.freeNamesTotalCap}`,
+                  )}
+                  {row('Issued today / daily cap', `${metrics.budget.sponsoredToday} / ${metrics.budget.platformPerDay}`)}
+                  {row(
+                    'Estimated gas paid so far',
+                    `$${metrics.budget.estimatedSpentUsd.toFixed(2)} / $${metrics.budget.totalCapUsd}`,
+                  )}
+                </>
+              ) : null}
 
               {invitations ? (
                 <>

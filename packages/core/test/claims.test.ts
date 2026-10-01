@@ -73,7 +73,10 @@ describe('claim register', () => {
       'credit-score',
       'guaranteed-return',
     ]);
-    expect(CLAIM_RULES.filter((rule) => rule.gate === null)).toHaveLength(2);
+    // Wording rules no gate can open: the two originals plus the ban list that
+    // grew out of the 2026-09-30 review (survival-independence, cannot-be-changed,
+    // retired-slogan).
+    expect(CLAIM_RULES.filter((rule) => rule.gate === null)).toHaveLength(5);
   });
 
   it('flags an independence claim while we are still the only verifier', () => {
@@ -187,12 +190,14 @@ describe('claim register', () => {
 
   it('knows which rules a closed gate is holding back', () => {
     const blocked = rulesBlockedBy(closedGates, 'nameImmutability').map((rule) => rule.id);
-    expect(blocked).toEqual(['name-not-modifiable', 'platform-cannot-modify']);
+    expect(blocked).toEqual(['name-not-modifiable', 'platform-cannot-modify', 'cannot-touch-names']);
   });
 
   it('lists the surfaces a stranger reads as our claim', () => {
     expect(PUBLISHING_SURFACES).toContain('README.md');
     expect(PUBLISHING_SURFACES).toContain('contracts/README.md');
     expect([...PUBLISHING_DIRECTORIES]).toContain('apps/web/app');
+    // ask.txt is a published surface even though it is generated in lib/
+    expect([...PUBLISHING_DIRECTORIES]).toContain('apps/web/lib');
   });
 });

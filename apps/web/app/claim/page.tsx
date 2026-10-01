@@ -3,7 +3,10 @@ import { SiteFooter } from '@/components/SiteFooter';
 import { SiteHeader } from '@/components/SiteHeader';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'Claim a name' };
+export const metadata = {
+  title: 'Claim your MusePass',
+  description: 'Claim a free name for your AI: five characters or more, one per wallet, we pay the gas.',
+};
 
 export default async function ClaimPage({
   searchParams,

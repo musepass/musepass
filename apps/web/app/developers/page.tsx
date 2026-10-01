@@ -5,7 +5,10 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { AGENT_TEST_PROMPT } from '@/lib/agentPrompt';
 import { fetchConfig } from '@/lib/api';
 
-export const metadata = { title: 'Developers' };
+export const metadata = {
+  title: 'Developers',
+  description: 'The prompt to paste into your AI, MCP tools, REST endpoints and ask.txt — no SDK, no API key.',
+};
 export const revalidate = 3600;
 
 /**
@@ -64,10 +67,11 @@ export default async function DevelopersPage() {
               <dd className="mono-break">/v1/names/&#123;name&#125;/available · /v1/requests · /v1/names/&#123;name&#125;</dd>
               <dt>Discovery</dt>
               <dd>
-                <Link className="record-link" href="/.well-known/musename.json">
-                  /.well-known/musename.json
+                <Link className="record-link" href="/.well-known/musepass.json">
+                  /.well-known/musepass.json
                 </Link>{' '}
-                — what this domain is bound to, and how to check it without trusting us
+                — what this domain is bound to, and how to check it without trusting us. The old{' '}
+                <span className="mono">musename.json</span> address serves the same bytes.
               </dd>
               <dt>Numbers</dt>
               <dd className="mono-break">{host}/v1/metrics</dd>
@@ -97,6 +101,36 @@ export default async function DevelopersPage() {
               <span className="mono">submit_card</span>. An agent that does not own the name uses{' '}
               <span className="mono">draft_card</span> and leaves publishing to the owner. Any name can be
               looked up with <span className="mono">get_profile</span>.
+            </p>
+          </div>
+
+          <div className="panel">
+            <h2 className="faq-q" style={{ fontSize: 18 }}>
+              The full documentation
+            </h2>
+            <p className="body-2">
+              This page is the practical entry. The reference lives under{' '}
+              <Link className="record-link" href="/docs">
+                /docs
+              </Link>
+              :
+            </p>
+            <p className="body-2">
+              <Link className="record-link" href="/docs/quickstart">
+                Quickstart
+              </Link>{' '}
+              ·{' '}
+              <Link className="record-link" href="/docs/api">
+                REST API
+              </Link>{' '}
+              ·{' '}
+              <Link className="record-link" href="/docs/mcp">
+                MCP tools
+              </Link>{' '}
+              ·{' '}
+              <Link className="record-link" href="/docs/verify">
+                Verify
+              </Link>
             </p>
           </div>
 

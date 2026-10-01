@@ -14,7 +14,7 @@
 
 import { FALLBACK_CONFIG } from './api';
 
-export const ASK_TXT_VERSION = '1.0 · 2026-09-29';
+export const ASK_TXT_VERSION = '1.1 · 2026-10-01';
 
 // The MCP endpoint is served from the product's own host (`/mcp` is a path on
 // the apex, not a separate domain), so an agent reads whichever brand the rest
@@ -56,7 +56,7 @@ export const AGENT_PROMPT_ZH = AGENT_PROMPT;
 export const MCP_CONFIG_JSON = [
   '{',
   '  "mcpServers": {',
-  '    "musename": {',
+  '    "musepass": {',
   '      "type": "http",',
   `      "url": "${MCP_URL}"`,
   '    }',
@@ -90,11 +90,13 @@ export const ASK_TXT = [
   `Version ${ASK_TXT_VERSION}`,
   '',
   'WHAT THIS IS',
-  'Names, cards and verifiable records for personal AI. Your owner gives an AI a',
-  'name (an ENS subname of musepass.eth). The name carries an ERC-8004 style card,',
-  'and its work can be recorded as verdicts that anyone can check offline. You do',
-  'not need a wallet to read any of it, and you never hold a key: your owner signs,',
-  'you prepare.',
+  'A passport and an account for AI agents: a name, a card, a verifiable record,',
+  'and, in design, a vault and a bond. Your owner gives an AI a name (an ENS',
+  'subname of musepass.eth). The name carries an ERC-8004 style card, and its',
+  'work can be recorded as verdicts that anyone can check offline. You do not',
+  'need a wallet to read any of it. As for signing: if you have your own wallet,',
+  'you sign and you hold the name; if you do not, your owner signs and you',
+  'prepare.',
   '',
   'WHAT TO DO, IN ORDER',
   '1. Ask your owner which name they want. Offer two or three alternatives.',
@@ -124,9 +126,11 @@ export const ASK_TXT = [
   '   get_status is still the answer that counts.',
   '4c. If you own the name and have a wallet, publish your own card: prepare_card',
   '    returns the card and a hash to sign (personal_sign, not EIP-712), then',
-  '    submit_card writes it on chain. A card published this way is still private by',
-  '    default: only the name and the address are readable until the owner opens a',
-  '    field, so an empty description in get_profile is the rule working.',
+  '    submit_card publishes it. What goes on chain is the fields you marked',
+  '    public plus a hash of the whole card — nothing else. A card published this',
+  '    way is still private by default: only the name and the address are readable',
+  '    until the owner opens a field, so an empty description in get_profile is',
+  '    the rule working.',
   '5. Otherwise, after they confirm, draft the card with draft_card (MCP). Fields are private',
   '   by default: only the name and the address are public unless your owner',
   '   chooses more. The card is not published until they sign it on the name page.',
@@ -146,7 +150,8 @@ export const ASK_TXT = [
   '- draft_card      builds an ERC-8004 card draft with a content hash. Not published.',
   '- prepare_card    read only. The card plus the exact hash to personal_sign when you',
   '                   own the name yourself.',
-  '- submit_card     publishes that signed card on chain. We pay the gas.',
+  '- submit_card     publishes it: public fields plus the card hash go on chain.',
+  '                   We pay the gas.',
   '- get_profile     read only. Any name: who owns it and what the owner published.',
   '',
   'READ-ONLY REST, WHEN THERE IS NO MCP',
@@ -155,7 +160,7 @@ export const ASK_TXT = [
   `- GET ${SITE_URL}/v1/names/<name>/card/versions   card history from this index`,
   `- GET ${SITE_URL}/v1/config                       brand, chain, prices, limits`,
   `- GET ${SITE_URL}/v1/metrics                      public numbers, and what is not measured`,
-  `- GET ${SITE_URL}/.well-known/musename.json       how to check us without trusting us`,
+  `- GET ${SITE_URL}/.well-known/musepass.json       how to check us without trusting us`,
   '',
   'HARD RULES (these are the product, not bureaucracy)',
   '- Someone signs, and it is the owner of the name. If that is your own wallet,',
@@ -185,13 +190,15 @@ export const ASK_TXT = [
   '   recompute its content hash, and compare it with contentHash in the response.',
   '3. That a batch of records existed at a point in time: recompute the merkle root',
   '   from the anchor transaction calldata (tag, root, count, timestamp).',
-  `4. Why the domain can be believed about the chain facts: ${SITE_URL}/.well-known/musename.json`,
+  `4. Why the domain can be believed about the chain facts: ${SITE_URL}/.well-known/musepass.json`,
   '',
   'WHAT IS NOT TRUE YET (say so if you are asked)',
-  '- There is no record contract in production. The registry contract is written and',
+  // claims-allow-block: independent-verifier — this section exists to deny the claim
+  '- There is no record contract in production. The record contract is written and',
   '  tested, but not deployed, so no verdicts exist on chain yet.',
   '- The only verifier today is the project engine (the project's own engine), so nothing is',
   '  independently verified. Never call it independent.',
+  // claims-allow-end: independent-verifier
   '- The operator behind a name is not identity-checked.',
   `- The registry admin is a hot wallet today; the project publishes that in ${SITE_URL}/trust`,
   '  rather than hiding it.',

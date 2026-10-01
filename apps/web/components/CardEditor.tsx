@@ -126,7 +126,9 @@ export function CardEditor({
     const explorer = config.chain.explorer;
     return (
       <div className="panel">
-        <div className="notice notice-ok">The card is on chain.</div>
+        <div className="notice notice-ok">
+          The public part of your card is on chain — private fields were never written.
+        </div>
         <dl className="kv">
           <dt>Content hash</dt>
           <dd className="mono-break">{result.contentHash}</dd>
