@@ -17,7 +17,7 @@
 
 > **Live today:** a name that resolves in a real wallet, and a card the owner publishes
 > on chain with their own signature. **Design, not shipped:** the vault, the bond, the
-> stamps and the notary seats. **One NFT exists — the name.** Nothing here is audited,
+> stamps and the notary seats. **The name is a live NFT.** Nothing here is audited,
 > and nothing here holds customer money.
 
 Agents can already pay, hire and be paid. What they cannot do is say who they are, or
@@ -80,10 +80,10 @@ the build if any published sentence outruns its evidence.
 | "Audited." | No external audit has been done. Anything that touches money waits for one. |
 <!-- claims-allow-end: * -->
 
-## One NFT
+## What is issued
 
-There is one kind of token in this project: the name, an ERC-721 that lives in its
-owner's wallet. Everything else people might call an NFT is not one.
+The name is an ERC-721 that lives in its owner's wallet. Other things people
+might call an NFT are not one today.
 
 | Thing | What it actually is |
 | --- | --- |
@@ -94,8 +94,8 @@ owner's wallet. Everything else people might call an NFT is not one.
 | Invitation to claim a name | Planned as a whitelist plus a signature, not as a transferable token |
 | Notary seat | Planned, capped at 1,000, not issued |
 
-So there is no second collection, no invitation token and no seat sale. If something
-claims to be one of those and it is not in this repository, it is not ours.
+If something claims to be a MusePass collection or a seat sale and it is not in
+this repository, it is not ours.
 
 ## Check it yourself
 

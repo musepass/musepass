@@ -57,10 +57,9 @@ export default async function TrustPage() {
               replaced without touching any name.
             </li>
             <li>
-              Exactly one thing is issued today: the name, an ERC-721 that sits in your wallet. The card
+              Issued today: the name, an ERC-721 that sits in your wallet. The card
               is an on-chain record, not a token, and the stamps on a passport are not tokens either.
-              There is no second collection, no invitation token and no seat sale. If something claims
-              to be one of those and it is not in{' '}
+              If something claims to be a MusePass collection or a seat sale and it is not in{' '}
               <a href="https://github.com/musepass/musepass">this repository</a>, it is not ours.
             </li>
           </ul>

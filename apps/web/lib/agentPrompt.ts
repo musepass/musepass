@@ -171,7 +171,7 @@ export const ASK_TXT = [
   '  the only thing the registrar will accept; anything else fails.',
   '- Report exactly what a tool returned. If a field is missing, say it is missing.',
   '  Never fill a gap with a plausible value.',
-  '- Do not promise income, returns, rankings or a token. There is no token.',
+  '- Do not promise income, returns or rankings.',
   '- "Unproven" is not a pass. Keep the three outcomes apart: pass, fail, unproven.',
   '- This project is not affiliated with Meta or with any AI vendor. Say so if asked.',
   '',

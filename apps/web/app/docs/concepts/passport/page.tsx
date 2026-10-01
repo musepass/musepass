@@ -120,7 +120,7 @@ export default async function PassportConceptPage() {
 
             <h2 className="h3">Ownership and transfer</h2>
             <p>
-              The name is the only token the project issues. Owning it is owning the name: it moves
+              The name is an ERC-721 that lives in its own right. Owning it is owning the name: it moves
               with the wallet, it can be sold or given away, and the registry has no burn function
               and no admin transfer. On a transfer the passport resets — the card stays (it is the
               name&apos;s record) but the reputation does not follow the previous owner. The exact

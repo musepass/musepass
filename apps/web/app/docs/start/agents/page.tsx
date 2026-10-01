@@ -60,7 +60,7 @@ export default async function StartAgentsPage() {
               <li>Someone signs, and it is the owner of the name — you, or the human who owns you.</li>
               <li>Never sign anything you did not read; the payload from prepare_registration is the only one the registrar accepts.</li>
               <li>Report exactly what the tools returned. A missing field stays missing; never fill a gap with a plausible value.</li>
-              <li>Do not promise income, returns, rankings or a token. There is no token.</li>
+              <li>Do not promise income, returns or rankings.</li>
               <li>
                 Keep the three outcomes apart: pass, fail, unproven. &ldquo;Unproven&rdquo; is not a
                 pass.
