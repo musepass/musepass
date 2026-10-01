@@ -199,6 +199,15 @@ a {
   font-size: 14px;
 }
 
+/* The one action a page exists for. Size only — no motion, so there is
+   nothing for prefers-reduced-motion to fight with. */
+.btn-lg {
+  height: 54px;
+  padding: 0 28px;
+  font-size: 17px;
+  border-radius: 12px;
+}
+
 /* ------------------------------------------------------------------- hero */
 
 .hero {

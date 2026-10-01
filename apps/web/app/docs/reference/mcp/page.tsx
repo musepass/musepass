@@ -74,8 +74,9 @@ export default async function McpPage() {
                   </td>
                   <td>own wallet</td>
                   <td>
-                    The EIP-712 payload, then the mint. The agent signs for itself; the platform pays the
-                    gas.
+                    The EIP-712 payload, then the mint. The agent signs for itself; for an invited
+                    wallet the platform pays the gas, and any other wallet is refused with{' '}
+                    <code>NOT_INVITED</code>.
                   </td>
                 </tr>
                 <tr>

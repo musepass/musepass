@@ -345,13 +345,20 @@ describe('GET /v1/names/{name}/available', () => {
 });
 
 describe('GET /v1/invitations', () => {
+  // The live config grows as real invitations go out, so these tests read the
+  // count from the same file instead of hardcoding it.
+  function issuedIn(config: MusenameConfig): number {
+    return config.invitations.invitations.filter((row) => !row.$example).length;
+  }
+
   it('publishes counts, never the list', async () => {
     const { app } = buildApp();
     const body = await (await app.request('/v1/invitations')).json();
 
-    expect(body.data.issued).toBe(3);
+    const issued = issuedIn(testConfig());
+    expect(body.data.issued).toBe(issued);
     expect(body.data.claimed).toBe(0);
-    expect(body.data.remaining).toBe(3);
+    expect(body.data.remaining).toBe(issued);
     expect(body.data.claimsSource).toBe('memory');
     // The one thing this endpoint must not do: name a wallet or a handle.
     expect(JSON.stringify(body)).not.toContain('d2b294');
@@ -381,9 +388,9 @@ describe('GET /v1/invitations', () => {
     });
 
     const body = await (await app.request('/v1/invitations')).json();
-    expect(body.data.issued).toBe(4);
+    expect(body.data.issued).toBe(issuedIn(config));
     expect(body.data.claimed).toBe(1);
-    expect(body.data.remaining).toBe(3);
+    expect(body.data.remaining).toBe(issuedIn(config) - 1);
 
     // And a claim recorded outside the config file still counts.
     await deps.invitationClaims.markClaimed({
@@ -443,9 +450,31 @@ describe('genesis cover', () => {
 });
 
 describe('POST /v1/names/claim', () => {
-  it('issues the name to the signer and records the sponsorship', async () => {
+  it('refuses an uninvited wallet at any label length', async () => {
     const { app, deps } = buildApp();
     const { signature } = await signClaim('aguang', deps.config, futureSeconds);
+
+    const response = await app.request('/v1/names/claim', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'aguang',
+        owner: ownerAccount.address,
+        deadline: futureSeconds,
+        signature,
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.errors[0].code).toBe('NOT_INVITED');
+    expect((deps.chain as FakeChain).registrations).toHaveLength(0);
+  });
+
+  it('issues the name to an invited wallet and records the sponsorship', async () => {
+    const config = invitedConfig();
+    const { app, deps } = buildApp({ config });
+    const { signature } = await signClaim('aguang', config, futureSeconds);
 
     const response = await app.request('/v1/names/claim', {
       method: 'POST',
@@ -678,8 +707,9 @@ describe('POST /v1/names/claim', () => {
   });
 
   it('is idempotent for the same owner', async () => {
-    const { app, deps } = buildApp();
-    const { signature } = await signClaim('aguang', deps.config, futureSeconds);
+    const config = invitedConfig();
+    const { app, deps } = buildApp({ config });
+    const { signature } = await signClaim('aguang', config, futureSeconds);
     const payload = JSON.stringify({
       label: 'aguang',
       owner: ownerAccount.address,
@@ -699,7 +729,8 @@ describe('POST /v1/names/claim', () => {
   });
 
   it('enforces the per wallet free name limit', async () => {
-    const { app, deps } = buildApp();
+    const config = invitedConfig();
+    const { app, deps } = buildApp({ config });
     await deps.names.insert({
       label: 'existing',
       fullName: 'existing.musepass.eth',
@@ -711,7 +742,7 @@ describe('POST /v1/names/claim', () => {
       agentHost: null,
       txHash: null,
     });
-    const { signature } = await signClaim('aguang2', deps.config, futureSeconds);
+    const { signature } = await signClaim('aguang2', config, futureSeconds);
 
     const response = await app.request('/v1/names/claim', {
       method: 'POST',
@@ -732,8 +763,9 @@ describe('POST /v1/names/claim', () => {
   it('returns a clear error when the chain call fails, and mints nothing', async () => {
     const chain = fakeChain();
     chain.failNext = true;
-    const { app, deps } = buildApp({ chain });
-    const { signature } = await signClaim('aguang', deps.config, futureSeconds);
+    const config = invitedConfig();
+    const { app, deps } = buildApp({ chain, config });
+    const { signature } = await signClaim('aguang', config, futureSeconds);
 
     const response = await app.request('/v1/names/claim', {
       method: 'POST',
@@ -775,7 +807,7 @@ describe('POST /v1/names/claim', () => {
   });
 
   it('rate limits repeated claims from one wallet', async () => {
-    const config = testConfig();
+    const config = invitedConfig();
     const chain = fakeChain();
     const { app } = buildApp({ chain, config });
 

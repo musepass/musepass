@@ -8,7 +8,7 @@ import { fetchConfig, fetchMetrics } from '@/lib/api';
 export const metadata = {
   title: 'Pricing and limits',
   description:
-    'The first name is free from five characters. Short names have approved prices and are not on sale yet. Every cap is published.',
+    'Names are issued by invitation; for invited wallets the first name is free. Short names have approved prices and are not on sale yet. Every cap is published.',
 };
 
 export const revalidate = 300;
@@ -33,16 +33,20 @@ export default async function PricingConceptPage() {
             <h1 className="h2">Pricing and limits</h1>
             <DocsLede
               status="live"
-              lede="Free from five characters up, one per wallet, we pay the gas. Short-name prices are approved and not on sale yet. The caps are published live."
+              lede="Names are issued by invitation, one per wallet, and for invited wallets we pay the gas. Short-name prices are approved and not on sale yet. The caps are published live."
             />
 
-            <h2 className="h3">Free names</h2>
+            <h2 className="h3">Invited names</h2>
             <ul>
               <li>
-                Five display units or longer (a CJK character counts as two), one free name per
-                wallet.
+                One invitation, written to a wallet address or an X account, covers one name —
+                including a 3–4 character short name. A wallet without an invitation is refused, at
+                any length.
               </li>
-              <li>Registration is sponsored: the project pays the gas, your wallet pays nothing.</li>
+              <li>
+                Registration is sponsored for invited wallets: the project pays the gas, your wallet
+                pays nothing.
+              </li>
               <li>
                 Labels: no emoji, no leading or trailing hyphen, no mixed confusable scripts — the
                 availability endpoint says which rule rejected a name, and &ldquo;taken&rdquo; is
@@ -76,7 +80,6 @@ export default async function PricingConceptPage() {
               only, one- and two-character names are reserved for the project, and nobody has been
               charged anything.
             </p>
-
             <h2 className="h3">The caps, live</h2>
             <p>
               Sponsored registration is capped so a leak is a fender-bender, not a firehose. These
@@ -90,7 +93,7 @@ export default async function PricingConceptPage() {
               <table className="docs-table">
                 <tbody>
                   <tr>
-                    <td>Total free names (hard cap)</td>
+                    <td>Names issued (hard cap)</td>
                     <td className="mono">{budget.freeNamesTotalCap.toLocaleString('en-US')}</td>
                   </tr>
                   <tr>
@@ -138,7 +141,7 @@ export default async function PricingConceptPage() {
 
             <div className="docs-next">
               <Link className="btn btn-primary" href="/claim">
-                Claim a free name
+                Claim a name
               </Link>
               <a className="btn" href={`${config.siteUrl}/v1/metrics`}>
                 The live numbers

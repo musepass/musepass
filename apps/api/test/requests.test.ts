@@ -40,6 +40,29 @@ function testConfig(): MusenameConfig {
   });
 }
 
+// Sponsorship is invitation-only, so every claim that is expected to succeed
+// in this suite runs on a config that carries an invitation for the signer.
+function invitedConfig(): MusenameConfig {
+  const config = testConfig();
+  return {
+    ...config,
+    invitations: {
+      ...config.invitations,
+      invitations: [
+        ...config.invitations.invitations,
+        {
+          wallet: ownerAccount.address,
+          issuedBy: 'test',
+          issuedAt: '2026-09-30',
+          claimedAt: null,
+          claimedLabel: null,
+          txHash: null,
+        },
+      ],
+    },
+  };
+}
+
 function fakeChain(taken = new Set<string>()): ChainReader {
   return {
     async listNames() {
@@ -246,7 +269,8 @@ describe('GET /v1/requests/{id}', () => {
 
 describe('claiming through a request', () => {
   it('registers the name when the owner signs with a valid token', async () => {
-    const { app, deps } = buildApp();
+    const config = invitedConfig();
+    const { app, deps } = buildApp({ config });
     const { body } = await createRequest(app, 'aguang');
     const token = new URL(body.data.confirmUrl).searchParams.get('token')!;
 
@@ -306,7 +330,8 @@ describe('claiming through a request', () => {
   });
 
   it('a confirmed request cannot be reused for a different name', async () => {
-    const { app, deps } = buildApp();
+    const config = invitedConfig();
+    const { app, deps } = buildApp({ config });
     const { body } = await createRequest(app, 'aguang');
     const token = new URL(body.data.confirmUrl).searchParams.get('token')!;
 
@@ -325,7 +350,8 @@ describe('claiming through a request', () => {
   });
 
   it('still works without a request, for the web flow', async () => {
-    const { app, deps } = buildApp();
+    const config = invitedConfig();
+    const { app, deps } = buildApp({ config });
     const { response } = await claim(app, deps.config, 'aguang');
     expect(response.status).toBe(201);
   });

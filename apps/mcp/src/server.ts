@@ -105,7 +105,7 @@ export function createServer(api: MusenameApi, config: MusenameConfig): McpServe
     {
       title: 'Prepare a registration for an agent that signs for itself',
       description:
-        'Use this when you have your OWN wallet and will sign for yourself. Returns the exact EIP-712 payload to sign for a name; hand the signature to submit_registration and the name is issued to that address, with the project paying the gas. Use request_name instead if you have no wallet of your own: it returns a confirmation link for your owner to sign.',
+        'Use this when you have your OWN wallet and will sign for yourself. Returns the exact EIP-712 payload to sign for a name; hand the signature to submit_registration and the name is issued to that address, with the project paying the gas for invited wallets. A wallet with no invitation is refused with NOT_INVITED and nothing is created. Use request_name instead if you have no wallet of your own: it returns a confirmation link for your owner to sign.',
       inputSchema: {
         name: z.string().describe('The name to register, with or without the root suffix.'),
         ownerAddress: z.string().describe('Your own wallet address, the one that will sign and own the name.'),
@@ -119,7 +119,7 @@ export function createServer(api: MusenameApi, config: MusenameConfig): McpServe
     {
       title: 'Submit a signature and receive the name',
       description:
-        'Second half of the self-signing path. Takes the signature you produced over the prepare_registration payload and issues the name to that address. The signature is verified against the registrar before anything is spent, so a wrong payload simply fails.',
+        'Second half of the self-signing path. Takes the signature you produced over the prepare_registration payload and issues the name to that address, for invited wallets only (the project pays the gas); any other wallet is refused with NOT_INVITED. The signature is verified against the registrar before anything is spent, so a wrong payload simply fails.',
       inputSchema: {
         label: z.string().describe('The label that was signed.'),
         owner: z.string().describe('The wallet address that signed.'),

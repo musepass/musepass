@@ -105,6 +105,9 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
   }, [mode, requestId, check]);
 
   const isAvailable = availability?.kind === 'available';
+  // Availability is checked with the wallet's identity, so once connected this
+  // is authoritative: no invitation, no name — at any length.
+  const invited = availability?.kind === 'available' && availability.invited;
   // Only an injected wallet can sit on the wrong network; an embedded wallet
   // just signs and never sends a transaction.
   const wrongChain =
@@ -112,6 +115,11 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
     Boolean(wallet.address) &&
     wallet.chainId !== config.chain.chainId;
   const busy = phase === 'signing' || phase === 'submitting';
+  // A connected wallet without an invitation can never be issued a name, so
+  // the button says so instead of letting the signature happen and the API
+  // refuse it afterwards. Anonymous visitors still get the button: connecting
+  // is how their invitation (if any) is found.
+  const blockUninvited = Boolean(wallet.address) && isAvailable && !invited;
 
   /**
    * Whatever is still missing, in order: connect a wallet (the browser
@@ -319,7 +327,7 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
             </button>
           </div>
           <div className="status" aria-live="polite">
-            <AvailabilityLine view={availability} config={config} />
+            <AvailabilityLine view={availability} config={config} signedIn={Boolean(wallet.address)} />
           </div>
         </div>
       </div>
@@ -329,9 +337,10 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
           Step 2: connect a wallet and sign
         </h3>
         <p className="body-2" style={{ fontSize: 15 }}>
-          The name goes straight to this wallet address, and we pay the gas. Nothing is issued until
-          this wallet signs — neither we nor your AI can sign instead of you. (AIs with no wallet at
-          all can use our custodial signer service instead; that path is explained in{' '}
+          The name goes straight to this wallet address. For invited wallets we pay the gas; nothing
+          is issued until this wallet signs — neither we nor your AI can sign instead of you. (AIs
+          with no wallet at all can use our custodial signer service instead; that path is explained
+          in{' '}
           <a href="/docs/reference/mcp">the MCP docs</a>.)
         </p>
 
@@ -344,6 +353,12 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
                 : wallet.address}
             </span>
             {wrongChain ? ` · switch to ${config.chain.name}` : ''}
+          </div>
+        ) : null}
+
+        {wallet.address && isAvailable && !invited ? (
+          <div className="notice notice-warn">
+            Names are issued by invitation, and this wallet or X handle has none yet.
           </div>
         ) : null}
 
@@ -367,21 +382,25 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
           ) : null}
           <button
             type="button"
-            className="btn btn-primary"
-            disabled={!isAvailable || busy || wallet.connecting || phase === 'loading'}
+            className="btn btn-primary btn-lg"
+            disabled={
+              !isAvailable || busy || wallet.connecting || phase === 'loading' || blockUninvited
+            }
             onClick={() => void start()}
           >
-            {wallet.connecting
-              ? 'Connecting…'
-              : !wallet.address
-                ? 'Connect and claim'
-                : wrongChain
-                  ? `Switch to ${config.chain.name} and claim`
-                  : phase === 'signing'
-                    ? 'Waiting for your signature…'
-                    : phase === 'submitting'
-                      ? 'Issuing…'
-                      : 'Sign and claim'}
+            {blockUninvited
+              ? 'Invitation required'
+              : wallet.connecting
+                ? 'Connecting…'
+                : !wallet.address
+                  ? 'Connect and claim'
+                  : wrongChain
+                    ? `Switch to ${config.chain.name} and claim`
+                    : phase === 'signing'
+                      ? 'Waiting for your signature…'
+                      : phase === 'submitting'
+                        ? 'Issuing…'
+                        : 'Sign and claim'}
           </button>
           {wallet.address ? (
             <button type="button" className="btn" onClick={disconnect} disabled={busy}>
@@ -424,17 +443,28 @@ function CopyForAgent({ text }: { text: string }) {
 function AvailabilityLine({
   view,
   config,
+  signedIn,
 }: {
   view: AvailabilityView | null;
   config: PublicConfig;
+  signedIn: boolean;
 }) {
   if (!view) return <span className="status-idle">Type a name to see whether it is free.</span>;
   switch (view.kind) {
     case 'available':
+      if (!view.invited) {
+        return (
+          <span className="status-ok">
+            {view.label}.{config.rootName} is available.{' '}
+            {signedIn
+              ? 'Names are issued by invitation, and this account has none yet.'
+              : 'Names are issued by invitation — connect a wallet or sign in with X to check yours.'}
+          </span>
+        );
+      }
       return (
         <span className="status-ok">
-          {view.label}.{config.rootName} is available, free.
-          {view.invited ? ' Your invitation covers this short name.' : ''}
+          {view.label}.{config.rootName} is available, free. Your invitation covers this name.
         </span>
       );
     case 'taken':
@@ -452,7 +482,9 @@ function AvailabilityLine({
         <span className="status-warn">
           {view.label} is short enough to be a premium name.{' '}
           {config.features.premiumPurchase ? '' : 'Premium names are not on sale yet.'}
-          {!config.features.premiumPurchase ? ' Invited wallets can still take a 3–4 character name — connect your wallet to check.' : ''}
+          {!config.features.premiumPurchase
+            ? ' Names are issued by invitation — an invited wallet can still take a 3–4 character name free.'
+            : ''}
         </span>
       );
     case 'reserved':

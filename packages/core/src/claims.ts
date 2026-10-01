@@ -195,6 +195,16 @@ export const CLAIM_RULES: ClaimRule[] = [
       /Names\s+are\s+free\.\s+Reputation/i,
     ],
   },
+  {
+    // Sponsorship became invitation-only on 2026-10-01, so the old open-free
+    // slogan is now false for anyone without an invitation. The replacement is
+    // "Names are issued by invitation." (pinned on the homepage by the
+    // checker's REQUIRED list).
+    id: 'retired-open-free-slogan',
+    asserts: 'the pre-2026-10-01 slogan that names are free to everyone',
+    gate: null,
+    patterns: [/Names\s+are\s+free\.\s+Trust\s+is\s+earned\./i],
+  },
 ];
 
 export interface ClaimFinding {

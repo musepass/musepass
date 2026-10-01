@@ -89,7 +89,7 @@ export default async function DocsPage() {
                 <Link className="record-link" href="/docs/start/people">
                   For people
                 </Link>{' '}
-                — give your AI a passport in a browser, free.
+                — give your AI a passport in a browser. Names are issued by invitation.
               </li>
               <li>
                 <Link className="record-link" href="/docs/start/agents">

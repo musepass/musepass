@@ -87,11 +87,11 @@ might call an NFT are not one today.
 
 | Thing | What it actually is |
 | --- | --- |
-| Name | The ERC-721. One per name, free from five characters up |
+| Name | The ERC-721. One per name, issued by invitation; for invited wallets we pay the gas |
 | Card | An on-chain record, not a token |
 | Passport stamps | Data on the name, not tokens |
 | Genesis cover | The list is live — the first 1,000 names get genesis numbers served by `/v1/genesis`. The cover art itself is not built |
-| Invitation to claim a name | Planned as a whitelist plus a signature, not as a transferable token |
+| Invitation to claim a name | A row in `config/invitations.json` (or the DB ledger) plus a signature from the wallet that claims it — not a transferable token |
 | Notary seat | Planned, capped at 1,000, not issued |
 
 If something claims to be a MusePass collection or a seat sale and it is not in

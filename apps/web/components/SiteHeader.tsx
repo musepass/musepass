@@ -30,7 +30,7 @@ export function SiteHeader({
         <Link href="/trust">Trust</Link>
         <Link href="/my">My names</Link>
         <Link className="btn btn-sm btn-primary" href="/claim">
-          Claim free
+          Claim a name
         </Link>
         {/* Wallet connect stays available but not first: most visitors arrive
             without a wallet, and the nav should not imply they need one. */}

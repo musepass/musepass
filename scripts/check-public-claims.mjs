@@ -127,6 +127,14 @@ const REQUIRED = [
     needle: '— example',
     because: 'the homepage record sample shows an invented record; it must say so',
   },
+  // Sponsorship policy (2026-10-01): names are issued by invitation only. The
+  // homepage must carry the sentence, so the policy cannot quietly vanish.
+  {
+    id: 'invitation-policy',
+    file: 'apps/web/app/page.tsx',
+    needle: 'Names are issued by invitation',
+    because: 'sponsorship is invitation-only; the homepage has to say so',
+  },
 ];
 
 const missing = [];

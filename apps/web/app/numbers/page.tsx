@@ -132,51 +132,50 @@ export default async function NumbersPage() {
                 events, or run <span className="mono">pnpm snapshot:names</span> in this repository.
               </p>
 
-              {metrics.budget ? (
+              {metrics.budget || invitations ? (
                 <>
                   <h2 className="faq-q" style={{ fontSize: 18, marginTop: 24 }}>
-                    Free-name budget
+                    Invitations and the budget
+                    {invitations?.campaign ? ` (${invitations.campaign})` : ''}
                   </h2>
                   <p className="body-2" style={{ fontSize: 14 }}>
-                    Free names are paid for by the platform, so the giveaway is finite. These are the
-                    caps and how much of each is spent; when a cap is reached, free claims pause and
-                    the claim endpoint says so.
+                    Names are issued by invitation, and every issued name is registered with gas the
+                    platform pays — so the giveaway is finite. These are the caps and how much of
+                    each is spent; when a cap is reached, claims pause and the claim endpoint says
+                    so. The invitation ledger publishes counts only: which wallets and accounts were
+                    invited is not published, on purpose.
                   </p>
-                  {row(
-                    'Free names issued (first-stage allocation)',
-                    `${metrics.budget.sponsoredLifetime} / ${metrics.budget.freeNamesTotalCap}`,
-                  )}
-                  {row('Issued today / daily cap', `${metrics.budget.sponsoredToday} / ${metrics.budget.platformPerDay}`)}
-                  {row(
-                    'Estimated gas paid so far',
-                    `$${metrics.budget.estimatedSpentUsd.toFixed(2)} / $${metrics.budget.totalCapUsd}`,
-                  )}
-                </>
-              ) : null}
+                  {metrics.budget ? (
+                    <>
+                      {row(
+                        'Names issued (first-stage allocation)',
+                        `${metrics.budget.sponsoredLifetime} / ${metrics.budget.freeNamesTotalCap}`,
+                      )}
+                      {row('Issued today / daily cap', `${metrics.budget.sponsoredToday} / ${metrics.budget.platformPerDay}`)}
+                      {row(
+                        'Estimated gas paid so far',
+                        `$${metrics.budget.estimatedSpentUsd.toFixed(2)} / $${metrics.budget.totalCapUsd}`,
+                      )}
+                    </>
+                  ) : null}
 
-              {invitations ? (
-                <>
-                  <h2 className="faq-q" style={{ fontSize: 18, marginTop: 24 }}>
-                    Invitations{invitations.campaign ? ` (${invitations.campaign})` : ''}
-                  </h2>
-                  <p className="body-2" style={{ fontSize: 14 }}>
-                    Short names (3–4 characters) are invitation only. This is the ledger of that
-                    campaign — counts only: which wallets and accounts were invited is not published,
-                    on purpose.
-                  </p>
-                  {row('Invitations issued', invitations.issued)}
-                  {row('Spent on a short name', invitations.claimed)}
-                  {row('Still open', invitations.remaining)}
-                  {invitations.rule ? (
-                    <p className="body-2" style={{ fontSize: 14, opacity: 0.75 }}>
-                      The invitation covers a name of {invitations.rule.min}–{invitations.rule.max}{' '}
-                      display units, one name per invitation. The spend count comes from the{' '}
-                      {invitations.claimsSource === 'postgres' ? 'database' : 'in-memory'} ledger
-                      {invitations.claimsSource === 'memory'
-                        ? ', so a restart of the service can undercount it until the database is attached'
-                        : ''}
-                      .
-                    </p>
+                  {invitations ? (
+                    <>
+                      {row('Invitations issued', invitations.issued)}
+                      {row('Spent on a 3–4 character name', invitations.claimed)}
+                      {row('Still open', invitations.remaining)}
+                      {invitations.rule ? (
+                        <p className="body-2" style={{ fontSize: 14, opacity: 0.75 }}>
+                          One invitation covers one name; a {invitations.rule.min}–{invitations.rule.max}{' '}
+                          character short name spends it. The spend count comes from the{' '}
+                          {invitations.claimsSource === 'postgres' ? 'database' : 'in-memory'} ledger
+                          {invitations.claimsSource === 'memory'
+                            ? ', so a restart of the service can undercount it until the database is attached'
+                            : ''}
+                          .
+                        </p>
+                      ) : null}
+                    </>
                   ) : null}
                 </>
               ) : null}

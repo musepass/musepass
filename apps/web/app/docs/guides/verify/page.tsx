@@ -58,10 +58,11 @@ pnpm verify:local`}</pre>
               </thead>
               <tbody>
                 <tr>
-                  <td>Free names</td>
+                  <td>Names</td>
                   <td>
-                    {config.pricing.freeMinUnits} display units or more (a CJK character counts as two),{' '}
-                    {config.limits.freeNamesPerWallet} per wallet. We pay the gas.
+                    Issued by invitation, {config.limits.freeNamesPerWallet} per wallet,{' '}
+                    {config.pricing.freeMinUnits} display units or longer (a CJK character counts as
+                    two). For invited wallets we pay the gas.
                   </td>
                 </tr>
                 <tr>

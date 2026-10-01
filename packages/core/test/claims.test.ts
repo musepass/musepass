@@ -73,10 +73,10 @@ describe('claim register', () => {
       'credit-score',
       'guaranteed-return',
     ]);
-    // Wording rules no gate can open: the two originals plus the ban list that
+    // Wording rules no gate can open: the two originals plus the ban lists that
     // grew out of the 2026-09-30 review (survival-independence, cannot-be-changed,
-    // retired-slogan).
-    expect(CLAIM_RULES.filter((rule) => rule.gate === null)).toHaveLength(5);
+    // retired-slogan) and the 2026-10-01 invitation switch (retired-open-free-slogan).
+    expect(CLAIM_RULES.filter((rule) => rule.gate === null)).toHaveLength(6);
   });
 
   it('flags an independence claim while we are still the only verifier', () => {

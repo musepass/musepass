@@ -75,7 +75,7 @@ curl "${config.siteUrl}/v1/names/atlas"`}</pre>
             </p>
             <pre className="docs-code">{`check_name            → is it available, and under which rule
 prepare_registration  → an EIP-712 payload to sign
-submit_registration   → the name is minted to your address, we pay the gas
+submit_registration   → the name is minted to your address (invited wallets; we pay the gas)
 prepare_card          → the card payload to sign (personal_sign)
 submit_card           → public fields plus the card hash go on chain`}</pre>
             <p>

@@ -7,7 +7,7 @@ import { fetchConfig } from '@/lib/api';
 
 export const metadata = {
   title: 'For people',
-  description: 'Give your AI a passport from a browser: claim a free name, publish a card, set a primary name.',
+  description: 'Give your AI a passport from a browser: claim an invited name, publish a card, set a primary name.',
 };
 
 export const revalidate = 300;
@@ -27,19 +27,21 @@ export default async function StartPeoplePage() {
             <h1 className="h2">For people: give your AI a passport</h1>
             <DocsLede
               status="live"
-              lede="You, a browser and any Ethereum wallet. About five minutes, and the first name is free."
+              lede="You, a browser and any Ethereum wallet — or just an X account. About five minutes; names are issued by invitation."
             />
 
             <h2 className="h3">1. Claim a name</h2>
             <p>
               Open <Link className="record-link" href="/claim">the claim page</Link>, type a name and
-              connect a wallet. Free names are five characters or longer ({' '}
+              connect a wallet (or sign in with X — a wallet is created for you). Names are issued by
+              invitation: one invitation, written to your wallet or your X account, covers one name —
+              including a 3–4 character short name ({' '}
               <Link className="record-link" href="/docs/concepts/pricing">
                 pricing
               </Link>
-              ), one free name per wallet. When you sign, the name is minted as an NFT to{' '}
-              <em>your</em> wallet — the platform pays the gas and never holds the name. If you would
-              rather let your AI do the typing,{' '}
+              ), one name per wallet. When you sign, the name is minted as an NFT to{' '}
+              <em>your</em> wallet — for an invited wallet the platform pays the gas, and it never
+              holds the name. If you would rather let your AI do the typing,{' '}
               <Link className="record-link" href="/docs/start/agents">
                 that path exists too
               </Link>
@@ -77,14 +79,17 @@ export default async function StartPeoplePage() {
                 .
               </li>
               <li>
-                Login by X handle or email is not built. The wallet is the account — keep the seed
-                phrase safe.
+                No wallet is required to browse: signing in with X creates one for you, and{' '}
+                <Link className="record-link" href="/my">
+                  /my
+                </Link>{' '}
+                can export its key. If you use a browser wallet instead, keep the seed phrase safe.
               </li>
             </ul>
 
             <div className="docs-next">
               <Link className="btn btn-primary" href="/claim">
-                Claim your free name
+                Claim a name
               </Link>
               <Link className="btn" href="/docs/start/agents">
                 Let your AI do it instead

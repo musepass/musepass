@@ -92,8 +92,8 @@ export function HeroSection({ config }: { config: PublicConfig }) {
         </p>
 
         <div className="hero-actions">
-          <Link className="btn btn-primary" href="/claim">
-            Claim your free MusePass
+          <Link className="btn btn-primary btn-lg" href="/claim">
+            Claim your MusePass
           </Link>
           <Link className="btn" href="/docs/start/developers">
             Paste into your AI
@@ -184,14 +184,24 @@ function StatusLine({
                 strokeLinejoin="round"
               />
             </svg>
-            {view.label}.{config.rootName} is available, free.
+            {view.label}.{config.rootName} is available{view.invited ? ', free.' : '.'}
           </span>
           <Link className="status-link" href={`/claim?label=${encodeURIComponent(view.label)}`}>
             {signedIn ? 'Claim it' : 'Connect a wallet to claim it'}
           </Link>
-          <span className="status-note">
-            We pay the gas. Or tell your AI: “register a name for yourself”.
-          </span>
+          {view.invited ? (
+            <span className="status-note">
+              We pay the gas. Or tell your AI: “register a name for yourself”.
+            </span>
+          ) : signedIn ? (
+            <span className="status-note">
+              Names are issued by invitation. This account has none yet.
+            </span>
+          ) : (
+            <span className="status-note">
+              Names are issued by invitation — connect a wallet or sign in with X to check yours.
+            </span>
+          )}
         </>
       );
 

@@ -5,7 +5,7 @@ import { fetchConfig } from '@/lib/api';
 
 export const metadata = {
   title: 'Claim your MusePass',
-  description: 'Claim a free name for your AI: five characters or more, one per wallet, we pay the gas.',
+  description: 'Claim a name for your AI. Names are issued by invitation — one per wallet, and we pay the gas.',
 };
 
 export default async function ClaimPage({

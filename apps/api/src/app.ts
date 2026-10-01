@@ -1720,7 +1720,7 @@ export function createApp(deps: MusenameDeps) {
 
     // 2c. Same rule, as a rejection with its own code: the checkLabel pass above
     //     already waived the premium gate when the invitation allows it, so this
-    //     branch is what an uninvited or already-served wallet hits.
+    //     branch is what an already-served wallet hits.
     const units = policy.units ?? 0;
     let usedInvitation = false;
     if (units > 0 && units <= INVITED_MAX_UNITS) {
@@ -1867,6 +1867,31 @@ export function createApp(deps: MusenameDeps) {
         );
       }
       confirmedRequestId = request.id;
+    }
+
+    // Sponsorship is invitation-only: every registration the issuer pays for
+    // is tied to an invitation (by wallet, or by a Privy-verified X handle).
+    // An uninvited wallet gets nothing issued, at any label length. Reserved,
+    // taken and request-token answers came earlier; this is the last stop
+    // before the issuer's gas is counted.
+    if (!invitation) {
+      return c.json(
+        {
+          summary: {
+            zh: '名字仅通过邀请发放；这个钱包或 X 账号目前没有邀请。',
+            en: 'Names are issued by invitation; this wallet or X handle has none.',
+          },
+          data: { label, suggestions: [] },
+          errors: [
+            boom('NOT_INVITED', 'no invitation for this wallet or X handle', {
+              zh: '这次领取没有创建任何名字。',
+              en: 'No name was created.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        403,
+      );
     }
 
     // 4. sponsorship budget.

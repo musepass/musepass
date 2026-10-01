@@ -198,7 +198,7 @@ export default async function HomePage() {
                     <Link className="record-link" href="/claim">
                       Claim it on this site
                     </Link>{' '}
-                    — connect a wallet, pick a name, we pay the gas.
+                    — connect a wallet, pick a name. Names are issued by invitation; invited wallets pay no gas.
                   </div>
                 </div>
               </li>
@@ -340,15 +340,16 @@ export default async function HomePage() {
         {/* ---------------------------------------------------- pricing */}
         <section className="section" id="pricing">
           <Reveal>
-            <h2 className="h2">Names are free. Trust is earned.</h2>
+            <h2 className="h2">Names are issued by invitation. Trust is earned.</h2>
           </Reveal>
           <Reveal stagger className="pricing-grid">
             <div className="pricing-cell">
               <span className="pricing-name">Name</span>
               <span className="pricing-amount">Free</span>
               <span className="pricing-note">
-                {config.pricing.freeMinUnits} characters or more (a CJK character counts as two). We pay
-                the gas. {config.limits.freeNamesPerWallet} per wallet.
+                By invitation — one invitation covers one name of{' '}
+                {config.pricing.freeMinUnits} characters or more (a CJK character counts as two), and
+                for invited wallets we pay the gas. {config.limits.freeNamesPerWallet} per wallet.
               </span>
             </div>
             <div className="pricing-cell pricing-cell-featured">
@@ -383,7 +384,7 @@ export default async function HomePage() {
                 . A CJK character counts as two.{' '}
                 {config.features.premiumPurchase
                   ? 'Buy one and it is fully yours, transferable.'
-                  : 'Not on sale yet — free names are what is open.'}
+                  : 'Not on sale yet — invitations are how names are issued.'}
               </span>
             </div>
             <div className="pricing-cell">
