@@ -398,12 +398,20 @@ export default async function HomePage() {
         </section>
 
         {/* --------------------------------------------------- developers
-            Entry points only. The paste block itself moved to /developers so
-            this page stays readable for the people it is now written for. */}
+            Entry points only. The paste block itself moved to the developer
+            docs so this page stays readable for the people it is written for. */}
         <section className="section" id="developers">
           <h2 className="h2" style={{ maxWidth: '18em' }}>
             Building with agents?
           </h2>
+          <p className="body-2" style={{ marginBottom: 20 }}>
+            The documentation is organised by who is reading — people, agents, merchants,
+            developers:{' '}
+            <Link className="record-link" href="/docs">
+              /docs
+            </Link>
+            .
+          </p>
           <div className="three-grid">
             <div className="three-item">
               <span className="three-title">MCP</span>
