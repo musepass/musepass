@@ -18,11 +18,23 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HOST="${MUSEPASS_HOST:-root@server address withheld}"
+HOST="${MUSEPASS_HOST:-$(cat "$(dirname "$0")/../.secrets/host" 2>/dev/null || true)}"
+if [ -z "$HOST" ]; then
+  echo "error: no deploy host. Set MUSEPASS_HOST or put it in .secrets/host (gitignored)." >&2
+  exit 1
+fi
 SSH_KEY="${MUSEPASS_SSH_KEY:-$HOME/.ssh/musename_deploy}"
 NEW_DOMAIN="${MUSEPASS_DOMAIN:-musepass.xyz}"
 OLD_DOMAIN="${MUSEPASS_OLD_DOMAIN:-musename.xyz}"
-EXPECTED_IP="${MUSEPASS_EXPECTED_IP:-server address withheld}"
+EXPECTED_IP="${MUSEPASS_EXPECTED_IP:-}"
+if [ -z "$EXPECTED_IP" ] && [ -f "$ROOT_DIR/.secrets/host" ]; then
+  # .secrets/host holds "user@1.2.3.4"; the DNS check wants the address.
+  EXPECTED_IP="$(sed 's/.*@//' "$ROOT_DIR/.secrets/host")"
+fi
+if [ -z "$EXPECTED_IP" ]; then
+  echo "error: no expected server address. Set MUSEPASS_EXPECTED_IP or put it in .secrets/host (gitignored)." >&2
+  exit 1
+fi
 
 APPLY=""
 FROM=""
