@@ -22,7 +22,9 @@ import {
   namehash,
   normalizeLabel,
   parseCardDataUri,
+  quotePurchase,
   registerMessage,
+  toBaseUnits,
   validateCard,
   verifyCardTextSignature,
   verifyRegisterSignature,
@@ -67,7 +69,7 @@ function boom(
 }
 
 export function createApp(deps: MusenameDeps) {
-  const { config, reservedIndex, chain, names, requests, cards, sponsorship, invitationClaims, indexKind, clock } = deps;
+  const { config, reservedIndex, chain, names, requests, cards, sponsorship, invitationClaims, purchases, indexKind, clock } = deps;
   const app = new Hono();
   const buckets = new Map<string, RateBucket>();
 
@@ -230,6 +232,20 @@ export function createApp(deps: MusenameDeps) {
         registrar: registrarAddress || null,
         l2Registry: chains.l2.l2Registry ?? null,
         usdc: chains.l2.usdc ?? null,
+        payment: (() => {
+          // D19: only publish payment facts when the rail is actually enabled.
+          const purchase = pricing.purchase;
+          if (!purchase?.enabled) return null;
+          return {
+            currency: purchase.currency,
+            token: purchase.token,
+            tokenDecimals: purchase.tokenDecimals,
+            treasury: purchase.treasury,
+            quoteTtlMinutes: purchase.quoteTtlMinutes,
+            additionalNameEnabled: purchase.additionalNameEnabled,
+            additionalNameUsd: pricing.additionalName?.priceUsd ?? null,
+          };
+        })(),
         pricing: {
           currency: pricing.currency,
           freeMinUnits: pricing.freeTier.minUnits,
@@ -239,9 +255,12 @@ export function createApp(deps: MusenameDeps) {
             minUnits: tier.minCodePoints,
             maxUnits: tier.maxCodePoints,
             priceUsd: tier.priceUsd,
-            // Phase 1 refuses to sell premium names, so the front end must not
-            // offer a purchase even though a price exists.
-            sellable: tier.status !== 'placeholder',
+            // D19: only the 4-character tier is sellable, and only while the
+            // purchase rail is enabled. Tiers 1–3 stay project-reserved.
+            sellable:
+              tier.maxCodePoints === 4 &&
+              tier.status !== 'placeholder' &&
+              Boolean(pricing.purchase?.enabled),
           })),
           certificationMonthlyUsd: pricing.certification.monthlyUsd,
         },
@@ -255,7 +274,9 @@ export function createApp(deps: MusenameDeps) {
         features: {
           cards: false,
           trackRecord: false,
-          premiumPurchase: false,
+          // Derived from config (D19), not hardcoded: it is true exactly when
+          // the purchase routes above are open for business.
+          premiumPurchase: Boolean(pricing.purchase?.enabled),
           aiRegistration: true,
         },
       },
@@ -660,6 +681,20 @@ export function createApp(deps: MusenameDeps) {
         ? invitedShortNameDecision(effectiveInvitation, result.units).allowed
         : null;
 
+    // D19: what the same wallet would pay if it bought the name instead of
+    // claiming it. Display-only, like `invited`; the authoritative quote comes
+    // from POST /v1/names/purchase/quote.
+    let purchase: { kind: string; priceUsd: number } | null = null;
+    if (ownerQuery && result.units !== null && config.pricing.purchase?.enabled) {
+      const ownerHasName = (await names.listByOwner(ownerQuery as Address)).length > 0;
+      const purchaseQuote = quotePurchase(result.units, ownerHasName, config.pricing);
+      // 'free-first' is not an offer to buy — showing it here would put a $0
+      // price next to "use the claim flow".
+      if (purchaseQuote && purchaseQuote.kind !== 'free-first') {
+        purchase = { kind: purchaseQuote.kind, priceUsd: purchaseQuote.priceUsd };
+      }
+    }
+
     let suggestions: string[] = [];
     if (!result.policyOk || result.available === false) {
       const base = result.label ?? 'name';
@@ -695,6 +730,7 @@ export function createApp(deps: MusenameDeps) {
           ? { category: result.reserved.category, appealable: result.reserved.appealable }
           : null,
         invited,
+        purchase,
         suggestions,
       },
       errors: result.issues.map((issue: LabelIssue) => ({
@@ -2039,6 +2075,793 @@ export function createApp(deps: MusenameDeps) {
           node,
           txHash,
           tier: record.tier,
+          alreadyRegistered: false,
+        },
+        errors: [],
+        meta: meta(true),
+      },
+      201,
+    );
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* POST /v1/names/purchase/quote  (D19)                                */
+  /* ------------------------------------------------------------------ */
+  /**
+   * Locks a price for one label and one payer. The response carries everything
+   * a wallet or an agent needs to pay on-chain (token, treasury, amount) plus
+   * the EIP-712 domain hint for the register signature. No invitation is
+   * consulted: paid purchase is open to everyone, invited or not.
+   */
+  app.post('/v1/names/purchase/quote', async (c) => {
+    const purchase = config.pricing.purchase;
+    if (!purchase?.enabled) {
+      return c.json(
+        {
+          summary: {
+            zh: '付费购买还没有开放。',
+            en: 'Paid purchase is not open yet.',
+          },
+          errors: [
+            boom('PURCHASE_NOT_ENABLED', 'purchase is disabled in config', {
+              zh: '付费购买还没有开放。',
+              en: 'Paid purchase is not open yet.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        503,
+      );
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = (await c.req.json()) as Record<string, unknown>;
+    } catch {
+      return c.json(
+        {
+          summary: { zh: '请求格式不对。', en: 'The request body is not valid JSON.' },
+          errors: [boom('BAD_REQUEST', 'invalid JSON body', { zh: '请求格式不对。', en: 'The request body is not valid JSON.' })],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    const rawLabel = typeof body.label === 'string' ? body.label : '';
+    const owner = typeof body.owner === 'string' ? (body.owner as Address) : null;
+    if (!rawLabel || !owner || !/^0x[0-9a-fA-F]{40}$/.test(owner)) {
+      return c.json(
+        {
+          summary: {
+            zh: '缺少名字或钱包地址。',
+            en: 'Missing label or owner address.',
+          },
+          errors: [
+            boom('BAD_REQUEST', 'label and owner are required', {
+              zh: '缺少名字或钱包地址。',
+              en: 'Missing label or owner address.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    let label: string;
+    try {
+      label = normalizeLabel(rawLabel).normalized;
+    } catch (error) {
+      return c.json(
+        {
+          summary: { zh: '这个名字不合规。', en: 'That name is not valid.' },
+          errors: [
+            boom(
+              isMusePassError(error) ? error.code : 'INVALID_NAME',
+              error instanceof Error ? error.message : String(error),
+              { zh: '这个名字不合规。', en: 'That name is not valid.' },
+            ),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    const ip = (c.req.header('x-forwarded-for') ?? '').split(',')[0].trim();
+    if (ip && !rateLimit(c, `purchase-ip:${ip}`, config.limits.rateLimits.claimPerHourPerIp)) {
+      return c.json(
+        {
+          summary: { zh: '太频繁了，请稍后再试。', en: 'Too many requests; please retry later.' },
+          errors: [
+            boom('RATE_LIMITED', 'purchase rate limit exceeded for this address', {
+              zh: '太频繁了，请稍后再试。',
+              en: 'Too many requests; please retry later.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        429,
+      );
+    }
+    if (!rateLimit(c, `purchase:${owner.toLowerCase()}`, config.limits.rateLimits.claimPerHourPerWallet)) {
+      return c.json(
+        {
+          summary: { zh: '太频繁了，请稍后再试。', en: 'Too many requests; please retry later.' },
+          errors: [
+            boom('RATE_LIMITED', 'purchase rate limit exceeded', {
+              zh: '太频繁了，请稍后再试。',
+              en: 'Too many requests; please retry later.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        429,
+      );
+    }
+
+    // Policy. allowPremium is only ever true for the 4-unit tier (D19); the
+    // 1–3 character names stay project-reserved on the purchase rail too.
+    const unitsOnly = checkLabel(label, { config, reservedIndex });
+    const units = unitsOnly.units ?? 0;
+    if (units > 0 && units < 4) {
+      return c.json(
+        {
+          summary: {
+            zh: '1–3 字符的名字由项目保留，暂不出售。',
+            en: 'Names of 1–3 characters are held by the project and are not for sale.',
+          },
+          data: { label, suggestions: [] },
+          errors: [
+            boom('NOT_PURCHASABLE', 'labels shorter than 4 units are not purchasable (D19)', {
+              zh: '1–3 字符的名字由项目保留，暂不出售。',
+              en: 'Names of 1–3 characters are held by the project and are not for sale.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        403,
+      );
+    }
+
+    let onChainFree: boolean;
+    try {
+      onChainFree = await chain.isLabelAvailable(label);
+    } catch (error) {
+      return c.json(
+        {
+          summary: {
+            zh: '链上暂时查不通，请稍后再试。',
+            en: 'The chain is not reachable right now; please retry.',
+          },
+          errors: [
+            boom('CHAIN_UNAVAILABLE', error instanceof Error ? error.message : String(error), {
+              zh: '链上暂时查不通，请稍后再试。',
+              en: 'The chain is not reachable right now; please retry.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        503,
+      );
+    }
+
+    const policy = checkLabel(label, {
+      config,
+      reservedIndex,
+      onChainFree,
+      invitation: null,
+      allowPremium: units === 4,
+    });
+    if (!policy.policyOk || !onChainFree) {
+      return c.json(
+        {
+          summary: policy.summary,
+          data: { label, suggestions: [] },
+          errors: policy.issues.map((issue) => ({ code: issue.code, message: issue.message })),
+          meta: meta(true),
+        },
+        409,
+      );
+    }
+
+    const ownerHasName = (await names.listByOwner(owner)).length > 0;
+    const quote = quotePurchase(units, ownerHasName, config.pricing);
+    if (!quote) {
+      return c.json(
+        {
+          summary: {
+            zh: '这个名字目前不能购买。',
+            en: 'This name cannot be bought at the moment.',
+          },
+          data: { label, suggestions: [] },
+          errors: [
+            boom('NOT_PURCHASABLE', 'no purchasable price for this label', {
+              zh: '这个名字目前不能购买。',
+              en: 'This name cannot be bought at the moment.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        403,
+      );
+    }
+    if (quote.kind === 'free-first') {
+      return c.json(
+        {
+          summary: {
+            zh: '你的第一个长名字是免费的（需要邀请）；请走免费领取，不用付钱。',
+            en: 'Your first long name is free (by invitation); use the claim flow instead of paying.',
+          },
+          data: { label, suggestions: [] },
+          errors: [
+            boom('FREE_NAME_USE_CLAIM', 'first long name per wallet is free; use the claim flow', {
+              zh: '你的第一个长名字是免费的（需要邀请）；请走免费领取，不用付钱。',
+              en: 'Your first long name is free (by invitation); use the claim flow instead of paying.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        409,
+      );
+    }
+
+    const maxOpen = config.limits.purchase?.maxOpenQuotesPerOwner ?? 5;
+    if ((await purchases.countOpenByOwner(owner)) >= maxOpen) {
+      return c.json(
+        {
+          summary: {
+            zh: '打开的报价太多了，先完成或等待现有的报价过期。',
+            en: 'Too many open quotes; finish or let the existing ones expire first.',
+          },
+          errors: [
+            boom('TOO_MANY_OPEN_QUOTES', `more than ${maxOpen} open quotes for this wallet`, {
+              zh: '打开的报价太多了，先完成或等待现有的报价过期。',
+              en: 'Too many open quotes; finish or let the existing ones expire first.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        429,
+      );
+    }
+
+    const expiresAt = new Date(clock().getTime() + purchase.quoteTtlMinutes * 60 * 1000);
+    const stored = await purchases.insertQuote({
+      id: randomUUID(),
+      label,
+      owner,
+      kind: quote.kind,
+      priceUsd: quote.priceUsd,
+      amountBaseUnits: toBaseUnits(quote.priceUsd, purchase.tokenDecimals),
+      token: purchase.token as Address,
+      treasury: purchase.treasury as Address,
+      chainId: config.chains.l2.chainId,
+      expiresAt,
+    });
+
+    return c.json(
+      {
+        summary: {
+          zh: `${label} 的价格已锁定 ${purchase.quoteTtlMinutes} 分钟：${quote.priceUsd} ${purchase.currency}。`,
+          en: `Price locked for ${label} (${quote.priceUsd} ${purchase.currency}) for ${purchase.quoteTtlMinutes} minutes.`,
+        },
+        data: {
+          quoteId: stored.id,
+          label,
+          fullName: `${label}.${config.brand.rootName}`,
+          kind: stored.kind,
+          priceUsd: stored.priceUsd,
+          currency: purchase.currency,
+          amountBaseUnits: stored.amountBaseUnits,
+          token: stored.token,
+          tokenDecimals: purchase.tokenDecimals,
+          treasury: stored.treasury,
+          chainId: stored.chainId,
+          payer: owner,
+          expiresAt: stored.expiresAt.toISOString(),
+          registerTypedDataHint: eip712Domain
+            ? { domain: eip712Domain, primaryType: 'Register' }
+            : null,
+        },
+        errors: [],
+        meta: meta(true),
+      },
+      201,
+    );
+  });
+
+  /* ------------------------------------------------------------------ */
+  /* POST /v1/names/purchase  (D19)                                      */
+  /* ------------------------------------------------------------------ */
+  /**
+   * Settles a paid purchase: verifies the register signature, the quote, the
+   * on-chain payment and the payment's uniqueness — in that order — then has
+   * the issuer sponsor the registration. The NOT_INVITED gate of the claim
+   * route is deliberately absent: paying is the invitation-free path.
+   */
+  app.post('/v1/names/purchase', async (c) => {
+    const purchase = config.pricing.purchase;
+    if (!purchase?.enabled || !eip712Domain || !registrarAddress) {
+      return c.json(
+        {
+          summary: { zh: '付费购买还没有开放。', en: 'Paid purchase is not open yet.' },
+          errors: [
+            boom('PURCHASE_NOT_ENABLED', 'purchase is disabled in config', {
+              zh: '付费购买还没有开放。',
+              en: 'Paid purchase is not open yet.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        503,
+      );
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = (await c.req.json()) as Record<string, unknown>;
+    } catch {
+      return c.json(
+        {
+          summary: { zh: '请求格式不对。', en: 'The request body is not valid JSON.' },
+          errors: [boom('BAD_REQUEST', 'invalid JSON body', { zh: '请求格式不对。', en: 'The request body is not valid JSON.' })],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    const rawLabel = typeof body.label === 'string' ? body.label : '';
+    const owner = typeof body.owner === 'string' ? (body.owner as Address) : null;
+    const signature = typeof body.signature === 'string' ? (body.signature as Hex) : null;
+    const quoteId = typeof body.quoteId === 'string' ? body.quoteId : null;
+    const paymentTxHash = typeof body.paymentTxHash === 'string' ? (body.paymentTxHash as Hex) : null;
+    const deadlineRaw = body.deadline;
+    const via = body.via === 'mcp' ? 'mcp' : 'web';
+    const agentHost = typeof body.agentHost === 'string' ? body.agentHost : null;
+
+    if (
+      !rawLabel ||
+      !owner ||
+      !/^0x[0-9a-fA-F]{40}$/.test(owner) ||
+      !signature ||
+      !quoteId ||
+      !paymentTxHash ||
+      !/^0x[0-9a-fA-F]{64}$/.test(paymentTxHash) ||
+      deadlineRaw === undefined
+    ) {
+      return c.json(
+        {
+          summary: {
+            zh: '缺少购买所需的信息（名字、地址、签名、报价或付款交易）。',
+            en: 'Missing one of: label, owner, signature, quote or payment transaction.',
+          },
+          errors: [
+            boom('BAD_REQUEST', 'label, owner, deadline, signature, quoteId and paymentTxHash are required', {
+              zh: '缺少购买所需的信息（名字、地址、签名、报价或付款交易）。',
+              en: 'Missing one of: label, owner, signature, quote or payment transaction.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    let deadline: bigint;
+    try {
+      deadline = BigInt(deadlineRaw as string | number | bigint);
+    } catch {
+      return c.json(
+        {
+          summary: { zh: '签名有效期格式不对。', en: 'The deadline is not a valid number.' },
+          errors: [boom('BAD_REQUEST', 'deadline must be a unix timestamp', { zh: '签名有效期格式不对。', en: 'The deadline is not a valid number.' })],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    // 1. Signature first, exactly like the claim route.
+    let signatureValid = false;
+    try {
+      signatureValid = await verifyRegisterSignature({
+        address: owner,
+        signature,
+        domain: eip712Domain,
+        message: registerMessage({ label: rawLabel, owner, deadline }),
+        now: BigInt(Math.floor(clock().getTime() / 1000)),
+      });
+    } catch (error) {
+      return c.json(
+        {
+          summary: { zh: '签名已经过期了，请重新签名。', en: 'That signature has expired; please sign again.' },
+          errors: [
+            boom(
+              isMusePassError(error) ? error.code : 'INVALID_SIGNATURE',
+              error instanceof Error ? error.message : String(error),
+              { zh: '签名已经过期了，请重新签名。', en: 'That signature has expired; please sign again.' },
+            ),
+          ],
+          meta: meta(false),
+        },
+        401,
+      );
+    }
+    if (!signatureValid) {
+      return c.json(
+        {
+          summary: {
+            zh: '签名和这个名字或地址对不上。',
+            en: 'The signature does not match this name and address.',
+          },
+          errors: [
+            boom('INVALID_SIGNATURE', 'signature does not match label/owner/deadline', {
+              zh: '签名和这个名字或地址对不上。',
+              en: 'The signature does not match this name and address.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        401,
+      );
+    }
+
+    let label: string;
+    try {
+      label = normalizeLabel(rawLabel).normalized;
+    } catch (error) {
+      return c.json(
+        {
+          summary: { zh: '这个名字不合规。', en: 'That name is not valid.' },
+          errors: [
+            boom(
+              isMusePassError(error) ? error.code : 'INVALID_NAME',
+              error instanceof Error ? error.message : String(error),
+              { zh: '这个名字不合规。', en: 'That name is not valid.' },
+            ),
+          ],
+          meta: meta(false),
+        },
+        400,
+      );
+    }
+
+    // 2. The quote: right label, right owner, still open, not expired.
+    const quote = await purchases.findQuote(quoteId);
+    if (!quote) {
+      return c.json(
+        {
+          summary: { zh: '没有这个报价。', en: 'No such purchase quote.' },
+          errors: [
+            boom('NOT_FOUND', 'unknown quote id', { zh: '没有这个报价。', en: 'No such purchase quote.' }),
+          ],
+          meta: meta(false),
+        },
+        404,
+      );
+    }
+    if (quote.status === 'settled' && quote.owner.toLowerCase() === owner.toLowerCase() && quote.label === label) {
+      // Idempotent: the same wallet asking again about its settled purchase.
+      return c.json({
+        summary: {
+          zh: `${label} 已经买好、注册完成了。`,
+          en: `${label} is already bought and registered.`,
+        },
+        data: {
+          label,
+          fullName: `${label}.${config.brand.rootName}`,
+          owner,
+          txHash: quote.registerTxHash,
+          paymentTxHash: quote.paymentTxHash,
+          quoteId: quote.id,
+          paid: true,
+          alreadyRegistered: true,
+        },
+        errors: [],
+        meta: meta(true),
+      });
+    }
+    if (quote.label !== label || quote.owner.toLowerCase() !== owner.toLowerCase()) {
+      return c.json(
+        {
+          summary: {
+            zh: '这个报价是给另一个名字或另一个钱包的。',
+            en: 'This quote is for a different name or wallet.',
+          },
+          errors: [
+            boom('QUOTE_MISMATCH', 'quote does not match label/owner', {
+              zh: '这个报价是给另一个名字或另一个钱包的。',
+              en: 'This quote is for a different name or wallet.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        409,
+      );
+    }
+    if (quote.status !== 'open' && quote.status !== 'settling') {
+      return c.json(
+        {
+          summary: { zh: '这个报价已经失效了。', en: 'This quote is no longer open.' },
+          errors: [
+            boom('QUOTE_NOT_OPEN', `quote status is ${quote.status}`, {
+              zh: '这个报价已经失效了。',
+              en: 'This quote is no longer open.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        409,
+      );
+    }
+    if (quote.expiresAt <= clock()) {
+      if (quote.status === 'open') await purchases.markStatus(quote.id, 'expired', clock());
+      return c.json(
+        {
+          summary: {
+            zh: '报价过期了，请重新获取一个新的报价；已付的钱不会被再次要求。',
+            en: 'The quote expired; request a new one. An already-bound payment is never charged again.',
+          },
+          errors: [
+            boom('EXPIRED', 'purchase quote expired', {
+              zh: '报价过期了，请重新获取一个新的报价；已付的钱不会被再次要求。',
+              en: 'The quote expired; request a new one. An already-bound payment is never charged again.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        410,
+      );
+    }
+
+    // 3. The label must still be free. If it was taken after payment, the money
+    //    is at the treasury; say so and keep the quote for the support refund.
+    let onChainFree: boolean;
+    try {
+      onChainFree = await chain.isLabelAvailable(label);
+    } catch (error) {
+      return c.json(
+        {
+          summary: {
+            zh: '链上暂时查不通，没有做任何修改，请稍后再试。',
+            en: 'The chain is not reachable right now; nothing was changed, please retry.',
+          },
+          errors: [
+            boom('CHAIN_UNAVAILABLE', error instanceof Error ? error.message : String(error), {
+              zh: '链上暂时查不通，没有做任何修改，请稍后再试。',
+              en: 'The chain is not reachable right now; nothing was changed, please retry.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        503,
+      );
+    }
+    if (!onChainFree) {
+      return c.json(
+        {
+          summary: {
+            zh: `付款之后 ${label} 被别人注册了。你的钱在国库地址上，联系 ${config.brand.supportEmail} 安排退款。`,
+            en: `${label} was taken after your payment. Your money is at the treasury; contact ${config.brand.supportEmail} for a refund.`,
+          },
+          data: { label, treasury: quote.treasury, paymentTxHash: quote.paymentTxHash ?? paymentTxHash },
+          errors: [
+            boom('NAME_TAKEN', 'label was registered between quote and purchase', {
+              zh: `名字在付款后被别人注册了；联系 ${config.brand.supportEmail} 退款。`,
+              en: `The name was taken after payment; contact ${config.brand.supportEmail} for a refund.`,
+            }),
+          ],
+          meta: meta(true),
+        },
+        409,
+      );
+    }
+
+    const policy = checkLabel(label, {
+      config,
+      reservedIndex,
+      onChainFree,
+      invitation: null,
+      allowPremium: true,
+    });
+    if (!policy.policyOk) {
+      return c.json(
+        {
+          summary: policy.summary,
+          data: { label, suggestions: [] },
+          errors: policy.issues.map((issue) => ({ code: issue.code, message: issue.message })),
+          meta: meta(true),
+        },
+        409,
+      );
+    }
+
+    // 4. Rate limits and the paid daily cap. No invitation check by design.
+    const startOfDay = new Date(clock());
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const perDay = config.limits.purchase?.perDayPerWallet ?? 20;
+    if ((await purchases.countSettledForOwnerSince(owner, startOfDay)) >= perDay) {
+      return c.json(
+        {
+          summary: {
+            zh: `今天已经买了 ${perDay} 个名字，明天再继续。`,
+            en: `You already bought ${perDay} names today; continue tomorrow.`,
+          },
+          errors: [
+            boom('PURCHASE_LIMIT', `daily purchase cap of ${perDay} reached`, {
+              zh: `今天已经买了 ${perDay} 个名字，明天再继续。`,
+              en: `You already bought ${perDay} names today; continue tomorrow.`,
+            }),
+          ],
+          meta: meta(true),
+        },
+        429,
+      );
+    }
+    if (!rateLimit(c, `purchase:${owner.toLowerCase()}`, config.limits.rateLimits.claimPerHourPerWallet)) {
+      return c.json(
+        {
+          summary: { zh: '太频繁了，请稍后再试。', en: 'Too many requests; please retry later.' },
+          errors: [
+            boom('RATE_LIMITED', 'purchase rate limit exceeded', {
+              zh: '太频繁了，请稍后再试。',
+              en: 'Too many requests; please retry later.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        429,
+      );
+    }
+    const clientIp = (c.req.header('x-forwarded-for') ?? '').split(',')[0].trim();
+    if (clientIp && !rateLimit(c, `purchase-ip:${clientIp}`, config.limits.rateLimits.claimPerHourPerIp)) {
+      return c.json(
+        {
+          summary: { zh: '太频繁了，请稍后再试。', en: 'Too many requests; please retry later.' },
+          errors: [
+            boom('RATE_LIMITED', 'purchase rate limit exceeded for this address', {
+              zh: '太频繁了，请稍后再试。',
+              en: 'Too many requests; please retry later.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        429,
+      );
+    }
+
+    // 5. Verify the payment on-chain, then bind it to this quote.
+    const verified = await chain.verifyPayment({
+      txHash: paymentTxHash,
+      token: quote.token,
+      from: owner,
+      to: quote.treasury,
+      minAmount: BigInt(quote.amountBaseUnits),
+    });
+    if (!verified.ok) {
+      const copy: Record<string, BilingualText> = {
+        NOT_FOUND: {
+          zh: '链上还查不到这笔付款；等交易确认后再重新提交，报价仍然有效。',
+          en: 'The payment transaction is not visible yet; wait for it to confirm and resubmit. The quote stays open.',
+        },
+        REVERTED: {
+          zh: '这笔付款交易失败了，请重新付款后再提交。',
+          en: 'The payment transaction reverted; pay again and resubmit.',
+        },
+        WRONG_TOKEN: {
+          zh: '付款用的代币不对：必须用 USDG。',
+          en: 'Wrong token: payment must be in USDG.',
+        },
+        WRONG_FROM: {
+          zh: '付款的钱包和注册的钱包不是同一个。',
+          en: 'The payment came from a different wallet than the one registering.',
+        },
+        WRONG_TO: {
+          zh: '收款地址不对：钱必须付到报价里的国库地址。',
+          en: 'Wrong recipient: the payment must go to the treasury address in the quote.',
+        },
+        INSUFFICIENT: {
+          zh: '付款金额不足。',
+          en: 'The paid amount is below the quoted price.',
+        },
+      };
+      const status = verified.reason === 'NOT_FOUND' ? 409 : 402;
+      return c.json(
+        {
+          summary: copy[verified.reason],
+          data: { quoteId: quote.id, expectedAmountBaseUnits: quote.amountBaseUnits, token: quote.token, treasury: quote.treasury },
+          errors: [
+            boom(`PAYMENT_${verified.reason}`, `payment verification failed: ${verified.reason}`, copy[verified.reason]),
+          ],
+          meta: meta(false),
+        },
+        status,
+      );
+    }
+
+    // 6. Bind the payment (double-spend guard) and sponsor the registration.
+    const settled = await purchases.settleQuote(quote.id, paymentTxHash, clock());
+    if (!settled) {
+      return c.json(
+        {
+          summary: {
+            zh: '这笔付款交易已经用过了一次，一笔付款只能买一个名字。',
+            en: 'This payment transaction was already used; one payment buys exactly one name.',
+          },
+          data: { quoteId: quote.id },
+          errors: [
+            boom('PAYMENT_ALREADY_USED', 'payment tx hash is bound to another purchase', {
+              zh: '这笔付款交易已经用过了一次，一笔付款只能买一个名字。',
+              en: 'This payment transaction was already used; one payment buys exactly one name.',
+            }),
+          ],
+          meta: meta(true),
+        },
+        409,
+      );
+    }
+
+    let txHash: Hex;
+    let node: Hex;
+    try {
+      const result = await chain.register({ label, owner, deadline, signature });
+      txHash = result.txHash;
+      node = result.node;
+    } catch (error) {
+      // Registration failed: reopen so the same payment can be retried.
+      await purchases.reopenQuote(quote.id);
+      return c.json(
+        {
+          summary: {
+            zh: '注册失败了，钱不会被要求再付一次；用同一个报价重试即可。',
+            en: 'Registration failed and you will not be charged again; retry with the same quote.',
+          },
+          data: { quoteId: quote.id, paymentTxHash },
+          errors: [
+            boom('CHAIN_ERROR', error instanceof Error ? error.message : String(error), {
+              zh: '注册失败了，钱不会被要求再付一次；用同一个报价重试即可。',
+              en: 'Registration failed and you will not be charged again; retry with the same quote.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        502,
+      );
+    }
+
+    const record = await names.insert({
+      label,
+      fullName: `${label}.${config.brand.rootName}`,
+      normalized: label,
+      ownerAddress: owner,
+      tier: quote.kind === 'tier-4' ? 'premium' : 'free',
+      status: 'active',
+      registeredVia: via,
+      agentHost,
+      txHash,
+    });
+    await sponsorship.record({ wallet: owner, txHash, nameId: record.id, paid: true });
+    await purchases.markSettled(quote.id, txHash, clock());
+
+    return c.json(
+      {
+        summary: {
+          zh: `搞定，${label}.${config.brand.rootName} 现在是你的了。`,
+          en: `Done: ${label}.${config.brand.rootName} now belongs to you.`,
+        },
+        data: {
+          label,
+          fullName: record.fullName,
+          owner,
+          node,
+          txHash,
+          paymentTxHash,
+          quoteId: quote.id,
+          tier: record.tier,
+          paid: true,
           alreadyRegistered: false,
         },
         errors: [],

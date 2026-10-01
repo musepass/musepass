@@ -96,6 +96,45 @@ export function createHttpApi(options: { baseUrl: string; fetchImpl?: typeof fet
       });
     },
 
+    async requestPurchaseQuote(input: { label: string; owner: string }) {
+      const payload = await request('/v1/names/purchase/quote', {
+        method: 'POST',
+        body: JSON.stringify({ label: input.label, owner: input.owner }),
+      });
+      return normalise(payload, {
+        zh: '报价拿到了。',
+        en: 'Here is the quote.',
+      });
+    },
+
+    async purchaseName(input: {
+      label: string;
+      owner: string;
+      deadline: number;
+      signature: string;
+      quoteId: string;
+      paymentTxHash: string;
+      agentHost?: string | null;
+    }) {
+      const payload = await request('/v1/names/purchase', {
+        method: 'POST',
+        body: JSON.stringify({
+          label: input.label,
+          owner: input.owner,
+          deadline: input.deadline,
+          signature: input.signature,
+          quoteId: input.quoteId,
+          paymentTxHash: input.paymentTxHash,
+          via: 'mcp',
+          agentHost: input.agentHost ?? null,
+        }),
+      });
+      return normalise(payload, {
+        zh: '购买已提交。',
+        en: 'The purchase was submitted.',
+      });
+    },
+
     async publishCard(input) {
       const payload = await request(`/v1/names/${encodeURIComponent(input.label)}/card`, {
         method: 'PUT',

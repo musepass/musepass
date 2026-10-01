@@ -6,6 +6,8 @@ import type {
   InvitationClaimsRepo,
   NamesRepo,
   NewRegistry,
+  PurchaseQuote,
+  PurchaseRepo,
   RegistrationRequest,
   RegistrationRequestRepo,
   RegistrationRequestStatus,
@@ -26,12 +28,14 @@ export function createMemoryRepos(): {
   requests: RegistrationRequestRepo;
   cards: CardsRepo;
   invitationClaims: InvitationClaimsRepo;
+  purchases: PurchaseRepo;
 } {
   const byNormalized = new Map<string, Registry>();
   const sponsorships: Array<SponsorshipEntry & { sponsoredAt: Date }> = [];
   const registrationRequests = new Map<string, RegistrationRequest>();
   const cardVersions: CardVersion[] = [];
   const invitationClaims = new Map<string, InvitationClaim>();
+  const purchaseQuotes = new Map<string, PurchaseQuote>();
   let nextId = 1;
 
   const names: NamesRepo = {
@@ -69,18 +73,23 @@ export function createMemoryRepos(): {
     async countForWalletSince(wallet, since) {
       const target = wallet.toLowerCase();
       return sponsorships.filter(
-        (entry) => entry.wallet.toLowerCase() === target && entry.sponsoredAt >= since,
+        (entry) =>
+          !entry.paid &&
+          entry.wallet.toLowerCase() === target &&
+          entry.sponsoredAt >= since,
       ).length;
     },
     async countForWalletLifetime(wallet) {
       const target = wallet.toLowerCase();
-      return sponsorships.filter((entry) => entry.wallet.toLowerCase() === target).length;
+      return sponsorships.filter(
+        (entry) => !entry.paid && entry.wallet.toLowerCase() === target,
+      ).length;
     },
     async countPlatformSince(since) {
-      return sponsorships.filter((entry) => entry.sponsoredAt >= since).length;
+      return sponsorships.filter((entry) => !entry.paid && entry.sponsoredAt >= since).length;
     },
     async countPlatformLifetime() {
-      return sponsorships.length;
+      return sponsorships.filter((entry) => !entry.paid).length;
     },
     async record(entry) {
       sponsorships.push({ ...entry, sponsoredAt: entry.sponsoredAt ?? new Date() });
@@ -153,5 +162,74 @@ export function createMemoryRepos(): {
     },
   };
 
-  return { names, sponsorship, requests, cards, invitationClaims: claims };
+  // D19: purchase quotes. The paid-tx set is shared state checked inside
+  // settleQuote so a payment hash can never settle two quotes in one process.
+  const usedPaymentTxHashes = new Set<string>();
+  const purchases: PurchaseRepo = {
+    async insertQuote(input) {
+      const stored: PurchaseQuote = {
+        ...input,
+        status: 'open',
+        paymentTxHash: null,
+        registerTxHash: null,
+        createdAt: input.createdAt ?? new Date(),
+      };
+      purchaseQuotes.set(stored.id, stored);
+      return stored;
+    },
+    async findQuote(id) {
+      return purchaseQuotes.get(id) ?? null;
+    },
+    async countOpenByOwner(owner) {
+      const target = owner.toLowerCase();
+      return [...purchaseQuotes.values()].filter(
+        (quote) => quote.status === 'open' && quote.owner.toLowerCase() === target,
+      ).length;
+    },
+    async settleQuote(id, paymentTxHash, at) {
+      const quote = purchaseQuotes.get(id);
+      if (!quote) return null;
+      const tx = paymentTxHash.toLowerCase();
+      if (quote.status !== 'open' || quote.expiresAt <= at) {
+        return null;
+      }
+      // A payment hash already seen is double-spending — unless it is this
+      // same quote retrying after a reopened register step, which is the
+      // documented recovery path: the hash stays bound to this quote alone.
+      if (usedPaymentTxHashes.has(tx) && quote.paymentTxHash !== tx) {
+        return null;
+      }
+      const updated: PurchaseQuote = { ...quote, status: 'settling', paymentTxHash };
+      purchaseQuotes.set(id, updated);
+      usedPaymentTxHashes.add(tx);
+      return updated;
+    },
+    async reopenQuote(id) {
+      const quote = purchaseQuotes.get(id);
+      if (!quote || quote.status !== 'settling') return;
+      // Payment stays bound; only the register step is retried.
+      purchaseQuotes.set(id, { ...quote, status: 'open' });
+    },
+    async markSettled(id, registerTxHash, at) {
+      const quote = purchaseQuotes.get(id);
+      if (!quote) return;
+      purchaseQuotes.set(id, { ...quote, status: 'settled', registerTxHash, expiresAt: at });
+    },
+    async markStatus(id, status) {
+      const quote = purchaseQuotes.get(id);
+      if (!quote) return;
+      purchaseQuotes.set(id, { ...quote, status });
+    },
+    async countSettledForOwnerSince(owner, since) {
+      const target = owner.toLowerCase();
+      return [...purchaseQuotes.values()].filter(
+        (quote) =>
+          quote.owner.toLowerCase() === target &&
+          (quote.status === 'settled' || quote.status === 'settling') &&
+          quote.createdAt >= since,
+      ).length;
+    },
+  };
+
+  return { names, sponsorship, requests, cards, invitationClaims: claims, purchases };
 }

@@ -6,6 +6,9 @@ import type {
   InvitationClaimsRepo,
   NamesRepo,
   NewRegistry,
+  PurchaseQuote,
+  PurchaseRepo,
+  PurchaseQuoteStatus,
   RegistrationRequest,
   RegistrationRequestRepo,
   RegistrationRequestStatus,
@@ -39,6 +42,43 @@ interface RequestRow {
   status: string;
   created_at: Date | string;
   confirmed_at: Date | string | null;
+}
+
+interface PurchaseQuoteRow {
+  id: string;
+  label: string;
+  owner_address: string;
+  kind: string;
+  price_usd: string;
+  amount_base_units: string;
+  token: string;
+  treasury: string;
+  chain_id: number;
+  status: string;
+  payment_tx_hash: string | null;
+  register_tx_hash: string | null;
+  expires_at: Date | string;
+  created_at: Date | string;
+  settled_at: Date | string | null;
+}
+
+function toPurchaseQuote(row: PurchaseQuoteRow): PurchaseQuote {
+  return {
+    id: row.id,
+    label: row.label,
+    owner: row.owner_address as Address,
+    kind: row.kind as PurchaseQuote['kind'],
+    priceUsd: Number(row.price_usd),
+    amountBaseUnits: row.amount_base_units,
+    token: row.token as Address,
+    treasury: row.treasury as Address,
+    chainId: Number(row.chain_id),
+    status: row.status as PurchaseQuoteStatus,
+    paymentTxHash: (row.payment_tx_hash as Hex | null) ?? null,
+    registerTxHash: (row.register_tx_hash as Hex | null) ?? null,
+    expiresAt: new Date(row.expires_at),
+    createdAt: new Date(row.created_at),
+  };
 }
 
 function toRegistry(row: NameRow): Registry {
@@ -83,6 +123,7 @@ export function createPostgresRepos(sql: Sql): {
   requests: RegistrationRequestRepo;
   cards: CardsRepo;
   invitationClaims: InvitationClaimsRepo;
+  purchases: PurchaseRepo;
 } {
   const names: NamesRepo = {
     async findByNormalized(normalized) {
@@ -145,7 +186,7 @@ export function createPostgresRepos(sql: Sql): {
     async countForWalletSince(wallet, since) {
       const { rows } = await sql.query<{ count: string }>(
         `select count(*)::text as count from sponsorship_ledger
-         where lower(wallet_address) = lower($1) and sponsored_at >= $2`,
+         where lower(wallet_address) = lower($1) and sponsored_at >= $2 and not paid`,
         [wallet, since],
       );
       return Number(rows[0]?.count ?? 0);
@@ -154,7 +195,7 @@ export function createPostgresRepos(sql: Sql): {
     async countForWalletLifetime(wallet) {
       const { rows } = await sql.query<{ count: string }>(
         `select count(*)::text as count from sponsorship_ledger
-         where lower(wallet_address) = lower($1)`,
+         where lower(wallet_address) = lower($1) and not paid`,
         [wallet],
       );
       return Number(rows[0]?.count ?? 0);
@@ -162,7 +203,7 @@ export function createPostgresRepos(sql: Sql): {
 
     async countPlatformSince(since) {
       const { rows } = await sql.query<{ count: string }>(
-        'select count(*)::text as count from sponsorship_ledger where sponsored_at >= $1',
+        'select count(*)::text as count from sponsorship_ledger where sponsored_at >= $1 and not paid',
         [since],
       );
       return Number(rows[0]?.count ?? 0);
@@ -170,7 +211,7 @@ export function createPostgresRepos(sql: Sql): {
 
     async countPlatformLifetime() {
       const { rows } = await sql.query<{ count: string }>(
-        'select count(*)::text as count from sponsorship_ledger',
+        'select count(*)::text as count from sponsorship_ledger where not paid',
       );
       return Number(rows[0]?.count ?? 0);
     },
@@ -178,14 +219,15 @@ export function createPostgresRepos(sql: Sql): {
     async record(entry: SponsorshipEntry) {
       await sql.query(
         `insert into sponsorship_ledger
-           (name_id, wallet_address, tx_hash, gas_cost_wei, sponsored_at)
-         values ($1,$2,$3,$4, coalesce($5, now()))`,
+           (name_id, wallet_address, tx_hash, gas_cost_wei, sponsored_at, paid)
+         values ($1,$2,$3,$4, coalesce($5, now()), $6)`,
         [
           entry.nameId ?? null,
           entry.wallet,
           entry.txHash,
           entry.gasCostWei ?? null,
           entry.sponsoredAt ?? null,
+          entry.paid ?? false,
         ],
       );
     },
@@ -354,5 +396,114 @@ export function createPostgresRepos(sql: Sql): {
     },
   };
 
-  return { names, sponsorship, requests, cards, invitationClaims };
+  // D19: paid purchase rail. settleQuote is the double-spend guard: the
+  // conditional UPDATE plus the UNIQUE index on payment_tx_hash means a
+  // payment hash can only ever bind to one quote, even under concurrent calls.
+  const purchases: PurchaseRepo = {
+    async insertQuote(input) {
+      const { rows } = await sql.query<PurchaseQuoteRow>(
+        `insert into purchase_quotes
+           (id, label, owner_address, kind, price_usd, amount_base_units,
+            token, treasury, chain_id, status, expires_at, created_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open',$10, coalesce($11, now()))
+         returning *`,
+        [
+          input.id,
+          input.label,
+          input.owner,
+          input.kind,
+          input.priceUsd,
+          input.amountBaseUnits,
+          input.token,
+          input.treasury,
+          input.chainId,
+          input.expiresAt,
+          input.createdAt ?? null,
+        ],
+      );
+      return toPurchaseQuote(rows[0]);
+    },
+
+    async findQuote(id) {
+      const { rows } = await sql.query<PurchaseQuoteRow>(
+        'select * from purchase_quotes where id = $1 limit 1',
+        [id],
+      );
+      return rows[0] ? toPurchaseQuote(rows[0]) : null;
+    },
+
+    async countOpenByOwner(owner) {
+      const { rows } = await sql.query<{ count: string }>(
+        `select count(*)::text as count from purchase_quotes
+         where status = 'open' and lower(owner_address) = lower($1)`,
+        [owner],
+      );
+      return Number(rows[0]?.count ?? 0);
+    },
+
+    async settleQuote(id, paymentTxHash, at) {
+      try {
+        // The `case` keeps a retried submit (after reopenQuote) from
+        // rewriting payment_tx_hash with the value it already holds — a fresh
+        // index insert trips the unique check even when nothing changed. The
+        // where clause also refuses to bind a *different* payment to a
+        // reopened quote: the first payment stays the owner of that quote.
+        const { rows } = await sql.query<PurchaseQuoteRow>(
+          `update purchase_quotes
+              set status = 'settling',
+                  payment_tx_hash = case when payment_tx_hash is null then $2 else payment_tx_hash end
+            where id = $1 and status = 'open' and expires_at > $3
+              and (payment_tx_hash is null or payment_tx_hash = $2)
+            returning *`,
+          [id, paymentTxHash, at],
+        );
+        return rows[0] ? toPurchaseQuote(rows[0]) : null;
+      } catch (error) {
+        // Unique violation on payment_tx_hash: this payment already bought something.
+        if (isUniqueViolation(error)) return null;
+        throw error;
+      }
+    },
+
+    async reopenQuote(id) {
+      await sql.query(
+        `update purchase_quotes set status = 'open'
+          where id = $1 and status = 'settling'`,
+        [id],
+      );
+    },
+
+    async markSettled(id, registerTxHash, at) {
+      await sql.query(
+        `update purchase_quotes
+            set status = 'settled', register_tx_hash = $2, settled_at = $3
+          where id = $1`,
+        [id, registerTxHash, at],
+      );
+    },
+
+    async markStatus(id, status, at) {
+      await sql.query(
+        `update purchase_quotes set status = $2 where id = $1`,
+        [id, status],
+      );
+    },
+
+    async countSettledForOwnerSince(owner, since) {
+      const { rows } = await sql.query<{ count: string }>(
+        `select count(*)::text as count from purchase_quotes
+         where lower(owner_address) = lower($1)
+           and status in ('settled', 'settling')
+           and coalesce(settled_at, created_at) >= $2`,
+        [owner, since],
+      );
+      return Number(rows[0]?.count ?? 0);
+    },
+  };
+
+  return { names, sponsorship, requests, cards, invitationClaims, purchases };
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === '23505';
 }

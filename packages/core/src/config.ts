@@ -43,10 +43,32 @@ export interface PremiumTier {
   status: string;
 }
 
+/**
+ * D19: paid purchase configuration. All real money is USDG on the L2; the
+ * registrar contract never touches money — buyers transfer the quoted amount
+ * to `treasury` and the API verifies the Transfer before sponsoring the
+ * registration.
+ */
+export interface PurchaseConfig {
+  enabled: boolean;
+  currency: string;
+  /** ERC-20 token buyers pay with (USDG on Robinhood Chain). */
+  token: string;
+  tokenDecimals: number;
+  /** Receive-only project address. Key lives in `.secrets/treasury.txt`, never on the server. */
+  treasury: string;
+  /** How long a purchase quote locks the label and price (minutes). */
+  quoteTtlMinutes: number;
+  /** Whether the second+ long name per wallet is sellable at `additionalName.priceUsd`. */
+  additionalNameEnabled: boolean;
+}
+
 export interface PricingConfig {
   currency: string;
   freeTier: { minUnits: number };
   premiumTiers: PremiumTier[];
+  purchase?: PurchaseConfig;
+  additionalName?: { priceUsd: number };
   certification: { monthlyUsd: number; status: string; phase: number };
 }
 
@@ -80,6 +102,11 @@ export interface LimitsConfig {
     claimPerHourPerWallet: number;
     claimPerHourPerIp: number;
     mcpRequestsPerHourPerHost: number;
+  };
+  /** D19: caps for the paid purchase rail (paid names bypass the free-claim quota). */
+  purchase?: {
+    perDayPerWallet: number;
+    maxOpenQuotesPerOwner: number;
   };
 }
 
@@ -212,6 +239,27 @@ function assertShape(config: MusenameConfig): void {
   require(config.limits?.maxLabelBytes > 0, 'config/limits.json: maxLabelBytes is required');
   require(config.pricing?.freeTier, 'config/pricing.json: freeTier is required');
   require(config.reserved?.categories, 'config/reserved-names.json: categories are required');
+
+  const purchase = config.pricing?.purchase;
+  if (purchase?.enabled) {
+    const address = /^0x[0-9a-fA-F]{40}$/;
+    require(
+      address.test(purchase.token),
+      'config/pricing.json: purchase.enabled requires purchase.token to be a contract address',
+    );
+    require(
+      address.test(purchase.treasury),
+      'config/pricing.json: purchase.enabled requires purchase.treasury to be an address',
+    );
+    require(
+      Number.isInteger(purchase.tokenDecimals) && purchase.tokenDecimals >= 0 && purchase.tokenDecimals <= 18,
+      'config/pricing.json: purchase.tokenDecimals must be an integer in 0..18',
+    );
+    require(
+      purchase.quoteTtlMinutes > 0,
+      'config/pricing.json: purchase.quoteTtlMinutes must be positive',
+    );
+  }
 }
 
 export function loadConfig(options: LoadConfigOptions = {}): MusenameConfig {

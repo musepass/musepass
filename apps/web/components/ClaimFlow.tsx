@@ -6,9 +6,12 @@ import {
   ApiError,
   checkAvailability,
   fetchRequest,
+  requestPurchaseQuote,
   submitClaim,
+  submitPurchase,
   type ClaimData,
   type PublicConfig,
+  type PurchasePayload,
   type RequestData,
 } from '@/lib/api';
 import { resolveAvailability, type AvailabilityView } from '@/lib/availability';
@@ -16,12 +19,13 @@ import {
   WalletError,
   deadlineInSeconds,
   hasWallet,
+  shortAddress,
 } from '@/lib/wallet';
 import { PrimaryNameCard } from './PrimaryNameCard';
 import { SharePass } from './SharePass';
 import { useWallet } from './WalletProvider';
 
-type Phase = 'loading' | 'ready' | 'signing' | 'submitting' | 'done' | 'failed';
+type Phase = 'loading' | 'ready' | 'signing' | 'paying' | 'submitting' | 'done' | 'failed';
 
 export interface ClaimFlowProps {
   config: PublicConfig;
@@ -40,6 +44,15 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
   const [phase, setPhase] = useState<Phase>('loading');
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ClaimData | null>(null);
+  // D19: a submit that failed only because the payment was not visible on
+  // chain yet. Retrying re-submits the same payment — never a second transfer.
+  const [pendingPurchase, setPendingPurchase] = useState<PurchasePayload | null>(null);
+  const [funding, setFunding] = useState<{
+    wallet: string;
+    treasury: string;
+    priceUsd: number;
+    currency: string;
+  } | null>(null);
 
   const check = useCallback(
     async (value: string) => {
@@ -106,20 +119,29 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
 
   const isAvailable = availability?.kind === 'available';
   // Availability is checked with the wallet's identity, so once connected this
-  // is authoritative: no invitation, no name — at any length.
+  // is authoritative for the claim path. The paid path (D19) is open to
+  // everyone, so a wallet without an invitation is only blocked from claiming.
   const invited = availability?.kind === 'available' && availability.invited;
+  const purchaseOffer =
+    availability && (availability.kind === 'available' || availability.kind === 'premium')
+      ? availability.purchase
+      : null;
+  const purchasable = Boolean(purchaseOffer && config.features.premiumPurchase);
+  const secondName = purchaseOffer?.kind === 'additional-name';
+  // A wallet that already has its free name, or was never invited, buys.
+  const buyPrimary = purchasable && (!invited || secondName);
   // Only an injected wallet can sit on the wrong network; an embedded wallet
   // just signs and never sends a transaction.
   const wrongChain =
     wallet.source === 'injected' &&
     Boolean(wallet.address) &&
     wallet.chainId !== config.chain.chainId;
-  const busy = phase === 'signing' || phase === 'submitting';
-  // A connected wallet without an invitation can never be issued a name, so
-  // the button says so instead of letting the signature happen and the API
-  // refuse it afterwards. Anonymous visitors still get the button: connecting
-  // is how their invitation (if any) is found.
-  const blockUninvited = Boolean(wallet.address) && isAvailable && !invited;
+  const busy = phase === 'signing' || phase === 'paying' || phase === 'submitting';
+  // A connected wallet without an invitation and without a purchasable price
+  // can never be issued this name, so the button says so instead of letting
+  // the signature happen and the API refuse it afterwards. Anonymous visitors
+  // still get the button: connecting is how their invitation (if any) is found.
+  const blockUninvited = Boolean(wallet.address) && isAvailable && !invited && !purchasable;
 
   /**
    * Whatever is still missing, in order: connect a wallet (the browser
@@ -200,6 +222,108 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         setError(cause.message);
       } else {
         setError('It did not go through. Try again.');
+      }
+    }
+  }
+
+  /**
+   * D19: the paid path, open to every wallet once purchase is enabled — a
+   * 4-character name ($5 USDG) or a second long name ($1). Order matters and
+   * is fixed: quote → check balance → sign → pay on-chain → submit. The
+   * submit verifies the transfer on chain, so nothing is registered until the
+   * money moved.
+   */
+  async function buy() {
+    setError(null);
+    setFunding(null);
+    setPendingPurchase(null);
+    try {
+      const owner =
+        wallet.address ??
+        (hasWallet() ? await wallet.connectWallet() : await wallet.loginWithX());
+      if (!owner) {
+        setPhase('failed');
+        return;
+      }
+
+      setPhase('submitting');
+      const quote = await requestPurchaseQuote({ label, owner });
+      const q = quote.data;
+
+      // An embedded wallet arrives with no funds as a rule, not an exception;
+      // check before signing so the message is an instruction, not a revert.
+      const balance = await wallet.readErc20Balance(q.token as Address);
+      if (balance !== null && balance < BigInt(q.amountBaseUnits)) {
+        setPhase('failed');
+        setFunding({ wallet: owner, treasury: q.treasury, priceUsd: q.priceUsd, currency: q.currency });
+        return;
+      }
+
+      setPhase('signing');
+      const deadline = deadlineInSeconds(config.limits.confirmTokenTtlMinutes);
+      const signature = await wallet.signRegister({
+        domain: {
+          name: config.productName,
+          version: '1',
+          chainId: config.chain.chainId,
+          verifyingContract: config.registrar as Address,
+        },
+        types: {
+          Register: [
+            { name: 'label', type: 'string' },
+            { name: 'owner', type: 'address' },
+            { name: 'deadline', type: 'uint256' },
+          ],
+        },
+        primaryType: 'Register',
+        message: { label, owner: owner as Address, deadline: BigInt(deadline) },
+      });
+
+      setPhase('paying');
+      const paymentTxHash = await wallet.payErc20({
+        chainId: q.chainId,
+        token: q.token as Address,
+        to: q.treasury as Address,
+        amountBaseUnits: BigInt(q.amountBaseUnits),
+      });
+
+      setPhase('submitting');
+      await settlePurchase({ label, owner, deadline, signature, quoteId: q.quoteId, paymentTxHash });
+    } catch (cause) {
+      setPhase('failed');
+      if (cause instanceof WalletError || cause instanceof ApiError) {
+        setError(cause.message);
+      } else {
+        setError('It did not go through. Nothing was paid.');
+      }
+    }
+  }
+
+  /** Submits (or re-submits after "not visible yet") one settled payment. */
+  async function settlePurchase(payload: PurchasePayload) {
+    try {
+      const purchased = await submitPurchase(payload);
+      setResult({
+        label: purchased.data.label,
+        fullName: purchased.data.fullName,
+        owner: purchased.data.owner as Address,
+        txHash: (purchased.data.txHash as `0x${string}` | null) ?? null,
+        tier: purchased.data.tier,
+        alreadyRegistered: purchased.data.alreadyRegistered,
+      });
+      setPendingPurchase(null);
+      setPhase('done');
+    } catch (cause) {
+      setPhase('failed');
+      if (cause instanceof ApiError && cause.code === 'PAYMENT_NOT_FOUND') {
+        setPendingPurchase(payload);
+        setError(
+          'The payment is not visible on chain yet. Wait a minute, then press “Check payment again” — you will not be asked to pay twice.',
+        );
+      } else if (cause instanceof WalletError || cause instanceof ApiError) {
+        setError(cause.message);
+      } else {
+        setError('The purchase did not go through.');
       }
     }
   }
@@ -337,10 +461,12 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
           Step 2: connect a wallet and sign
         </h3>
         <p className="body-2" style={{ fontSize: 15 }}>
-          The name goes straight to this wallet address. For invited wallets we pay the gas; nothing
-          is issued until this wallet signs — neither we nor your AI can sign instead of you. (AIs
-          with no wallet at all can use our custodial signer service instead; that path is explained
-          in{' '}
+          The name goes straight to this wallet address. For invited wallets we pay the gas;
+          nothing is issued until this wallet signs — neither we nor your AI can sign instead of
+          you. Paid names, when purchase is enabled, settle in{' '}
+          {config.payment?.currency ?? 'USDG'} on {config.chain.name}: we verify the payment on
+          chain and sponsor the registration. (AIs with no wallet at all can use our custodial
+          signer service instead; that path is explained in{' '}
           <a href="/docs/reference/mcp">the MCP docs</a>.)
         </p>
 
@@ -358,50 +484,92 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
 
         {wallet.address && isAvailable && !invited ? (
           <div className="notice notice-warn">
-            Names are issued by invitation, and this wallet or X handle has none yet.
+            {purchasable
+              ? 'Names are issued by invitation, and this wallet has none — but this one can be bought with the button below.'
+              : 'Names are issued by invitation, and this wallet or X handle has none yet.'}
           </div>
         ) : null}
 
         {wallet.error ? <div className="notice notice-error">{wallet.error}</div> : null}
         {error ? <div className="notice notice-error">{error}</div> : null}
 
+        {funding ? (
+          <div className="notice notice-info">
+            This wallet does not have enough {funding.currency} yet. Send{' '}
+            {funding.priceUsd} {funding.currency} (on {config.chain.name}) to{' '}
+            <span className="mono">{funding.wallet}</span>, then press Buy again. The payment goes
+            to the project treasury (<span className="mono">{shortAddress(funding.treasury)}</span>)
+            and buys exactly this name.
+          </div>
+        ) : null}
+
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* One button, whatever is left: connect, switch networks, then sign.
-              Two buttons here meant the owner had to guess the right order, and
-              the second one only worked if the first had been pressed. */}
+          {/* One button, whatever is left: connect, switch networks, then sign
+              (or pay). Two buttons here meant the owner had to guess the right
+              order, and the second one only worked if the first had been
+              pressed. */}
           {wallet.privyEnabled && !wallet.address ? (
             <button
               type="button"
               className="btn"
-              disabled={!isAvailable || busy || wallet.connecting || phase === 'loading'}
+              disabled={!isAvailable && !purchasable || busy || wallet.connecting || phase === 'loading'}
               onClick={() => void wallet.loginWithX()}
               title="No wallet needed — one is created for you"
             >
               Continue with X
             </button>
           ) : null}
-          <button
-            type="button"
-            className="btn btn-primary btn-lg"
-            disabled={
-              !isAvailable || busy || wallet.connecting || phase === 'loading' || blockUninvited
-            }
-            onClick={() => void start()}
-          >
-            {blockUninvited
-              ? 'Invitation required'
-              : wallet.connecting
-                ? 'Connecting…'
-                : !wallet.address
-                  ? 'Connect and claim'
-                  : wrongChain
-                    ? `Switch to ${config.chain.name} and claim`
-                    : phase === 'signing'
-                      ? 'Waiting for your signature…'
-                      : phase === 'submitting'
-                        ? 'Issuing…'
-                        : 'Sign and claim'}
-          </button>
+          {buyPrimary || (purchasable && availability?.kind === 'premium') ? (
+            <button
+              type="button"
+              className="btn btn-primary btn-lg"
+              disabled={busy || wallet.connecting || phase === 'loading'}
+              onClick={() => void buy()}
+            >
+              {phase === 'signing'
+                ? 'Waiting for your signature…'
+                : phase === 'paying'
+                  ? 'Waiting for your payment…'
+                  : phase === 'submitting'
+                    ? 'Verifying the payment…'
+                    : secondName
+                      ? `Add a second name — $${purchaseOffer?.priceUsd}`
+                      : `Buy — $${purchaseOffer?.priceUsd ?? 5} ${config.payment?.currency ?? 'USDG'}`}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-primary btn-lg"
+              disabled={
+                !isAvailable || busy || wallet.connecting || phase === 'loading' || blockUninvited
+              }
+              onClick={() => void start()}
+            >
+              {blockUninvited
+                ? 'Invitation required'
+                : wallet.connecting
+                  ? 'Connecting…'
+                  : !wallet.address
+                    ? 'Connect and claim'
+                    : wrongChain
+                      ? `Switch to ${config.chain.name} and claim`
+                      : phase === 'signing'
+                        ? 'Waiting for your signature…'
+                        : phase === 'submitting'
+                          ? 'Issuing…'
+                          : 'Sign and claim'}
+            </button>
+          )}
+          {pendingPurchase ? (
+            <button
+              type="button"
+              className="btn"
+              disabled={busy}
+              onClick={() => void settlePurchase(pendingPurchase)}
+            >
+              Check payment again
+            </button>
+          ) : null}
           {wallet.address ? (
             <button type="button" className="btn" onClick={disconnect} disabled={busy}>
               Use a different wallet
@@ -452,12 +620,22 @@ function AvailabilityLine({
   if (!view) return <span className="status-idle">Type a name to see whether it is free.</span>;
   switch (view.kind) {
     case 'available':
+      if (view.purchase?.kind === 'additional-name') {
+        return (
+          <span className="status-ok">
+            {view.label}.{config.rootName} is available. This wallet already has its free name, so
+            this one is ${view.purchase.priceUsd} {config.payment?.currency ?? 'USDG'}.
+          </span>
+        );
+      }
       if (!view.invited) {
         return (
           <span className="status-ok">
             {view.label}.{config.rootName} is available.{' '}
             {signedIn
-              ? 'Names are issued by invitation, and this account has none yet.'
+              ? view.purchase
+                ? `This wallet has no invitation, but this name can be bought: $${view.purchase.priceUsd} ${config.payment?.currency ?? 'USDG'}.`
+                : 'Names are issued by invitation, and this account has none yet.'
               : 'Names are issued by invitation — connect a wallet or sign in with X to check yours.'}
           </span>
         );
@@ -478,13 +656,21 @@ function AvailabilityLine({
         </span>
       );
     case 'premium':
+      if (config.features.premiumPurchase) {
+        return (
+          <span className="status-warn">
+            {view.label} is a 4-character name: $
+            {view.purchase?.priceUsd ?? view.priceUsd ?? 5}{' '}
+            {config.payment?.currency ?? 'USDG'} to buy.
+            {!signedIn ? ' Connect a wallet to continue.' : ''}
+          </span>
+        );
+      }
       return (
         <span className="status-warn">
-          {view.label} is short enough to be a premium name.{' '}
-          {config.features.premiumPurchase ? '' : 'Premium names are not on sale yet.'}
-          {!config.features.premiumPurchase
-            ? ' Names are issued by invitation — an invited wallet can still take a 3–4 character name free.'
-            : ''}
+          {view.label} is short enough to be a premium name. Premium names are not on sale yet.
+          Names are issued by invitation — an invited wallet can still take a 3–4 character name
+          free.
         </span>
       );
     case 'reserved':

@@ -71,9 +71,11 @@ describe('tool registration over the MCP protocol', () => {
       'get_profile',
       'get_status',
       'prepare_card',
+      'prepare_purchase',
       'prepare_registration',
       'request_name',
       'submit_card',
+      'submit_purchase',
       'submit_registration',
     ]);
   });

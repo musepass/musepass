@@ -253,5 +253,7 @@ export const AGENT_TEST_PROMPT = [
   '',
   'Notes: names are issued by invitation — check_name with ?owner=<your address>',
   'says whether this wallet is invited. Labels need at least 5 characters without an',
-  'invitation (shorter ones are premium and not on sale), and one wallet gets one name.',
+  'invitation (4-character names and second names can be bought with prepare_purchase',
+  'and submit_purchase once purchase is switched on; 1–3 characters stay unsold), and',
+  'one wallet gets one free name.',
 ].join('\n');

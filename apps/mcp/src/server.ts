@@ -4,8 +4,10 @@ import type { MusenameConfig } from '@musename/core';
 import {
   checkName,
   prepareCard,
+  preparePurchase,
   prepareRegistration,
   submitCard,
+  submitPurchase,
   submitRegistration,
   draftCard,
   getProfile,
@@ -129,6 +131,42 @@ export function createServer(api: MusenameApi, config: MusenameConfig): McpServe
     },
     async ({ label, owner, deadline, signature }) =>
       text(render(await submitRegistration(api, { label, owner, deadline, signature }, config))),
+  );
+
+  server.registerTool(
+    'prepare_purchase',
+    {
+      title: 'Get a purchase quote and the payment to make',
+      description:
+        'Buy a name outright, no invitation needed: 4-character names cost $5 in USDG, and a second long name (5+ characters) costs $1. Returns a locked quote plus a ready-to-send ERC-20 transfer (data.txTemplate) from your wallet to the project treasury. Order matters: send the transfer and wait for it to confirm, sign data.typedData, then call submit_purchase with the payment tx hash. The first long name per wallet is free via the claim flow — this tool is for everything else.',
+      inputSchema: {
+        name: z.string().describe('The name to buy, with or without the root suffix.'),
+        ownerAddress: z.string().describe('Your wallet address: it pays, signs and owns the name.'),
+      },
+    },
+    async ({ name, ownerAddress }) =>
+      text(render(await preparePurchase(api, { name, ownerAddress }, config))),
+  );
+
+  server.registerTool(
+    'submit_purchase',
+    {
+      title: 'Submit a paid purchase and receive the name',
+      description:
+        'Second half of the paid path. Takes the quote id, your EIP-712 signature over the prepared payload, and the hash of your confirmed USDG payment. The API verifies the payment on-chain (token, sender, recipient, amount) and that the payment has not already been used, then registers the name with the gas paid by the project. If the payment is not visible yet, wait and submit the same values again; you are never charged twice.',
+      inputSchema: {
+        label: z.string().describe('The label that was signed.'),
+        owner: z.string().describe('The wallet that paid and signed.'),
+        deadline: z.number().describe('The deadline from the prepared payload, in Unix seconds.'),
+        signature: z.string().describe('The EIP-712 signature over the prepared payload.'),
+        quoteId: z.string().describe('The quote id from prepare_purchase.'),
+        paymentTxHash: z.string().describe('The on-chain hash of your confirmed USDG transfer.'),
+      },
+    },
+    async ({ label, owner, deadline, signature, quoteId, paymentTxHash }) =>
+      text(
+        render(await submitPurchase(api, { label, owner, deadline, signature, quoteId, paymentTxHash }, config)),
+      ),
   );
 
   server.registerTool(

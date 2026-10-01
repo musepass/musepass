@@ -54,6 +54,19 @@ export interface MusenameApi {
     requestedFor: string;
     host?: string | null;
   }): Promise<ToolResult>;
+  requestPurchaseQuote(input: {
+    label: string;
+    owner: string;
+  }): Promise<ToolResult>;
+  purchaseName(input: {
+    label: string;
+    owner: string;
+    deadline: number;
+    signature: string;
+    quoteId: string;
+    paymentTxHash: string;
+    agentHost?: string | null;
+  }): Promise<ToolResult>;
   getRequest(id: string): Promise<ToolResult>;
   getProfile(name: string): Promise<ToolResult>;
 }
@@ -375,6 +388,105 @@ export function prepareRegistration(
 }
 
 /**
+ * `prepare_purchase` (D19): everything an agent needs to buy a name outright.
+ *
+ * Paid purchase is the invitation-free path: anyone with a wallet can buy a
+ * 4-character name for $5, or a second long name for $1. The order of
+ * operations is fixed and this tool says so: pay on-chain first, wait for the
+ * transfer to confirm, then sign and submit. The payment is an ordinary
+ * ERC-20 transfer the agent sends itself (data.txTemplate is ready to use);
+ * the register signature is the same EIP-712 payload as the claim flow.
+ */
+export async function preparePurchase(
+  api: MusenameApi,
+  input: { name: string; ownerAddress: string },
+  config: MusenameConfig,
+): Promise<ToolResult> {
+  const label = (input.name ?? '').trim().toLowerCase();
+  const owner = (input.ownerAddress ?? '').trim();
+
+  if (!label || !/^0x[0-9a-fA-F]{40}$/.test(owner)) {
+    return {
+      summary: {
+        zh: '需要一个名字和一个钱包地址，地址形如 0x…（40 位十六进制）。',
+        en: 'I need a name and a wallet address (0x…, 40 hex characters).',
+      },
+      data: {},
+      errors: [{ code: 'BAD_INPUT', message: 'name and ownerAddress are required' }],
+    };
+  }
+
+  const quote = await api.requestPurchaseQuote({ label, owner });
+  if (quote.errors.length > 0) return quote;
+
+  const q = quote.data as {
+    quoteId?: string;
+    priceUsd?: number;
+    currency?: string;
+    amountBaseUnits?: string;
+    token?: string;
+    tokenDecimals?: number;
+    treasury?: string;
+    chainId?: number;
+    expiresAt?: string;
+  };
+  if (!q.quoteId || !q.token || !q.treasury || !q.amountBaseUnits) {
+    return {
+      summary: {
+        zh: '报价缺少付款信息，这次不算成功，请重试。',
+        en: 'The quote came back without payment details; please retry.',
+      },
+      data: quote.data,
+      errors: [{ code: 'NO_QUOTE_DETAILS', message: 'API did not return token/treasury/amount' }],
+    };
+  }
+
+  // Same EIP-712 shape as the claim flow. The signature window (15 minutes)
+  // sits inside the quote's TTL (30 minutes), so by the time the payment
+  // confirms there is still room to sign and submit.
+  const deadline = Math.floor(Date.now() / 1000) + 15 * 60;
+  const domain = buildEip712Domain({
+    productName: config.brand.productName,
+    chainId: config.chains.l2.chainId,
+    verifyingContract: config.chains.l2.registrar as `0x${string}`,
+  });
+  const message = registerMessage({ label, owner: owner as `0x${string}`, deadline: BigInt(deadline) });
+
+  return {
+    summary: {
+      zh: `报价拿到了：${label}.${config.brand.rootName} 价格 ${q.priceUsd} ${q.currency}（${q.quoteId.slice(0, 8)}…），${q.expiresAt} 前有效。购买不需要邀请。三步走：①用 ${owner} 把 ${q.amountBaseUnits} 个最小单位从 data.txTemplate 转到国库（USDG，链 ${q.chainId}），等交易上链；②对 data.typedData 做 EIP-712 签名；③把签名和付款交易哈希交给 submit_purchase。付款没确认之前 submit 不会成功，但报价保持有效。`,
+      en: `Quote ready: ${label}.${config.brand.rootName} costs ${q.priceUsd} ${q.currency} (quote ${q.quoteId.slice(0, 8)}…), held until ${q.expiresAt}. No invitation is needed to buy. Three steps: (1) from ${owner}, send the ERC-20 transfer in data.txTemplate (${q.amountBaseUnits} base units of USDG on chain ${q.chainId}) to the treasury and wait for it to confirm; (2) sign data.typedData with EIP-712; (3) hand the signature and the payment tx hash to submit_purchase. Submitting before the payment confirms does not settle, and the quote stays open.`,
+    },
+    data: {
+      ...quote.data,
+      label,
+      owner,
+      deadline,
+      typedData: { domain, types: REGISTER_TYPES, primaryType: 'Register', message },
+      // A ready-to-send ERC-20 transfer: same token, same treasury, same amount
+      // the API will verify against. Sending anything else fails verification.
+      txTemplate: {
+        chainId: q.chainId,
+        from: owner,
+        to: q.token,
+        value: '0',
+        data: erc20TransferCalldata(q.treasury, q.amountBaseUnits),
+        dataExplanation: `transfer(${q.treasury}, ${q.amountBaseUnits})`,
+      },
+      submitWith: 'submit_purchase',
+    },
+    errors: [],
+  };
+}
+
+/** keccak256("transfer(address,uint256)") selector + ABI-encoded args. */
+function erc20TransferCalldata(to: string, amountBaseUnits: string): string {
+  const address = to.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+  const amount = BigInt(amountBaseUnits).toString(16).padStart(64, '0');
+  return `0xa9059cbb${address}${amount}`;
+}
+
+/**
  * `submit_registration`: the second half, for an agent that signs for itself.
  *
  * Nothing here is trusted on the agent's word: the API verifies the signature
@@ -414,6 +526,69 @@ export async function submitRegistration(
       txHash,
       nextStep: 'card',
       nextStepEn: `The name exists now. Next: draft its card, and have the owner publish it at ${config.brand.siteUrl}/name/${input.label.trim()}.`,
+    },
+  };
+}
+
+/**
+ * `submit_purchase`: the second half of the paid rail.
+ *
+ * Nothing is trusted on the agent's word: the API re-verifies the register
+ * signature, the on-chain USDG transfer (token, sender, recipient, amount) and
+ * that this exact payment has not already bought a name, before it spends any
+ * gas. If the payment is not visible yet, wait and submit the same values
+ * again — the quote stays open and the payment is never charged twice.
+ */
+export async function submitPurchase(
+  api: MusenameApi,
+  input: {
+    label: string;
+    owner: string;
+    deadline: number;
+    signature: string;
+    quoteId: string;
+    paymentTxHash: string;
+    agentHost?: string | null;
+  },
+  config: MusenameConfig,
+): Promise<ToolResult> {
+  if (
+    !input.label?.trim() ||
+    !input.owner?.trim() ||
+    !input.signature?.trim() ||
+    !input.quoteId?.trim() ||
+    !input.paymentTxHash?.trim()
+  ) {
+    return {
+      summary: {
+        zh: '需要 label、owner、deadline、signature、quoteId 和 paymentTxHash。',
+        en: 'I need all of: label, owner, deadline, signature, quoteId and paymentTxHash.',
+      },
+      data: {},
+      errors: [
+        { code: 'BAD_INPUT', message: 'label, owner, deadline, signature, quoteId and paymentTxHash are required' },
+      ],
+    };
+  }
+
+  const result = await api.purchaseName({
+    label: input.label.trim(),
+    owner: input.owner.trim(),
+    deadline: Number(input.deadline),
+    signature: input.signature.trim(),
+    quoteId: input.quoteId.trim(),
+    paymentTxHash: input.paymentTxHash.trim(),
+    agentHost: input.agentHost ?? null,
+  });
+
+  if (result.errors.length > 0) return result;
+
+  return {
+    ...result,
+    data: {
+      ...(result.data as object),
+      nextStep: 'card',
+      nextStepEn: `The name is bought and registered. Next: draft its card, and have the owner publish it at ${config.brand.siteUrl}/name/${input.label.trim()}.`,
     },
   };
 }

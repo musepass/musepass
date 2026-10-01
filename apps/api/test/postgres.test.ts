@@ -67,6 +67,7 @@ describe('migrations', () => {
       'records',
       'registration_requests',
       'reserved_names',
+      'purchase_quotes',
       'sponsorship_ledger',
       'subscriptions',
     ]) {
@@ -192,5 +193,86 @@ describe('registration requests', () => {
 
     await repos.requests.markStatus(id, 'expired', new Date());
     expect(await repos.requests.countOpenByHost('hostx')).toBe(before);
+  });
+});
+
+describe('purchase quotes (D19)', () => {
+  const TOKEN = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168';
+  const TREASURY = '0x6BD854c3bdcD0F37dC1C8370D8B0627b8C6FE335';
+  const PAYMENT = `0x${'cd'.repeat(32)}` as Hex;
+  const at = new Date('2026-09-29T00:10:00.000Z');
+
+  function newQuote(label: string, owner: Address = OWNER) {
+    return {
+      id: crypto.randomUUID(),
+      label,
+      owner,
+      kind: 'tier-4' as const,
+      priceUsd: 5,
+      amountBaseUnits: '5000000',
+      token: TOKEN,
+      treasury: TREASURY,
+      chainId: 4663,
+      expiresAt: new Date('2026-09-29T00:40:00.000Z'),
+      createdAt: new Date('2026-09-29T00:10:00.000Z'),
+    };
+  }
+
+  it('inserts and finds a quote, and counts the open ones per owner', async () => {
+    await repos.purchases.insertQuote(newQuote('gold'));
+    const quote = await repos.purchases.insertQuote(newQuote('iron'));
+    expect(await repos.purchases.countOpenByOwner(OWNER)).toBeGreaterThanOrEqual(2);
+    expect(await repos.purchases.countOpenByOwner(OWNER.toLowerCase() as Address)).toBeGreaterThanOrEqual(2);
+
+    const found = await repos.purchases.findQuote(quote.id);
+    expect(found?.label).toBe('iron');
+    expect(await repos.purchases.findQuote(crypto.randomUUID())).toBeNull();
+  });
+
+  it('settles a quote by binding the payment, exactly once per payment', async () => {
+    const quote = await repos.purchases.insertQuote(newQuote('paid1'));
+    const settled = await repos.purchases.settleQuote(quote.id, PAYMENT, at);
+    expect(settled?.status).toBe('settling');
+    expect(settled?.paymentTxHash).toBe(PAYMENT);
+
+    // The same payment cannot buy a second name: unique index refuses it.
+    const other = await repos.purchases.insertQuote(newQuote('paid2'));
+    expect(await repos.purchases.settleQuote(other.id, PAYMENT, at)).toBeNull();
+
+    // A settled quote itself is no longer open for settling either.
+    expect(await repos.purchases.settleQuote(quote.id, `0x${'ce'.repeat(32)}` as Hex, at)).toBeNull();
+  });
+
+  it('reopens a failed register step and lets the same payment retry', async () => {
+    const quote = await repos.purchases.insertQuote(newQuote('retry'));
+    // A payment hash no other quote has used yet (PAYMENT is bound above).
+    const retryPayment = `0x${'da'.repeat(32)}` as Hex;
+    const first = await repos.purchases.settleQuote(quote.id, retryPayment, at);
+    expect(first?.status).toBe('settling');
+
+    await repos.purchases.reopenQuote(quote.id);
+    const again = await repos.purchases.settleQuote(quote.id, retryPayment, at);
+    expect(again?.status).toBe('settling');
+    expect(again?.paymentTxHash).toBe(retryPayment);
+
+    await repos.purchases.markSettled(quote.id, TX, at);
+    const settled = await repos.purchases.findQuote(quote.id);
+    expect(settled?.status).toBe('settled');
+    expect(settled?.registerTxHash).toBe(TX);
+  });
+
+  it('refuses to settle an expired quote', async () => {
+    const quote = await repos.purchases.insertQuote(newQuote('late'));
+    const tooLate = new Date('2026-09-29T00:41:00.000Z');
+    expect(await repos.purchases.settleQuote(quote.id, PAYMENT, tooLate)).toBeNull();
+  });
+
+  it('counts settled purchases per owner since a point in time', async () => {
+    const since = new Date('2026-09-29T00:00:00.000Z');
+    const before = await repos.purchases.countSettledForOwnerSince(OTHER, since);
+    const quote = await repos.purchases.insertQuote(newQuote('counted', OTHER));
+    await repos.purchases.settleQuote(quote.id, `0x${'cf'.repeat(32)}` as Hex, at);
+    await repos.purchases.markSettled(quote.id, TX, at);
+    expect(await repos.purchases.countSettledForOwnerSince(OTHER, since)).toBe(before + 1);
   });
 });

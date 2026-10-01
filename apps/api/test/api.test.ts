@@ -48,17 +48,30 @@ interface FakeChain extends ChainReader {
   /** Labels with a published card, for the genesis cover numbering. */
   cards: Set<string>;
   failNext: boolean;
+  /**
+   * D19: seeded ERC-20 transfers, standing in for eth_getTransactionReceipt.
+   * The keys are tx hashes; a `null` entry means "the node has never seen it".
+   */
+  payments: Map<Hex, null | {
+    status: 'success' | 'reverted';
+    token: Address;
+    from: Address;
+    to: Address;
+    amount: bigint;
+  }>;
 }
 
 function fakeChain(): FakeChain {
   const taken = new Set<string>();
   const registrations: Array<{ label: string; owner: Address }> = [];
   const cards = new Set<string>();
+  const payments: FakeChain['payments'] = new Map();
   const chain: FakeChain = {
     taken,
     registrations,
     cards,
     failNext: false,
+    payments,
     async listNames() {
       return registrations.map((entry, index) => ({
         ...entry,
@@ -85,8 +98,48 @@ function fakeChain(): FakeChain {
       registrations.push({ label, owner });
       return { txHash: `0x${'ab'.repeat(32)}` as Hex, node: `0x${'cd'.repeat(32)}` as Hex };
     },
+    async verifyPayment(input) {
+      const payment = payments.get(input.txHash) ?? null;
+      if (!payment) return { ok: false, reason: 'NOT_FOUND' as const };
+      if (payment.status !== 'success') return { ok: false, reason: 'REVERTED' as const };
+      if (payment.token.toLowerCase() !== input.token.toLowerCase()) {
+        return { ok: false, reason: 'WRONG_TOKEN' as const };
+      }
+      if (payment.from.toLowerCase() !== input.from.toLowerCase()) {
+        return { ok: false, reason: 'WRONG_FROM' as const };
+      }
+      if (payment.to.toLowerCase() !== input.to.toLowerCase()) {
+        return { ok: false, reason: 'WRONG_TO' as const };
+      }
+      if (payment.amount < input.minAmount) return { ok: false, reason: 'INSUFFICIENT' as const };
+      return { ok: true, amount: payment.amount, blockNumber: 1 };
+    },
   };
   return chain;
+}
+
+/** Seeds an on-chain payment and returns its tx hash. Test convenience only. */
+function seedPayment(
+  chain: FakeChain,
+  overrides: Partial<{
+    txHash: Hex;
+    status: 'success' | 'reverted';
+    token: Address;
+    from: Address;
+    to: Address;
+    amount: bigint;
+  }> = {},
+): Hex {
+  const txHash = overrides.txHash ?? (`0x${'ef'.repeat(32)}` as Hex);
+  chain.payments.set(txHash, {
+    status: 'success',
+    token: (testConfig().pricing.purchase?.token ?? '0x5fc5360d0400a0fd4f2af552add042d716f1d168') as Address,
+    from: ownerAccount.address,
+    to: (testConfig().pricing.purchase?.treasury ?? '0x6bd854c3bdcd0f37dc1c8370d8b0627b8c6fe335') as Address,
+    amount: 5_000_000n,
+    ...overrides,
+  });
+  return txHash;
 }
 
 const FIXED_NOW = new Date('2026-09-29T00:00:00.000Z');
@@ -102,6 +155,7 @@ function buildApp(overrides: Partial<MusenameDeps> = {}, config = testConfig()) 
     cards: repos.cards,
     sponsorship: repos.sponsorship,
     invitationClaims: repos.invitationClaims,
+    purchases: repos.purchases,
     indexKind: 'memory',
     clock: () => FIXED_NOW,
     ...overrides,
@@ -892,5 +946,438 @@ describe('GET /v1/names?owner=', () => {
     expect(response.status).toBe(200);
     expect(body.data.count).toBe(0);
     expect(body.summary.en).toContain('does not hold a name');
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* D19: the paid purchase rail                                         */
+/* ------------------------------------------------------------------ */
+
+/** The live config ships with purchase.enabled=false; tests switch it on. */
+function purchaseConfig(): MusenameConfig {
+  const config = testConfig();
+  const purchase = config.pricing.purchase!;
+  return { ...config, pricing: { ...config.pricing, purchase: { ...purchase, enabled: true } } };
+}
+
+describe('POST /v1/names/purchase/quote (D19)', () => {
+  it('locks a $5 price for a 4 character name, with no invitation consulted', async () => {
+    const { app } = buildApp({}, purchaseConfig());
+    const response = await app.request('/v1/names/purchase/quote', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'gold', owner: ownerAccount.address }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.kind).toBe('tier-4');
+    expect(body.data.priceUsd).toBe(5);
+    // USDG has 6 decimals on Robinhood Chain: $5 = 5,000,000 base units.
+    expect(body.data.amountBaseUnits).toBe('5000000');
+    expect(body.data.currency).toBe('USDG');
+    expect(body.data.quoteId).toBeTruthy();
+    expect(body.data.expiresAt).toBeTruthy();
+  });
+
+  it('quotes $1 for a second long name on a wallet that already holds one', async () => {
+    const config = purchaseConfig();
+    const { app, deps } = buildApp({ config });
+    await deps.names.insert({
+      label: 'existing',
+      fullName: 'existing.musepass.eth',
+      normalized: 'existing',
+      ownerAddress: ownerAccount.address,
+      tier: 'free',
+      status: 'active',
+      registeredVia: 'web',
+      agentHost: null,
+      txHash: null,
+    });
+
+    const response = await app.request('/v1/names/purchase/quote', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'secondname', owner: ownerAccount.address }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.kind).toBe('additional-name');
+    expect(body.data.priceUsd).toBe(1);
+    expect(body.data.amountBaseUnits).toBe('1000000');
+  });
+
+  it('points a first long name back at the free claim flow instead of quoting', async () => {
+    const { app } = buildApp({}, purchaseConfig());
+    const response = await app.request('/v1/names/purchase/quote', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'aguang', owner: ownerAccount.address }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.errors[0].code).toBe('FREE_NAME_USE_CLAIM');
+  });
+
+  it('keeps 1–3 character names off the paid rail too', async () => {
+    const { app } = buildApp({}, purchaseConfig());
+    for (const label of ['a', 'ab', 'abc']) {
+      const response = await app.request('/v1/names/purchase/quote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label, owner: ownerAccount.address }),
+      });
+      const body = await response.json();
+      expect(response.status).toBe(403);
+      expect(body.errors[0].code).toBe('NOT_PURCHASABLE');
+    }
+  });
+
+  it('answers 503 while purchase is disabled in config', async () => {
+    const { app } = buildApp(); // live config: enabled=false
+    const quote = await app.request('/v1/names/purchase/quote', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: 'gold', owner: ownerAccount.address }),
+    });
+    expect(quote.status).toBe(503);
+    expect((await quote.json()).errors[0].code).toBe('PURCHASE_NOT_ENABLED');
+
+    const submit = await app.request('/v1/names/purchase', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'gold',
+        owner: ownerAccount.address,
+        deadline: futureSeconds,
+        signature: '0x' + '00'.repeat(65),
+        quoteId: 'irrelevant',
+        paymentTxHash: `0x${'ef'.repeat(32)}`,
+      }),
+    });
+    expect(submit.status).toBe(503);
+    expect((await submit.json()).errors[0].code).toBe('PURCHASE_NOT_ENABLED');
+  });
+
+  it('caps the open quotes one wallet may hold', async () => {
+    const { app } = buildApp({}, purchaseConfig());
+    // Four-character labels, so each quote is priced instead of 409-ing into
+    // the free-first path a 5+ character name would take.
+    let lastStatus = 201;
+    for (let index = 0; index < 8 && lastStatus === 201; index += 1) {
+      const response = await app.request('/v1/names/purchase/quote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: `g${index}bu`, owner: ownerAccount.address }),
+      });
+      lastStatus = response.status;
+    }
+    expect(lastStatus).toBe(429);
+  });
+});
+
+describe('POST /v1/names/purchase (D19)', () => {
+  async function buyLabel(
+    app: ReturnType<typeof createApp>,
+    chain: FakeChain,
+    label: string,
+    config: MusenameConfig,
+    options: {
+      paymentOverrides?: Parameters<typeof seedPayment>[2];
+      submitLabel?: string;
+      paymentTxHash?: Hex;
+    } = {},
+  ) {
+    const quote = await (
+      await app.request('/v1/names/purchase/quote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label, owner: ownerAccount.address }),
+      })
+    ).json();
+    // Sign what will be submitted; the mismatch is between the payload and
+    // the quote, not inside the payload itself.
+    const { signature } = await signClaim(options.submitLabel ?? label, config, futureSeconds);
+    const paymentTxHash =
+      options.paymentTxHash ?? seedPayment(chain, options.paymentOverrides ?? {});
+    return app.request('/v1/names/purchase', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: options.submitLabel ?? label,
+        owner: ownerAccount.address,
+        deadline: futureSeconds,
+        signature,
+        quoteId: quote.data.quoteId,
+        paymentTxHash,
+      }),
+    });
+  }
+
+  it('settles an uninvited wallet buying a 4 character name, end to end', async () => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    const { app, deps } = buildApp({ chain, config });
+
+    const response = await buyLabel(app, chain, 'gold', config);
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.fullName).toBe('gold.musepass.eth');
+    expect(body.data.tier).toBe('premium');
+    expect(body.data.paid).toBe(true);
+    expect(chain.registrations).toEqual([{ label: 'gold', owner: ownerAccount.address }]);
+    // Paid purchases never consume sponsorship budget.
+    expect(await deps.sponsorship.countForWalletLifetime(ownerAccount.address)).toBe(0);
+  });
+
+  it('sells a second long name to a wallet already at its free quota', async () => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    const { app, deps } = buildApp({ chain, config });
+    await deps.names.insert({
+      label: 'existing',
+      fullName: 'existing.musepass.eth',
+      normalized: 'existing',
+      ownerAddress: ownerAccount.address,
+      tier: 'free',
+      status: 'active',
+      registeredVia: 'web',
+      agentHost: null,
+      txHash: null,
+    });
+
+    const response = await buyLabel(app, chain, 'secondname', config, {
+      paymentOverrides: { amount: 1_000_000n },
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.data.label).toBe('secondname');
+  });
+
+  it.each([
+    ['WRONG_TOKEN', { token: '0x1111111111111111111111111111111111111111' as Address }],
+    ['WRONG_FROM', { from: sponsorAccount.address }],
+    ['WRONG_TO', { to: sponsorAccount.address }],
+    ['INSUFFICIENT', { amount: 4_999_999n }],
+    ['REVERTED', { status: 'reverted' as const }],
+  ])('refuses a payment that fails verification: %s', async (reason, overrides) => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    const { app } = buildApp({ chain, config });
+
+    const response = await buyLabel(app, chain, 'gold', config, { paymentOverrides: overrides });
+    const body = await response.json();
+
+    expect(response.status).toBe(402);
+    expect(body.errors[0].code).toBe(`PAYMENT_${reason}`);
+    expect(chain.registrations).toHaveLength(0);
+  });
+
+  it('treats a payment the node has not seen as retryable, not failed', async () => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    const { app } = buildApp({ chain, config });
+    const unseen = `0x${'ee'.repeat(32)}` as Hex;
+
+    const response = await buyLabel(app, chain, 'gold', config, { paymentTxHash: unseen });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.errors[0].code).toBe('PAYMENT_NOT_FOUND');
+    expect(chain.registrations).toHaveLength(0);
+  });
+
+  it('lets one payment buy exactly one name', async () => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    const { app } = buildApp({ chain, config });
+    const txHash = seedPayment(chain, { amount: 10_000_000n }); // enough for two
+
+    const first = await buyLabel(app, chain, 'gold', config, { paymentTxHash: txHash });
+    expect(first.status).toBe(201);
+
+    const second = await buyLabel(app, chain, 'iron', config, { paymentTxHash: txHash });
+    const body = await second.json();
+
+    expect(second.status).toBe(409);
+    expect(body.errors[0].code).toBe('PAYMENT_ALREADY_USED');
+    expect(chain.registrations).toHaveLength(1);
+  });
+
+  it('refuses a submit after the quote expired', async () => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    let now = FIXED_NOW;
+    const { app } = buildApp({ chain, config, clock: () => now });
+
+    const quote = await (
+      await app.request('/v1/names/purchase/quote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'gold', owner: ownerAccount.address }),
+      })
+    ).json();
+    now = new Date(FIXED_NOW.getTime() + 31 * 60 * 1000);
+    // The register signature must outlive the 31-minute clock jump below, or
+    // the submit dies as EXPIRED (401) before the quote is ever consulted.
+    const lateDeadline = futureSeconds + 31 * 60 + 60;
+    const { signature } = await signClaim('gold', config, lateDeadline);
+    const paymentTxHash = seedPayment(chain);
+
+    const response = await app.request('/v1/names/purchase', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'gold',
+        owner: ownerAccount.address,
+        deadline: lateDeadline,
+        signature,
+        quoteId: quote.data.quoteId,
+        paymentTxHash,
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(410);
+    expect(body.errors[0].code).toBe('EXPIRED');
+  });
+
+  it('says the money is at the treasury when the label is taken after payment', async () => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    const { app } = buildApp({ chain, config });
+
+    const quote = await (
+      await app.request('/v1/names/purchase/quote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'gold', owner: ownerAccount.address }),
+      })
+    ).json();
+    chain.taken.add('gold'); // someone else registers it before the submit
+    const { signature } = await signClaim('gold', config, futureSeconds);
+
+    const response = await app.request('/v1/names/purchase', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        label: 'gold',
+        owner: ownerAccount.address,
+        deadline: futureSeconds,
+        signature,
+        quoteId: quote.data.quoteId,
+        paymentTxHash: seedPayment(chain),
+      }),
+    });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.errors[0].code).toBe('NAME_TAKEN');
+    expect(body.summary.en).toContain('refund');
+  });
+
+  it('refuses a submit that does not match its quote', async () => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    const { app } = buildApp({ chain, config });
+
+    const response = await buyLabel(app, chain, 'gold', config, { submitLabel: 'iron' });
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.errors[0].code).toBe('QUOTE_MISMATCH');
+    expect(chain.registrations).toHaveLength(0);
+  });
+
+  it('reopens the quote when registration fails, so the same payment can retry', async () => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    const { app } = buildApp({ chain, config });
+
+    // First attempt: quote and pay, then the chain breaks on register.
+    const quote = await (
+      await app.request('/v1/names/purchase/quote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'gold', owner: ownerAccount.address }),
+      })
+    ).json();
+    const { signature } = await signClaim('gold', config, futureSeconds);
+    const paymentTxHash = seedPayment(chain);
+    const payload = JSON.stringify({
+      label: 'gold',
+      owner: ownerAccount.address,
+      deadline: futureSeconds,
+      signature,
+      quoteId: quote.data.quoteId,
+      paymentTxHash,
+    });
+    const headers = { 'content-type': 'application/json' };
+
+    chain.failNext = true;
+    const failed = await app.request('/v1/names/purchase', { method: 'POST', headers, body: payload });
+    expect(failed.status).toBe(502);
+
+    // Second attempt with the same payment: the quote was reopened.
+    chain.failNext = false;
+    const retried = await app.request('/v1/names/purchase', { method: 'POST', headers, body: payload });
+    expect(retried.status).toBe(201);
+    expect(chain.registrations).toHaveLength(1);
+  });
+
+  it('is idempotent for an already settled purchase', async () => {
+    const config = purchaseConfig();
+    const chain = fakeChain();
+    const { app } = buildApp({ chain, config });
+
+    const quote = await (
+      await app.request('/v1/names/purchase/quote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ label: 'gold', owner: ownerAccount.address }),
+      })
+    ).json();
+    const { signature } = await signClaim('gold', config, futureSeconds);
+    const payload = JSON.stringify({
+      label: 'gold',
+      owner: ownerAccount.address,
+      deadline: futureSeconds,
+      signature,
+      quoteId: quote.data.quoteId,
+      paymentTxHash: seedPayment(chain),
+    });
+    const headers = { 'content-type': 'application/json' };
+
+    const first = await app.request('/v1/names/purchase', { method: 'POST', headers, body: payload });
+    const second = await app.request('/v1/names/purchase', { method: 'POST', headers, body: payload });
+    const body = await second.json();
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(200);
+    expect(body.data.alreadyRegistered).toBe(true);
+    expect(chain.registrations).toHaveLength(1);
+  });
+});
+
+describe('GET /v1/config with purchase (D19)', () => {
+  it('derives the feature flag and payment block from config', async () => {
+    const { app } = buildApp({}, purchaseConfig());
+    const body = await (await app.request('/v1/config')).json();
+
+    expect(body.data.features.premiumPurchase).toBe(true);
+    expect(body.data.payment).toMatchObject({ currency: 'USDG', tokenDecimals: 6 });
+    expect(body.data.pricing.premiumTiers.find((tier: { id: string }) => tier.id === 'tier-4').sellable).toBe(true);
+    expect(body.data.pricing.premiumTiers.find((tier: { id: string }) => tier.id === 'tier-3').sellable).toBe(false);
+  });
+
+  it('hides the payment block while purchase is disabled', async () => {
+    const { app } = buildApp();
+    const body = await (await app.request('/v1/config')).json();
+    expect(body.data.features.premiumPurchase).toBe(false);
+    expect(body.data.payment).toBeNull();
   });
 });

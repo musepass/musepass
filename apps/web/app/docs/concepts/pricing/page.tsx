@@ -8,7 +8,7 @@ import { fetchConfig, fetchMetrics } from '@/lib/api';
 export const metadata = {
   title: 'Pricing and limits',
   description:
-    'Names are issued by invitation; for invited wallets the first name is free. Short names have approved prices and are not on sale yet. Every cap is published.',
+    'Names are issued by invitation; for invited wallets the first name is free. Four-character names and additional names have approved prices. Every cap is published.',
 };
 
 export const revalidate = 300;
@@ -33,15 +33,15 @@ export default async function PricingConceptPage() {
             <h1 className="h2">Pricing and limits</h1>
             <DocsLede
               status="live"
-              lede="Names are issued by invitation, one per wallet, and for invited wallets we pay the gas. Short-name prices are approved and not on sale yet. The caps are published live."
+              lede="Names are issued by invitation, one per wallet, and for invited wallets we pay the gas. Four-character names and additional long names have approved prices. The caps are published live."
             />
 
             <h2 className="h3">Invited names</h2>
             <ul>
               <li>
                 One invitation, written to a wallet address or an X account, covers one name —
-                including a 3–4 character short name. A wallet without an invitation is refused, at
-                any length.
+                including a 3–4 character short name. A wallet without an invitation is refused on
+                the free rail, at any length.
               </li>
               <li>
                 Registration is sponsored for invited wallets: the project pays the gas, your wallet
@@ -54,7 +54,7 @@ export default async function PricingConceptPage() {
               </li>
             </ul>
 
-            <h2 className="h3">Short names: approved, not on sale</h2>
+            <h2 className="h3">Short and additional names: the price ladder</h2>
             <table className="docs-table">
               <thead>
                 <tr>
@@ -70,15 +70,33 @@ export default async function PricingConceptPage() {
                       {tier.minUnits} character{tier.minUnits === 1 ? '' : 's'}
                     </td>
                     <td>${tier.priceUsd}</td>
-                    <td>{tier.minUnits <= 2 ? 'reserved for the project' : 'invitation-only, free'}</td>
+                    <td>
+                      {tier.minUnits <= 2
+                        ? 'held by the project, not for sale'
+                        : tier.sellable
+                          ? `on sale for ${config.pricing.currency}, or free for invited wallets`
+                          : 'invitation-only, free'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             <p>
-              The payment flow does not exist: three- and four-character names go to invited wallets
-              only, one- and two-character names are reserved for the project, and nobody has been
-              charged anything.
+              {config.features.premiumPurchase && config.payment ? (
+                <>
+                  A four-character name is ${tiers.find((tier) => tier.minUnits === 4)?.priceUsd ?? 5}{' '}
+                  {config.payment.currency}, paid on {config.chain.name} to the project treasury;
+                  the registration itself is still sponsored. A second long name beyond the free
+                  one is ${config.payment.additionalNameUsd ?? 1}. One payment buys exactly one
+                  name, and names of 1–3 characters stay with the project.
+                </>
+              ) : (
+                <>
+                  The payment rail is built but not switched on: today three- and four-character
+                  names go to invited wallets only, one- and two-character names are held by the
+                  project, and nobody has been charged anything.
+                </>
+              )}
             </p>
             <h2 className="h3">The caps, live</h2>
             <p>
@@ -129,10 +147,6 @@ export default async function PricingConceptPage() {
               </p>
             </div>
             <ul>
-              <li>
-                A second, longer name beyond the free one: $1 — the design price; the claim policy
-                has no notion of a paid extra name yet.
-              </li>
               <li>
                 Record certification: ${config.pricing.certificationMonthlyUsd}/month — the record
                 contract is not deployed, so nothing can be certified yet.

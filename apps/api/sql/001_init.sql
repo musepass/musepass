@@ -100,8 +100,13 @@ create table if not exists sponsorship_ledger (
   wallet_address    text        not null,
   tx_hash           text        not null,
   gas_cost_wei      numeric(78, 0),
-  sponsored_at      timestamptz not null default now()
+  sponsored_at      timestamptz not null default now(),
+  paid              boolean     not null default false
 );
+
+-- D19: the column is new on an existing table, so it needs an ALTER as well as
+-- the CREATE above (create table if not exists is a no-op on the live DB).
+alter table sponsorship_ledger add column if not exists paid boolean not null default false;
 
 create index if not exists sponsorship_ledger_wallet_idx
   on sponsorship_ledger (wallet_address, sponsored_at);
@@ -134,3 +139,28 @@ create table if not exists api_usage (
 );
 
 create index if not exists api_usage_client_idx on api_usage (client_id, ts);
+
+-- D19: paid purchase rail. A quote locks label+price+payer for a TTL; the
+-- buyer pays USDG on-chain, submits the payment tx hash, and the API verifies
+-- the Transfer before sponsoring the registration. The UNIQUE constraint on
+-- payment_tx_hash is the double-spend guard: one payment buys exactly one name,
+-- even under concurrent submits.
+create table if not exists purchase_quotes (
+  id                 uuid primary key,
+  label              text          not null,
+  owner_address      text          not null,
+  kind               text          not null check (kind in ('tier-4', 'additional-name')),
+  price_usd          numeric(12,2) not null,
+  amount_base_units  numeric(78,0) not null,
+  token              text          not null,
+  treasury           text          not null,
+  chain_id           integer       not null,
+  status             text          not null check (status in ('open', 'settling', 'settled', 'expired', 'failed')),
+  payment_tx_hash    text unique,
+  register_tx_hash   text,
+  expires_at         timestamptz   not null,
+  created_at         timestamptz   not null default now(),
+  settled_at         timestamptz
+);
+
+create index if not exists purchase_quotes_owner_idx on purchase_quotes (owner_address, status);

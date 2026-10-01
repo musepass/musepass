@@ -75,8 +75,8 @@ pnpm verify:local`}</pre>
                       .join(' · ')}
                     .{' '}
                     {config.features.premiumPurchase
-                      ? 'On sale.'
-                      : 'Not on sale yet, and there is no purchase endpoint to call.'}{' '}
+                      ? `Four-character names are on sale for ${config.pricing.currency}; one payment buys exactly one name.`
+                      : 'Not on sale yet; the purchase endpoints answer 503 until it is switched on.'}{' '}
                     Invited wallets can still take a 3–4 character name free — the counts are public at{' '}
                     <Link href="/numbers">/numbers</Link>, the list of who is invited is not.
                   </td>

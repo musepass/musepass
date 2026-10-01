@@ -55,6 +55,8 @@ export interface AvailabilityData {
   reserved: { category: string; appealable: boolean } | null;
   /** Null when the query did not say who is asking (no ?owner=). */
   invited: boolean | null;
+  /** D19: what this wallet would pay to buy rather than claim. Display-only. */
+  purchase: { kind: string; priceUsd: number } | null;
   suggestions: string[];
 }
 
@@ -127,6 +129,16 @@ export interface PublicConfig {
   registrar: string | null;
   l2Registry: string | null;
   usdc: string | null;
+  /** D19: null unless the paid rail is enabled. Everything a payer needs. */
+  payment: {
+    currency: string;
+    token: string;
+    tokenDecimals: number;
+    treasury: string;
+    quoteTtlMinutes: number;
+    additionalNameEnabled: boolean;
+    additionalNameUsd: number | null;
+  } | null;
   pricing: {
     currency: string;
     freeMinUnits: number;
@@ -174,8 +186,12 @@ export const FALLBACK_CONFIG: PublicConfig = {
   registrar: '0xb1e8a90e5a9b1c8e69242bc70d928789d89c02b7',
   l2Registry: '0x4b959e1fb5567caa7fe21d0d2a7f870af705b792',
   usdc: null,
+  // Paid purchase (D19) is off in the fallback: the API only publishes this
+  // block when the rail is enabled, and a stale fallback must not promise a
+  // checkout that is closed.
+  payment: null,
   pricing: {
-    currency: 'USDC',
+    currency: 'USDG',
     freeMinUnits: 5,
     lengthMetric: 'display-width',
     // Mirrors config/pricing.json (D15). It cannot be empty: the landing page is
@@ -371,6 +387,65 @@ export interface ClaimPayload {
 export function submitClaim(payload: ClaimPayload, options?: RequestOptions) {
   return request<ClaimData>(
     '/v1/names/claim',
+    { method: 'POST', body: JSON.stringify(payload) },
+    options,
+  );
+}
+
+export interface PurchaseQuoteData {
+  quoteId: string;
+  label: string;
+  fullName: string;
+  kind: string;
+  priceUsd: number;
+  currency: string;
+  amountBaseUnits: string;
+  token: string;
+  tokenDecimals: number;
+  treasury: string;
+  chainId: number;
+  payer: string;
+  expiresAt: string;
+  registerTypedDataHint: { domain: unknown; primaryType: 'Register' } | null;
+}
+
+/** D19: locks a price for one label and payer. No invitation is consulted. */
+export function requestPurchaseQuote(
+  payload: { label: string; owner: string },
+  options?: RequestOptions,
+) {
+  return request<PurchaseQuoteData>(
+    '/v1/names/purchase/quote',
+    { method: 'POST', body: JSON.stringify(payload) },
+    options,
+  );
+}
+
+export interface PurchaseData {
+  label: string;
+  fullName: string;
+  owner: string;
+  txHash: string | null;
+  paymentTxHash: string;
+  quoteId: string;
+  tier: string;
+  paid: boolean;
+  alreadyRegistered: boolean;
+}
+
+export interface PurchasePayload {
+  label: string;
+  owner: string;
+  deadline: number;
+  signature: string;
+  quoteId: string;
+  paymentTxHash: string;
+}
+
+/** Settles a purchase: the API verifies the USDG transfer before registering. */
+export function submitPurchase(payload: PurchasePayload, options?: RequestOptions) {
+  return request<PurchaseData>(
+    '/v1/names/purchase',
     { method: 'POST', body: JSON.stringify(payload) },
     options,
   );

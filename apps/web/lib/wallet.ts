@@ -74,8 +74,8 @@ export function hasWallet(): boolean {
   return typeof window !== 'undefined' && Boolean(window.ethereum);
 }
 
-export async function currentChainId(): Promise<number> {
-  const hex = (await getProvider().request({ method: 'eth_chainId' })) as string;
+export async function currentChainId(provider: Eip1193Provider = getProvider()): Promise<number> {
+  const hex = (await provider.request({ method: 'eth_chainId' })) as string;
   return Number.parseInt(hex, 16);
 }
 
@@ -87,9 +87,11 @@ export async function connect(): Promise<Address> {
   return getAddress(accounts[0]);
 }
 
-export async function ensureChain(chainId: number): Promise<void> {
-  const provider = getProvider();
-  if ((await currentChainId()) === chainId) return;
+export async function ensureChain(
+  chainId: number,
+  provider: Eip1193Provider = getProvider(),
+): Promise<void> {
+  if ((await currentChainId(provider)) === chainId) return;
 
   const spec = KNOWN_CHAINS[chainId];
   const hexChainId = `0x${chainId.toString(16)}`;
@@ -196,6 +198,87 @@ export async function signCardPayload(account: Address, payload: Hex): Promise<H
 export function shortAddress(address: string): string {
   if (!address || address.length < 10) return address;
   return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
+
+/* ------------------------------------------------------------------ */
+/* D19: paying for a name in USDG                                      */
+/* ------------------------------------------------------------------ */
+
+/** ABI-encode `transfer(address,uint256)` without pulling in a codec. */
+function erc20TransferData(to: Address, amountBaseUnits: bigint): `0x${string}` {
+  const address = to.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+  const amount = amountBaseUnits.toString(16).padStart(64, '0');
+  return `0xa9059cbb${address}${amount}` as `0x${string}`;
+}
+
+/**
+ * Sends the USDG payment from the connected wallet. Works with any EIP-1193
+ * provider — a browser extension or a Privy embedded wallet — because it is
+ * just eth_sendTransaction with ERC-20 calldata; wallets render it as an
+ * ordinary token transfer.
+ */
+export async function sendErc20TransferWithProvider(
+  account: Address,
+  token: Address,
+  to: Address,
+  amountBaseUnits: bigint,
+  provider: Eip1193Provider,
+): Promise<Hex> {
+  try {
+    return (await provider.request({
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from: account,
+          to: token,
+          value: '0x0',
+          data: erc20TransferData(to, amountBaseUnits),
+        },
+      ],
+    })) as Hex;
+  } catch (error) {
+    if ((error as { code?: number }).code === 4001) {
+      throw new WalletError('REJECTED', 'You cancelled the payment.');
+    }
+    throw new WalletError('SEND_FAILED', 'The payment did not send. You can try again.');
+  }
+}
+
+export async function sendErc20Transfer(
+  account: Address,
+  token: Address,
+  to: Address,
+  amountBaseUnits: bigint,
+): Promise<Hex> {
+  return sendErc20TransferWithProvider(account, token, to, amountBaseUnits, getProvider());
+}
+
+/**
+ * The wallet's USDG balance, via a plain eth_call so no RPC endpoint needs to
+ * be configured in the browser. Returns null when the call fails for any
+ * reason — an unknown balance must not block a payment the wallet may still
+ * allow.
+ */
+export async function readErc20BalanceWithProvider(
+  account: Address,
+  token: Address,
+  provider: Eip1193Provider,
+): Promise<bigint | null> {
+  try {
+    const owner = account.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+    const result = (await provider.request({
+      method: 'eth_call',
+      params: [{ to: token, data: `0x70a08231${owner}` }, 'latest'],
+    })) as string;
+    if (!result || result === '0x') return null;
+    return BigInt(result);
+  } catch {
+    return null;
+  }
+}
+
+export async function readErc20Balance(account: Address, token: Address): Promise<bigint | null> {
+  return readErc20BalanceWithProvider(account, token, getProvider());
 }
 
 export function deadlineInSeconds(minutes = 15): number {

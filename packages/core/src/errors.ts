@@ -15,6 +15,7 @@ export type MusePassErrorCode =
   | 'INVALID_CONFIG'
   | 'INVALID_CARD'
   | 'INVALID_SIGNATURE'
+  | 'INVALID_PRICE'
   | 'EXPIRED';
 
 export interface MusePassErrorJson {

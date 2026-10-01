@@ -315,5 +315,55 @@ export function createChainReader(options: ChainReaderOptions): ChainReader {
       }
       return { txHash, node: await nodeFor(input.label) };
     },
+
+    /**
+     * D19: verifies a USDG payment by reading the transaction receipt and
+     * matching an ERC-20 Transfer event. Read-only, so it works whether or not
+     * the issuer key is configured. Indexed `from`/`to` live in the last 20
+     * bytes of their topics, which also handles operator-style transfers
+     * harmlessly (the operator slot is simply ignored).
+     */
+    async verifyPayment(input) {
+      const receipt = await publicClient.getTransactionReceipt({ hash: input.txHash }).catch(() => null);
+      if (!receipt) return { ok: false, reason: 'NOT_FOUND' as const };
+      if (receipt.status !== 'success') return { ok: false, reason: 'REVERTED' as const };
+
+      const token = input.token.toLowerCase();
+      const from = input.from.toLowerCase();
+      const to = input.to.toLowerCase();
+      let sawTokenTransfer = false;
+      let sawFrom = false;
+      let sawTo = false;
+      let best = 0n;
+
+      for (const log of receipt.logs) {
+        if ((log.address as string).toLowerCase() !== token) continue;
+        if (log.topics[0] !== TRANSFER_EVENT_TOPIC) continue;
+        sawTokenTransfer = true;
+        const logFrom = topicAddress(log.topics[1]);
+        const logTo = topicAddress(log.topics[2]);
+        if (logFrom === from) sawFrom = true;
+        if (logTo === to) sawTo = true;
+        if (logFrom === from && logTo === to) {
+          const value = BigInt(log.data);
+          if (value > best) best = value;
+        }
+      }
+
+      if (!sawTokenTransfer) return { ok: false, reason: 'WRONG_TOKEN' as const };
+      if (!sawFrom) return { ok: false, reason: 'WRONG_FROM' as const };
+      if (!sawTo) return { ok: false, reason: 'WRONG_TO' as const };
+      if (best < input.minAmount) return { ok: false, reason: 'INSUFFICIENT' as const };
+      return { ok: true, amount: best, blockNumber: Number(receipt.blockNumber) };
+    },
   };
+}
+
+/** keccak256('Transfer(address,address,uint256)') */
+export const TRANSFER_EVENT_TOPIC: Hex =
+  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+
+function topicAddress(topic: Hex | undefined): string {
+  if (!topic) return '';
+  return ('0x' + topic.slice(-40)).toLowerCase();
 }

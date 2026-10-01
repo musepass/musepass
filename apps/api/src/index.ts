@@ -7,6 +7,7 @@ import type {
   CardsRepo,
   InvitationClaimsRepo,
   NamesRepo,
+  PurchaseRepo,
   RegistrationRequestRepo,
   SponsorshipRepo,
 } from './deps.js';
@@ -29,6 +30,7 @@ let requests: RegistrationRequestRepo;
 let cards: CardsRepo;
 let sponsorship: SponsorshipRepo;
 let invitationClaims: InvitationClaimsRepo;
+let purchases: PurchaseRepo;
 let indexKind: 'memory' | 'postgres' = 'memory';
 if (process.env.DATABASE_URL) {
   // Imported only when it is actually used, so a deployment that runs without
@@ -42,11 +44,11 @@ if (process.env.DATABASE_URL) {
     },
   };
   await migrate(sql);
-  ({ names, requests, cards, sponsorship, invitationClaims } = createPostgresRepos(sql));
+  ({ names, requests, cards, sponsorship, invitationClaims, purchases } = createPostgresRepos(sql));
   indexKind = 'postgres';
   logger.log('info', 'using postgres for the index');
 } else {
-  ({ names, requests, cards, sponsorship, invitationClaims } = createMemoryRepos());
+  ({ names, requests, cards, sponsorship, invitationClaims, purchases } = createMemoryRepos());
   logger.log('warn', 'DATABASE_URL is not set: the index is in memory and is lost on restart', {
     effect: 'chain data is unaffected; the index is rebuilt by re-reading',
   });
@@ -61,6 +63,7 @@ const app = createApp({
   cards,
   sponsorship,
   invitationClaims,
+  purchases,
   indexKind,
   clock: () => new Date(),
   logger,

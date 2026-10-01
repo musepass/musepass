@@ -1,19 +1,56 @@
 {
-  "$comment": "Rule 6: prices are configuration. The length ladder was set 2026-09-30 (docs/decisions.md D15) and replaces the 2026-09-29 numbers in D6. Short names are still NOT sellable: the claim policy rejects every non-free tier until the payment flow exists (`features.premiumPurchase` stays false). The currency is also unsettled — this chain's stablecoin is USDG, not USDC — so nothing here has been charged to anyone.",
-  "currency": "USDC",
+  "$comment": "Rule 6: prices are configuration. The length ladder was set 2026-09-30 (docs/decisions.md D15). D19 (2026-10-01) turns on paid purchase: 4-char names sell for $5 and the second+ long name per wallet for $1, paid in USDG. Tiers 1-3 stay project-reserved (quotePurchase returns null below 4 units). The registrar contract never touches money: buyers pay the treasury direct and the API verifies the Transfer before sponsoring.",
+  "currency": "USDG",
   "$comment_units": "All length thresholds use limits.lengthMetric (default: display width, so one CJK character counts as two).",
   "freeTier": {
     "minUnits": 5
   },
-  "$comment_ladder": "A name is priced by how few characters it has, because that is what makes it worth remembering. The first name of five characters or more is free — that promise is what the product is built on and it does not change. What costs money is being short, and taking more names than the free one.",
+  "$comment_ladder": "A name is priced by how few characters it has, because that is what makes it worth remembering. The first name of five characters or more is free (invitation-gated, D17) — that promise is what the product is built on and it does not change. What costs money is being short, and taking more names than the free one.",
   "premiumTiers": [
-    { "id": "tier-1", "minCodePoints": 1, "maxCodePoints": 1, "priceUsd": 500, "status": "approved" },
-    { "id": "tier-2", "minCodePoints": 2, "maxCodePoints": 2, "priceUsd": 100, "status": "approved" },
-    { "id": "tier-3", "minCodePoints": 3, "maxCodePoints": 3, "priceUsd": 20, "status": "approved" },
-    { "id": "tier-4", "minCodePoints": 4, "maxCodePoints": 4, "priceUsd": 5, "status": "approved" }
+    {
+      "id": "tier-1",
+      "minCodePoints": 1,
+      "maxCodePoints": 1,
+      "priceUsd": 500,
+      "status": "approved",
+      "$comment": "Not sellable yet (D19): opens only after 50+ tier-4 sales are reviewed."
+    },
+    {
+      "id": "tier-2",
+      "minCodePoints": 2,
+      "maxCodePoints": 2,
+      "priceUsd": 100,
+      "status": "approved",
+      "$comment": "Not sellable yet (D19)."
+    },
+    {
+      "id": "tier-3",
+      "minCodePoints": 3,
+      "maxCodePoints": 3,
+      "priceUsd": 20,
+      "status": "approved",
+      "$comment": "Not sellable yet (D19)."
+    },
+    {
+      "id": "tier-4",
+      "minCodePoints": 4,
+      "maxCodePoints": 4,
+      "priceUsd": 5,
+      "status": "approved"
+    }
   ],
+  "purchase": {
+    "enabled": true,
+    "$comment": "Flip to true in the same push that deploys the purchase API (D19). token = canonical USDG verified on docs.robinhood.com/chain/contracts and re-checked via RPC (symbol USDG, decimals 6). treasury is receive-only; the key lives in .secrets/treasury.txt and never on the server.",
+    "currency": "USDG",
+    "token": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "tokenDecimals": 6,
+    "treasury": "0x6BD854c3bdcD0F37dC1C8370D8B0627b8C6FE335",
+    "quoteTtlMinutes": 30,
+    "additionalNameEnabled": true
+  },
   "additionalName": {
-    "$comment": "Beyond the one free name per wallet, a longer name is one dollar. Not implemented: the claim policy has no notion of a paid extra name yet, and this key is the design that the payment flow will read.",
+    "$comment": "Beyond the one free name per wallet, a longer name is one dollar (D19).",
     "priceUsd": 1
   },
   "certification": {

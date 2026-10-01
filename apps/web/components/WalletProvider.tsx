@@ -16,6 +16,8 @@ import {
   connect,
   currentChainId,
   ensureChain,
+  readErc20BalanceWithProvider,
+  sendErc20TransferWithProvider,
   signRegister as signRegisterInjected,
   signRegisterWithProvider,
   type Eip1193Provider,
@@ -56,6 +58,19 @@ interface WalletContextValue extends WalletState {
   disconnect: () => void;
   switchTo: (chainId: number) => Promise<void>;
   signRegister: (typedData: RegisterTypedData) => Promise<Hex>;
+  /**
+   * D19: the one thing this site asks a wallet to *send* rather than sign —
+   * the USDG payment for a purchase. Works for the extension and the embedded
+   * wallet alike, and makes sure whichever it is sits on the payment chain.
+   */
+  payErc20: (input: {
+    chainId: number;
+    token: Address;
+    to: Address;
+    amountBaseUnits: bigint;
+  }) => Promise<Hex>;
+  /** The connected wallet's balance of an ERC-20, null when unreadable. */
+  readErc20Balance: (token: Address) => Promise<bigint | null>;
   getAccessToken: () => Promise<string | null>;
   clearError: () => void;
 }
@@ -224,6 +239,51 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const getAccessToken = useCallback(async () => privyRef.current?.getAccessToken() ?? null, []);
 
+  // The provider behind the active wallet. Claims only need a signature, but a
+  // purchase sends a real transaction, and for an embedded wallet that is a
+  // different provider than window.ethereum.
+  const activeProvider = useCallback(async (): Promise<Eip1193Provider | null> => {
+    if (usingInjected && injected) {
+      const { getProvider } = await import('@/lib/wallet');
+      try {
+        return getProvider();
+      } catch {
+        return null;
+      }
+    }
+    const wallet = privyRef.current?.wallet;
+    if (!wallet?.address) return null;
+    return wallet.getEthereumProvider();
+  }, [usingInjected, injected]);
+
+  const payErc20 = useCallback(
+    async (input: {
+      chainId: number;
+      token: Address;
+      to: Address;
+      amountBaseUnits: bigint;
+    }): Promise<Hex> => {
+      const address = usingInjected && injected ? injected : (privyRef.current?.wallet?.address as Address | undefined);
+      if (!address) throw new WalletError('NO_WALLET', 'Connect a wallet first.');
+      const provider = await activeProvider();
+      if (!provider) throw new WalletError('NO_WALLET', 'The wallet is not ready yet. Try again.');
+      await ensureChain(input.chainId, provider);
+      return sendErc20TransferWithProvider(address, input.token, input.to, input.amountBaseUnits, provider);
+    },
+    [usingInjected, injected, activeProvider],
+  );
+
+  const readErc20Balance = useCallback(
+    async (token: Address): Promise<bigint | null> => {
+      const address = usingInjected && injected ? injected : (privyRef.current?.wallet?.address as Address | undefined);
+      if (!address) return null;
+      const provider = await activeProvider();
+      if (!provider) return null;
+      return readErc20BalanceWithProvider(address, token, provider);
+    },
+    [usingInjected, injected, activeProvider],
+  );
+
   const clearError = useCallback(() => setState((prev) => ({ ...prev, error: null })), []);
 
   // Stable identity on purpose: PrivySync's effect depends on this callback, so
@@ -269,6 +329,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       disconnect,
       switchTo,
       signRegister,
+      payErc20,
+      readErc20Balance,
       getAccessToken,
       clearError,
     }),
@@ -284,6 +346,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       disconnect,
       switchTo,
       signRegister,
+      payErc20,
+      readErc20Balance,
       getAccessToken,
       clearError,
     ],

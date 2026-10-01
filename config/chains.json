@@ -16,8 +16,8 @@
     "durinRegistryImplementation": "0x94871e1d891a80a63bee5df5857efedd0e3a9510",
     "l2Registry": "0x4b959e1fb5567caa7fe21d0d2a7f870af705b792",
     "registrar": "0xb1e8a90e5a9b1c8e69242bc70d928789d89c02b7",
-    "usdc": "",
-    "stablecoinNote": "这条链的主稳定币是 USDG（Paxos），不是 USDC；阶段 5 收款前需确认地址",
+    "usdc": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    "stablecoinNote": "USDG（Paxos，官方 docs.robinhood.com/chain/contracts 核实，decimals=6）。key 名沿用 usdc 是历史兼容；收款参数以 pricing.json 的 purchase 块为准（D19）。",
     "previousRoot": {
       "rootName": "musepass.eth",
       "l2Registry": "0x0ca717398428bcae7fae24e656e8444ecd9ba5a5",

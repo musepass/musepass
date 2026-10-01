@@ -205,6 +205,21 @@ export const CLAIM_RULES: ClaimRule[] = [
     gate: null,
     patterns: [/Names\s+are\s+free\.\s+Trust\s+is\s+earned\./i],
   },
+  {
+    // D19: sentences that promise the paid rail works. While
+    // config/pricing.json has purchase.enabled=false the routes answer 503 and
+    // every "you can buy" sentence on the site is false, so they stay out of
+    // the copy until a live purchase (with its tx hashes) is on record.
+    id: 'paid-purchase-live',
+    asserts: 'names can be bought for USDG right now',
+    gate: 'paidPurchase',
+    patterns: [
+      /anyone\s+can\s+buy/i,
+      /no\s+invitation\s+needed/i,
+      /purchase\s+is\s+(?:live|open)/i,
+      /Buy\s+for\s+\$/i,
+    ],
+  },
 ];
 
 export interface ClaimFinding {
