@@ -116,21 +116,32 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const injected = state.address;
 
-  // The extension wins when both exist: a crypto user who also logged in with X
-  // almost certainly meant to use their own wallet.
-  const address = injected ?? (privyState?.wallet?.address as Address | undefined) ?? null;
-  const source: 'injected' | 'privy' | null = injected
-    ? 'injected'
-    : privyState?.wallet
-      ? 'privy'
-      : null;
-  const chainId = injected ? state.chainId : privyState?.wallet ? 4663 : null;
+  // Whichever the user last acted on wins. An X login is an explicit choice,
+  // so after it the embedded wallet is used even when a browser extension is
+  // also connected (the passive `eth_accounts` restore never overrides it);
+  // clicking "Connect wallet" switches back to the extension.
+  const [activeSource, setActiveSource] = useState<'injected' | 'privy' | null>(null);
+  const privyAddress = (privyState?.wallet?.address as Address | undefined) ?? null;
+  const address: Address | null =
+    activeSource === 'privy'
+      ? privyAddress
+      : activeSource === 'injected' && injected
+        ? injected
+        : injected ?? privyAddress;
+  const usingInjected = Boolean(injected) && address === injected;
+  const source: 'injected' | 'privy' | null = address
+    ? usingInjected
+      ? 'injected'
+      : 'privy'
+    : null;
+  const chainId = usingInjected ? state.chainId : privyAddress ? 4663 : null;
 
   const connectWallet = useCallback(async () => {
     setState((prev) => ({ ...prev, connecting: true, error: null }));
     try {
       const connected = await connect();
       const chain = await currentChainId();
+      setActiveSource('injected');
       setState({ address: connected, chainId: chain, connecting: false, error: null });
       return connected;
     } catch (error) {
@@ -159,6 +170,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     for (let waited = 0; waited < 120; waited += 1) {
       const found = privyRef.current?.wallet?.address;
       if (found) {
+        setActiveSource('privy');
         setState((prev) => ({ ...prev, connecting: false, error: null }));
         return found as Address;
       }
@@ -175,6 +187,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const disconnect = useCallback(() => {
     setState({ address: null, chainId: null, connecting: false, error: null });
+    setActiveSource(null);
     const logout = privyRef.current?.logout;
     if (logout) Promise.resolve(logout()).catch(() => {});
   }, []);
@@ -183,7 +196,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     async (target: number) => {
       // A Privy embedded wallet never sends transactions on this site — the
       // issuer sponsors every claim — so there is nothing to switch.
-      if (!injected) return;
+      if (!usingInjected) return;
       try {
         await ensureChain(target);
         setState((prev) => ({ ...prev, chainId: target, error: null }));
@@ -194,19 +207,19 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
     },
-    [injected],
+    [usingInjected],
   );
 
   const signRegister = useCallback(
     async (typedData: RegisterTypedData): Promise<Hex> => {
-      if (injected) return signRegisterInjected(injected, typedData);
+      if (usingInjected && injected) return signRegisterInjected(injected, typedData);
       const wallet = privyState?.wallet;
       if (!wallet) throw new WalletError('NO_WALLET', 'Connect a wallet first.');
       const provider = await wallet.getEthereumProvider();
       if (!provider) throw new WalletError('NO_WALLET', 'The embedded wallet is not ready yet.');
       return signRegisterWithProvider(wallet.address as Address, typedData, provider);
     },
-    [injected, privyState],
+    [usingInjected, injected, privyState],
   );
 
   const getAccessToken = useCallback(async () => privyRef.current?.getAccessToken() ?? null, []);
@@ -254,8 +267,16 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       {privyEnabled ? (
         <PrivySync
           onChange={(snapshot) => {
+            const hadWallet = privyRef.current?.wallet != null;
             privyRef.current = snapshot;
             setPrivyState(snapshot);
+            // A restored or fresh Privy session takes over the active wallet —
+            // unless the user has since explicitly connected an extension.
+            if (snapshot.authenticated && snapshot.wallet && !hadWallet) {
+              setActiveSource((prev) => (prev === 'injected' ? prev : 'privy'));
+            } else if (!snapshot.authenticated) {
+              setActiveSource((prev) => (prev === 'privy' ? null : prev));
+            }
           }}
         />
       ) : null}
