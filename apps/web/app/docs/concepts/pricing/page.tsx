@@ -9,7 +9,7 @@ import { fetchConfig, fetchMetrics } from '@/lib/api';
 export const metadata = {
   title: 'Pricing and limits',
   description:
-    'Names are issued by invitation; for invited wallets the first name is free. Four-character names and additional names have approved prices. Every cap is published.',
+    'The first name (five characters or more) is free for every wallet, gas paid. Short names need an invitation or a purchase. Every cap is published.',
 };
 
 export const revalidate = 300;
@@ -34,24 +34,30 @@ export default async function PricingConceptPage() {
             <h1 className="h2">Pricing and limits</h1>
             <DocsLede
               status="live"
-              lede="Names are issued by invitation, one per wallet, and for invited wallets we pay the gas. Four-character names and additional long names have approved prices. The caps are published live."
+              lede="The first name — five characters or more — is free for every wallet, once, and we pay the gas. Invitations and purchases cover short names. The caps are published live."
             />
 
-            <h2 className="h3">Invited names</h2>
+            <h2 className="h3">Free names</h2>
             <ul>
               <li>
-                One invitation, written to a wallet address or an X account, covers one name —
-                including a 3–4 character short name. A wallet without an invitation is refused on
-                the free rail, at any length.
+                Every wallet may claim one name of {config.pricing.freeMinUnits} characters or more
+                (a CJK character counts as two). No invitation is needed for it.
               </li>
               <li>
-                Registration is sponsored for invited wallets: the project pays the gas, your wallet
-                pays nothing.
+                Registration is sponsored: the project pays the gas, your wallet pays nothing.
               </li>
               <li>
                 Labels: no emoji, no leading or trailing hyphen, no mixed confusable scripts — the
                 availability endpoint says which rule rejected a name, and &ldquo;taken&rdquo; is
                 not an error.
+              </li>
+            </ul>
+
+            <h2 className="h3">Short names: invitation or purchase</h2>
+            <ul>
+              <li>
+                One invitation, written to a wallet address or an X account, covers one 3–4
+                character short name, free. That is the invitation&apos;s whole job now.
               </li>
             </ul>
 

@@ -36,7 +36,7 @@ export default async function TrustPage() {
             <li>
               Ownership follows the owner&apos;s signature: the registrar requires a signature from the
               beneficiary, and a signed label cannot be swapped for another name or another person.
-              Names are issued by invitation, and the platform pays the gas without getting the name.
+              Names are claimed by the owner&apos;s signature, and the platform pays the gas without getting the name.
             </li>
             <li>
               The registry has no burn and no admin transfer, and the platform has no call that takes a

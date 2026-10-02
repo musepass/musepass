@@ -29,9 +29,10 @@ export default async function TermsPage() {
         <main className="narrow">
           <h1 className="h2">Terms</h1>
           <p className="body-2">
-            Short version: we issue names on a public chain, you hold them in your own wallet, names
-            are issued by invitation and we pay the gas for invited wallets within published caps,
-            and we cannot undo a transaction for anyone. Last updated 2026-10-01.
+            Short version: we issue names on a public chain, you hold them in your own wallet, the
+            first long name is free for every wallet within published caps, short names need an
+            invitation or a purchase, and we cannot undo a transaction for anyone. Last updated
+            2026-10-02.
           </p>
 
           {section(
@@ -45,12 +46,12 @@ export default async function TermsPage() {
           )}
 
           {section(
-            'Invitations and sponsorship',
+            'Names and sponsorship',
             <p>
-              Names are issued by invitation: one invitation, written to a wallet address or an X
-              account, covers one name for that wallet — including a 3–4 character short name —
-              and we pay the registration gas. A wallet without an invitation is refused, at any
-              length. Issuance runs within
+              Every wallet may claim one name of five characters or more, free, with the
+              registration gas paid by the platform. An invitation — written to a wallet address
+              or an X account — is what unlocks a 3–4 character short name instead, one name per
+              invitation. Issuance runs within
               caps that are published as they apply ({config.siteUrl.replace(/\/$/, '')}/numbers);
               when a cap is reached, issuance pauses rather than silently continuing. Sponsorship of
               gas is a present decision, not a permanent promise — if it changes, this page changes

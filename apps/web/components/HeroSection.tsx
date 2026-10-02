@@ -199,11 +199,12 @@ function StatusLine({
             </span>
           ) : signedIn ? (
             <span className="status-note">
-              Names are issued by invitation. This account has none yet.
+              Short names need an invitation. This account has none yet — a longer name is still
+              free.
             </span>
           ) : (
             <span className="status-note">
-              Names are issued by invitation — connect a wallet or sign in with X to check yours.
+              Short names need an invitation — connect a wallet or sign in with X to check yours.
             </span>
           )}
         </>

@@ -142,11 +142,12 @@ export default async function NumbersPage() {
                     {invitations?.campaign ? ` (${invitations.campaign})` : ''}
                   </h2>
                   <p className="body-2" style={{ fontSize: 14 }}>
-                    Names are issued by invitation, and every issued name is registered with gas the
-                    platform pays — so the giveaway is finite. These are the caps and how much of
-                    each is spent; when a cap is reached, claims pause and the claim endpoint says
-                    so. The invitation ledger publishes counts only: which wallets and accounts were
-                    invited is not published, on purpose.
+                    Sponsored registrations — the first long name of any wallet, or any name an
+                    invitation covers — are registered with gas the platform pays, so the giveaway
+                    is finite. These are the caps and how much of each is spent; when a cap is
+                    reached, claims pause and the claim endpoint says so. The invitation ledger
+                    publishes counts only: which wallets and accounts were invited is not
+                    published, on purpose.
                   </p>
                   {metrics.budget ? (
                     <>

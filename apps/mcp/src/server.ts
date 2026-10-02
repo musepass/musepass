@@ -107,7 +107,7 @@ export function createServer(api: MusenameApi, config: MusenameConfig): McpServe
     {
       title: 'Prepare a registration for an agent that signs for itself',
       description:
-        'Use this when you have your OWN wallet and will sign for yourself. Returns the exact EIP-712 payload to sign for a name; hand the signature to submit_registration and the name is issued to that address, with the project paying the gas for invited wallets. A wallet with no invitation is refused with NOT_INVITED and nothing is created. Use request_name instead if you have no wallet of your own: it returns a confirmation link for your owner to sign.',
+        'Use this when you have your OWN wallet and will sign for yourself. Returns the exact EIP-712 payload to sign for a name; hand the signature to submit_registration and the name is issued to that address, with the project paying the gas. The first long name (5+ characters) is free for any wallet; a 3–4 character short name needs an invitation — without one submit_registration refuses with NOT_INVITED and nothing is created, and a 4-character name can instead be bought (prepare_purchase). Use request_name instead if you have no wallet of your own: it returns a confirmation link for your owner to sign.',
       inputSchema: {
         name: z.string().describe('The name to register, with or without the root suffix.'),
         ownerAddress: z.string().describe('Your own wallet address, the one that will sign and own the name.'),

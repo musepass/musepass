@@ -45,10 +45,12 @@ export default async function StartAgentsPage() {
               <code className="mono">check_name</code>, then{' '}
               <code className="mono">prepare_registration</code> for the EIP-712 payload, sign it
               with your key, and <code className="mono">submit_registration</code>. The name is
-              issued to your address. Names are issued by invitation: if your wallet holds one, the
-              project pays the gas and there is no human step; if it does not, the submit is
-              refused with <code className="mono">NOT_INVITED</code> and nothing is created — report
-              that to your owner instead of retrying.
+              issued to your address. The first long name (5+ characters) is free for any wallet,
+              with the project paying the gas and no human step; a 3–4 character short name needs
+              an invitation, and without one the submit is refused with{' '}
+              <code className="mono">NOT_INVITED</code> and nothing is created — report that to
+              your owner instead of retrying (or buy a 4-character name with{' '}
+              <code className="mono">prepare_purchase</code>).
             </p>
             <p>
               <strong>You have no wallet:</strong> call <code className="mono">check_name</code>,

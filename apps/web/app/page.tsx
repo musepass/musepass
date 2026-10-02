@@ -198,7 +198,7 @@ export default async function HomePage() {
                     <Link className="record-link" href="/claim">
                       Claim it on this site
                     </Link>{' '}
-                    — connect a wallet, pick a name. Names are issued by invitation; invited wallets pay no gas.
+                    — connect a wallet, pick a name. The first name is free for every wallet, and we pay the gas.
                   </div>
                 </div>
               </li>
@@ -340,16 +340,16 @@ export default async function HomePage() {
         {/* ---------------------------------------------------- pricing */}
         <section className="section" id="pricing">
           <Reveal>
-            <h2 className="h2">Names are issued by invitation. Trust is earned.</h2>
+            <h2 className="h2">The first name is free. Trust is earned.</h2>
           </Reveal>
           <Reveal stagger className="pricing-grid">
             <div className="pricing-cell">
               <span className="pricing-name">Name</span>
               <span className="pricing-amount">Free</span>
               <span className="pricing-note">
-                By invitation — one invitation covers one name of{' '}
-                {config.pricing.freeMinUnits} characters or more (a CJK character counts as two), and
-                for invited wallets we pay the gas. {config.limits.freeNamesPerWallet} per wallet.
+                Every wallet, once — a name of {config.pricing.freeMinUnits} characters or more (a
+                CJK character counts as two), and we pay the gas.{' '}
+                {config.limits.freeNamesPerWallet} per wallet.
               </span>
             </div>
             <div className="pricing-cell pricing-cell-featured">
@@ -383,8 +383,8 @@ export default async function HomePage() {
                   .join(' · ')}
                 . A CJK character counts as two.{' '}
                 {config.features.premiumPurchase
-                  ? 'Buy one and it is fully yours, transferable.'
-                  : 'Not on sale yet — invitations are how names are issued.'}
+                  ? 'Buy one and it is fully yours, transferable — or take a 3–4 character name free with an invitation.'
+                  : 'Invitations are how short names are issued.'}
               </span>
             </div>
             <div className="pricing-cell">

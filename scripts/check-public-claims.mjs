@@ -127,13 +127,14 @@ const REQUIRED = [
     needle: '— example',
     because: 'the homepage record sample shows an invented record; it must say so',
   },
-  // Sponsorship policy (2026-10-01): names are issued by invitation only. The
-  // homepage must carry the sentence, so the policy cannot quietly vanish.
+  // Free-name policy (D20, 2026-10-02): every wallet gets one free long name
+  // (5+ characters); invitations cover short ones. The homepage must carry the
+  // free sentence, so the policy cannot quietly vanish.
   {
-    id: 'invitation-policy',
+    id: 'free-name-policy',
     file: 'apps/web/app/page.tsx',
-    needle: 'Names are issued by invitation',
-    because: 'sponsorship is invitation-only; the homepage has to say so',
+    needle: 'The first name is free',
+    because: 'the free rail is open to every wallet; the homepage has to say so',
   },
 ];
 

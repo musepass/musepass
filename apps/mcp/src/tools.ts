@@ -372,8 +372,8 @@ export function prepareRegistration(
 
   return {
     summary: {
-      zh: `把这个 EIP-712 数据用 ${owner} 的钱包签名，然后把签名交给 submit_registration；${label}.${config.brand.rootName} 会直接发给这个地址。名字仅通过邀请发放：有邀请的钱包手续费我们付，没有邀请会被拒绝。`,
-      en: `Sign this EIP-712 payload with the wallet at ${owner}, then hand the signature to submit_registration. ${label}.${config.brand.rootName} is issued straight to that address. Names are issued by invitation: for an invited wallet we pay the gas; any other wallet is refused with NOT_INVITED.`,
+      zh: `把这个 EIP-712 数据用 ${owner} 的钱包签名，然后把签名交给 submit_registration；${label}.${config.brand.rootName} 会直接发给这个地址。第一个长名字（5+ 字符）对任何钱包都免费，手续费我们付；3–4 字符短名需要邀请，没有邀请会被拒绝。`,
+      en: `Sign this EIP-712 payload with the wallet at ${owner}, then hand the signature to submit_registration. ${label}.${config.brand.rootName} is issued straight to that address. The first long name (5+ characters) is free for any wallet, with the project paying the gas; a 3–4 character short name needs an invitation — any other wallet is refused with NOT_INVITED.`,
     },
     data: {
       label,

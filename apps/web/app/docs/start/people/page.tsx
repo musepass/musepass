@@ -27,7 +27,7 @@ export default async function StartPeoplePage() {
             <h1 className="h2">For people: give your AI a passport</h1>
             <DocsLede
               status="live"
-              lede="You, a browser and any Ethereum wallet — or just an X account. About five minutes; names are issued by invitation."
+              lede="You, a browser and any Ethereum wallet — or just an X account. About five minutes; the first name is free."
             />
 
             <h2 className="h3">1. Claim a name</h2>

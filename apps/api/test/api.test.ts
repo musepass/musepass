@@ -384,6 +384,19 @@ describe('GET /v1/names/{name}/available', () => {
     expect(body.errors.map((error: { code: string }) => error.code)).toContain('NOT_FREE_TIER');
   });
 
+  it('says any wallet may take a long name for free, invited or not (D20)', async () => {
+    const { app } = buildApp();
+
+    const body = await (
+      await app.request(`/v1/names/aguang/available?owner=${ownerAccount.address}`)
+    ).json();
+
+    expect(body.data.available).toBe(true);
+    expect(body.data.invited).toBe(true);
+    expect(body.data.price.tier).toBe('free');
+    expect(body.data.price.priceUsd).toBe(0);
+  });
+
   it('rejects a malformed owner query instead of guessing', async () => {
     const { app } = buildApp();
     const response = await app.request('/v1/names/gold/available?owner=0x1234');
@@ -506,7 +519,7 @@ describe('genesis cover', () => {
 });
 
 describe('POST /v1/names/claim', () => {
-  it('refuses an uninvited wallet at any label length', async () => {
+  it('issues a free long name to a wallet with no invitation (D20)', async () => {
     const { app, deps } = buildApp();
     const { signature } = await signClaim('aguang', deps.config, futureSeconds);
 
@@ -522,9 +535,11 @@ describe('POST /v1/names/claim', () => {
     });
     const body = await response.json();
 
-    expect(response.status).toBe(403);
-    expect(body.errors[0].code).toBe('NOT_INVITED');
-    expect((deps.chain as FakeChain).registrations).toHaveLength(0);
+    // The free rail is open to every wallet: the quota and budget caps below
+    // are the abuse guard, not an invitation list.
+    expect(response.status).toBe(201);
+    expect(body.data.label).toBe('aguang');
+    expect((deps.chain as FakeChain).registrations).toHaveLength(1);
   });
 
   it('issues the name to an invited wallet and records the sponsorship', async () => {

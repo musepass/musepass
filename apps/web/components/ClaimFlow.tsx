@@ -119,8 +119,8 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
 
   const isAvailable = availability?.kind === 'available';
   // Availability is checked with the wallet's identity, so once connected this
-  // is authoritative for the claim path. The paid path (D19) is open to
-  // everyone, so a wallet without an invitation is only blocked from claiming.
+  // is authoritative for the claim path. D20: a long name (5+) is free for
+  // every wallet; `invited` is only the short-name privilege.
   const invited = availability?.kind === 'available' && availability.invited;
   const purchaseOffer =
     availability && (availability.kind === 'available' || availability.kind === 'premium')
@@ -137,10 +137,11 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
     Boolean(wallet.address) &&
     wallet.chainId !== config.chain.chainId;
   const busy = phase === 'signing' || phase === 'paying' || phase === 'submitting';
-  // A connected wallet without an invitation and without a purchasable price
-  // can never be issued this name, so the button says so instead of letting
-  // the signature happen and the API refuse it afterwards. Anonymous visitors
-  // still get the button: connecting is how their invitation (if any) is found.
+  // A connected wallet that can neither claim this name for free (long name,
+  // or a short one its invitation covers) nor buy it, can never be issued it —
+  // the button says so instead of letting the signature happen and the API
+  // refuse it afterwards. Anonymous visitors still get the button: connecting
+  // is how their invitation (if any) is found.
   const blockUninvited = Boolean(wallet.address) && isAvailable && !invited && !purchasable;
 
   /**
@@ -485,8 +486,8 @@ export function ClaimFlow({ config, mode, initialLabel, requestId, confirmToken 
         {wallet.address && isAvailable && !invited ? (
           <div className="notice notice-warn">
             {purchasable
-              ? 'Names are issued by invitation, and this wallet has none — but this one can be bought with the button below.'
-              : 'Names are issued by invitation, and this wallet or X handle has none yet.'}
+              ? 'Short names need an invitation, and this wallet has none — but this one can be bought with the button below.'
+              : 'Short names need an invitation, and this wallet or X handle has none yet.'}
           </div>
         ) : null}
 
@@ -635,14 +636,15 @@ function AvailabilityLine({
             {signedIn
               ? view.purchase
                 ? `This wallet has no invitation, but this name can be bought: $${view.purchase.priceUsd} ${config.payment?.currency ?? 'USDG'}.`
-                : 'Names are issued by invitation, and this account has none yet.'
-              : 'Names are issued by invitation — connect a wallet or sign in with X to check yours.'}
+                : 'Short names need an invitation, and this account has none yet.'
+              : 'Short names need an invitation — connect a wallet or sign in with X to check yours.'}
           </span>
         );
       }
       return (
         <span className="status-ok">
-          {view.label}.{config.rootName} is available, free. Your invitation covers this name.
+          {view.label}.{config.rootName} is available, free — one free name per wallet, and
+          invitations are what cover short ones.
         </span>
       );
     case 'taken':
@@ -670,7 +672,7 @@ function AvailabilityLine({
         <span className="status-warn">
           {view.label} is short enough to be a premium name. Premium names are not on sale yet.
           Names are issued by invitation — an invited wallet can still take a 3–4 character name
-          free.
+          free, and any wallet can take a longer one free.
         </span>
       );
     case 'reserved':

@@ -170,7 +170,7 @@ export interface PublicConfig {
 export const FALLBACK_CONFIG: PublicConfig = {
   productName: 'MusePass',
   tagline: {
-    en: 'Give your AI a passport: a name any wallet can read and a track record anyone can check. Names are issued by invitation.',
+    en: 'Give your AI a passport: a name any wallet can read and a track record anyone can check. The first name is free.',
   },
   rootName: 'musepass.eth',
   siteUrl: 'https://musepass.xyz',

@@ -196,12 +196,12 @@ export const CLAIM_RULES: ClaimRule[] = [
     ],
   },
   {
-    // Sponsorship became invitation-only on 2026-10-01, so the old open-free
-    // slogan is now false for anyone without an invitation. The replacement is
-    // "Names are issued by invitation." (pinned on the homepage by the
-    // checker's REQUIRED list).
+    // D20 (2026-10-02) reopened the free rail: every wallet gets one free long
+    // name. The blanket slogan stays retired because it overstates the policy
+    // (short names still need an invitation or a purchase); the pinned
+    // replacement on the homepage is "The first name is free."
     id: 'retired-open-free-slogan',
-    asserts: 'the pre-2026-10-01 slogan that names are free to everyone',
+    asserts: 'the blanket slogan that all names are free to everyone',
     gate: null,
     patterns: [/Names\s+are\s+free\.\s+Trust\s+is\s+earned\./i],
   },

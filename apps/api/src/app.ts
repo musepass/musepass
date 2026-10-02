@@ -781,9 +781,13 @@ export function createApp(deps: MusenameDeps) {
     const effectiveInvitation = invitation ?? handleInvitation;
 
     const result = checkLabel(label ?? rawName, { config, reservedIndex, onChainFree, invitation: effectiveInvitation });
+    // D20: `invited` answers "can this wallet take this name on the free rail?"
+    // A long name (5+ units) is free for every wallet; a short one (3–4) needs
+    // the invitation. Display-only — the claim route decides for real.
     const invited =
       (ownerQuery || handleInvitation) && result.units !== null
-        ? invitedShortNameDecision(effectiveInvitation, result.units).allowed
+        ? result.units > INVITED_MAX_UNITS ||
+          invitedShortNameDecision(effectiveInvitation, result.units).allowed
         : null;
 
     // D19: what the same wallet would pay if it bought the name instead of
@@ -2010,30 +2014,14 @@ export function createApp(deps: MusenameDeps) {
       confirmedRequestId = request.id;
     }
 
-    // Sponsorship is invitation-only: every registration the issuer pays for
-    // is tied to an invitation (by wallet, or by a Privy-verified X handle).
-    // An uninvited wallet gets nothing issued, at any label length. Reserved,
-    // taken and request-token answers came earlier; this is the last stop
-    // before the issuer's gas is counted.
-    if (!invitation) {
-      return c.json(
-        {
-          summary: {
-            zh: '名字仅通过邀请发放；这个钱包或 X 账号目前没有邀请。',
-            en: 'Names are issued by invitation; this wallet or X handle has none.',
-          },
-          data: { label, suggestions: [] },
-          errors: [
-            boom('NOT_INVITED', 'no invitation for this wallet or X handle', {
-              zh: '这次领取没有创建任何名字。',
-              en: 'No name was created.',
-            }),
-          ],
-          meta: meta(true),
-        },
-        403,
-      );
-    }
+    // D20: the free rail is open to every wallet — one name of five characters
+    // or more per wallet, with the quota and budget checks below as the abuse
+    // guard (they cap per wallet, per day and in total, which is what actually
+    // bounds issuer gas). The invitation is the privilege that unlocks 3–4
+    // character short names, enforced at step 2c above with its own codes; a
+    // four-character name can also simply be bought. There is deliberately no
+    // blanket invitation check here: requiring one would contradict the
+    // published promise that the first long name is free.
 
     // 4. sponsorship budget.
     const startOfDay = new Date(clock());
@@ -2396,14 +2384,14 @@ export function createApp(deps: MusenameDeps) {
       return c.json(
         {
           summary: {
-            zh: '你的第一个长名字是免费的（需要邀请）；请走免费领取，不用付钱。',
-            en: 'Your first long name is free (by invitation); use the claim flow instead of paying.',
+            zh: '你的第一个长名字是免费的；请走免费领取，不用付钱。',
+            en: 'Your first long name is free; use the claim flow instead of paying.',
           },
           data: { label, suggestions: [] },
           errors: [
             boom('FREE_NAME_USE_CLAIM', 'first long name per wallet is free; use the claim flow', {
-              zh: '你的第一个长名字是免费的（需要邀请）；请走免费领取，不用付钱。',
-              en: 'Your first long name is free (by invitation); use the claim flow instead of paying.',
+              zh: '你的第一个长名字是免费的；请走免费领取，不用付钱。',
+              en: 'Your first long name is free; use the claim flow instead of paying.',
             }),
           ],
           meta: meta(true),

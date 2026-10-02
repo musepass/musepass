@@ -5,7 +5,7 @@
   "freeTier": {
     "minUnits": 5
   },
-  "$comment_ladder": "A name is priced by how few characters it has, because that is what makes it worth remembering. The first name of five characters or more is free (invitation-gated, D17) — that promise is what the product is built on and it does not change. What costs money is being short, and taking more names than the free one.",
+  "$comment_ladder": "A name is priced by how few characters it has, because that is what makes it worth remembering. The first name of five characters or more is free for every wallet, one per wallet (D20, 2026-10-02 — revises D17: the free rail is open, quota and budget caps are the abuse guard). What costs money is being short (3-4 needs an invitation or a purchase), and taking more names than the free one.",
   "premiumTiers": [
     {
       "id": "tier-1",

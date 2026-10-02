@@ -37,7 +37,7 @@ export async function GET() {
           A name any wallet can read, and a track record anyone can check.
         </div>
         <div style={{ display: 'flex', fontSize: 24, color: '#d8c48f' }}>
-          Names are issued by invitation. Trust is earned. · {config.siteUrl.replace(/^https?:\/\//, '')}
+          The first name is free. Trust is earned. · {config.siteUrl.replace(/^https?:\/\//, '')}
         </div>
       </div>
     ),
