@@ -56,6 +56,8 @@ function build() {
     cards: repos.cards,
     sponsorship: repos.sponsorship,
     invitationClaims: repos.invitationClaims,
+    purchases: repos.purchases,
+    certificationIntents: repos.certificationIntents,
     indexKind: 'memory',
     clock: () => new Date('2026-09-29T12:00:00.000Z'),
   };
@@ -142,6 +144,50 @@ describe('GET /v1/metrics', () => {
     const metrics = data.notMeasured.map((entry) => entry.metric);
     expect(metrics).toContain('queries by anyone other than us');
     for (const entry of data.notMeasured) expect(entry.why.length).toBeGreaterThan(20);
+  });
+
+  it('reports purchase revenue only for settled quotes', async () => {
+    const { app, repos } = build();
+    const before = (await app.request('http://local/v1/metrics')).json();
+    expect((await before).data.purchases).toMatchObject({ settled: 0, revenueUsd: 0, lastSettledAt: null });
+
+    const quote = await repos.purchases.insertQuote({
+      id: 'q1',
+      label: 'gold',
+      owner: OWNER,
+      kind: 'tier-4',
+      priceUsd: 5,
+      amountBaseUnits: '5000000',
+      token: '0x0000000000000000000000000000000000000001',
+      treasury: '0x0000000000000000000000000000000000000002',
+      chainId: 4663,
+      expiresAt: new Date('2026-09-29T13:00:00.000Z'),
+    });
+    // Open quotes are not revenue.
+    const stillZero = (await (await app.request('http://local/v1/metrics')).json()).data.purchases;
+    expect(stillZero).toMatchObject({ settled: 0, revenueUsd: 0 });
+
+    await repos.purchases.settleQuote(quote.id, `0x${'11'.repeat(32)}`, new Date('2026-09-29T12:30:00.000Z'));
+    await repos.purchases.markSettled(quote.id, `0x${'22'.repeat(32)}`, new Date('2026-09-29T12:31:00.000Z'));
+    const after = (await (await app.request('http://local/v1/metrics')).json()).data.purchases;
+    expect(after).toMatchObject({ settled: 1, revenueUsd: 5 });
+    expect(after.lastSettledAt).toBe('2026-09-29T12:31:00.000Z');
+  });
+
+  it('bucket registrations into the last 14 UTC days, zero-filled', async () => {
+    const { app, repos } = build();
+    await insertName(repos, 'today1');
+    await insertName(repos, 'today2');
+    await insertName(repos, 'yesterday', { when: '2026-09-28T00:00:00.000Z' });
+
+    const { data } = await readMetrics(app);
+    const daily = (data as { dailyRegistrations: Array<{ date: string; registrations: number }> })
+      .dailyRegistrations;
+    // The fixed clock is 2026-09-29T12:00Z, so the window ends on that day.
+    expect(daily).toHaveLength(14);
+    expect(daily[13]).toEqual({ date: '2026-09-29', registrations: 2 });
+    expect(daily[12]).toEqual({ date: '2026-09-28', registrations: 1 });
+    expect(daily[0]).toEqual({ date: '2026-09-16', registrations: 0 });
   });
 
   it('says when the numbers come from a memory index', async () => {

@@ -10,6 +10,11 @@ function purchasablePricing() {
   return { ...config.pricing, purchase: { ...config.pricing.purchase!, enabled: true } };
 }
 
+/** The off switch: purchase is live in config, so this test builds the disabled variant. */
+function disabledPricing() {
+  return { ...config.pricing, purchase: { ...config.pricing.purchase!, enabled: false } };
+}
+
 describe('quoteLabel', () => {
   it('prices names at or above the free threshold as free', () => {
     expect(quoteLabel(5, config.pricing)).toMatchObject({ tier: 'free', priceUsd: 0 });
@@ -70,8 +75,8 @@ describe('quoteLabel', () => {
 
 describe('quotePurchase (D19)', () => {
   it('quotes nothing while purchase is disabled', () => {
-    expect(quotePurchase(4, false, config.pricing)).toBeNull();
-    expect(quotePurchase(5, true, config.pricing)).toBeNull();
+    expect(quotePurchase(4, false, disabledPricing())).toBeNull();
+    expect(quotePurchase(5, true, disabledPricing())).toBeNull();
   });
 
   it.each([

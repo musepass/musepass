@@ -344,6 +344,15 @@ export interface MetricsData {
   byChannel: Record<string, number>;
   byStatus: Record<string, number>;
   firstRegisteredAt: string | null;
+  purchases?: {
+    settled: number;
+    revenueUsd: number;
+    currency: string;
+    lastSettledAt: string | null;
+    note: string;
+  };
+  dailyRegistrations?: Array<{ date: string; registrations: number }>;
+  certificationIntents?: { total: number; last7Days: number; note: string };
   notMeasured: Array<{ id: string; metric: string; why: string }>;
 }
 
@@ -387,6 +396,22 @@ export interface ClaimPayload {
 export function submitClaim(payload: ClaimPayload, options?: RequestOptions) {
   return request<ClaimData>(
     '/v1/names/claim',
+    { method: 'POST', body: JSON.stringify(payload) },
+    options,
+  );
+}
+
+/**
+ * Certification is not running yet; this only adds a contact to the list of
+ * people to tell when it opens. The API stores the contact privately and
+ * publishes counts alone.
+ */
+export function submitCertificationIntent(
+  payload: { contact: string; note?: string },
+  options?: RequestOptions,
+) {
+  return request<{ ok: boolean; totalIntents: number }>(
+    '/v1/certification/intent',
     { method: 'POST', body: JSON.stringify(payload) },
     options,
   );

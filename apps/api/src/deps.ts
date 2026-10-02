@@ -95,6 +95,8 @@ export interface PurchaseRepo {
   markStatus(id: string, status: 'expired' | 'failed', at: Date): Promise<void>;
   /** Settled purchases for a wallet since a date (daily purchase cap). */
   countSettledForOwnerSince(owner: Address, since: Date): Promise<number>;
+  /** Aggregate over settled purchases, for the public scoreboard. */
+  purchaseTotals(): Promise<{ count: number; totalUsd: number; lastSettledAt: Date | null }>;
 }
 
 /**
@@ -224,6 +226,25 @@ export interface RegistrationRequestRepo {
   markStatus(id: string, status: RegistrationRequestStatus, at: Date): Promise<void>;
 }
 
+/**
+ * Certification is designed ($5/month, phase 5) but not running, so there is
+ * nothing to buy yet. This table collects who wants to be told when it opens.
+ * Contacts stay private — only counts are published, same rule as invitations.
+ */
+export interface CertificationIntent {
+  id: string;
+  contact: string;
+  note: string | null;
+  createdAt: Date;
+}
+
+export interface CertificationIntentsRepo {
+  /** Idempotent per contact (case-insensitive): a repeat sign-up is a no-op. */
+  insert(input: { contact: string; note?: string | null; createdAt?: Date }): Promise<CertificationIntent>;
+  countAll(): Promise<number>;
+  countSince(since: Date): Promise<number>;
+}
+
 export interface MusenameDeps {
   config: MusenameConfig;
   reservedIndex: ReservedIndex;
@@ -234,6 +255,7 @@ export interface MusenameDeps {
   sponsorship: SponsorshipRepo;
   invitationClaims: InvitationClaimsRepo;
   purchases: PurchaseRepo;
+  certificationIntents: CertificationIntentsRepo;
   /**
    * 'postgres' when DATABASE_URL is set, 'memory' otherwise.
    *

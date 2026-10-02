@@ -164,3 +164,16 @@ create table if not exists purchase_quotes (
 );
 
 create index if not exists purchase_quotes_owner_idx on purchase_quotes (owner_address, status);
+
+-- Certification is designed ($5/month) but not running, so there is nothing
+-- to buy. This table collects who wants to be told when it opens. Contacts
+-- stay private; only counts are published (same rule as invitations). The
+-- unique index on lower(contact) makes a repeat sign-up idempotent.
+create table if not exists certification_intents (
+  id          uuid primary key,
+  contact     text          not null,
+  note        text,
+  created_at  timestamptz   not null default now()
+);
+
+create unique index if not exists certification_intents_contact_idx on certification_intents (lower(contact));

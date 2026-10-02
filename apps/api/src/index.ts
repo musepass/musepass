@@ -5,6 +5,7 @@ import { createApp } from './app.js';
 import { createChainReader } from './chain/registry.js';
 import type {
   CardsRepo,
+  CertificationIntentsRepo,
   InvitationClaimsRepo,
   NamesRepo,
   PurchaseRepo,
@@ -31,6 +32,7 @@ let cards: CardsRepo;
 let sponsorship: SponsorshipRepo;
 let invitationClaims: InvitationClaimsRepo;
 let purchases: PurchaseRepo;
+let certificationIntents: CertificationIntentsRepo;
 let indexKind: 'memory' | 'postgres' = 'memory';
 if (process.env.DATABASE_URL) {
   // Imported only when it is actually used, so a deployment that runs without
@@ -44,11 +46,11 @@ if (process.env.DATABASE_URL) {
     },
   };
   await migrate(sql);
-  ({ names, requests, cards, sponsorship, invitationClaims, purchases } = createPostgresRepos(sql));
+  ({ names, requests, cards, sponsorship, invitationClaims, purchases, certificationIntents } = createPostgresRepos(sql));
   indexKind = 'postgres';
   logger.log('info', 'using postgres for the index');
 } else {
-  ({ names, requests, cards, sponsorship, invitationClaims, purchases } = createMemoryRepos());
+  ({ names, requests, cards, sponsorship, invitationClaims, purchases, certificationIntents } = createMemoryRepos());
   logger.log('warn', 'DATABASE_URL is not set: the index is in memory and is lost on restart', {
     effect: 'chain data is unaffected; the index is rebuilt by re-reading',
   });
@@ -64,6 +66,7 @@ const app = createApp({
   sponsorship,
   invitationClaims,
   purchases,
+  certificationIntents,
   indexKind,
   clock: () => new Date(),
   logger,

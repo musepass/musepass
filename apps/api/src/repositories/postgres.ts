@@ -2,6 +2,8 @@ import type { Address, Hex } from 'viem';
 import type {
   CardVersion,
   CardsRepo,
+  CertificationIntent,
+  CertificationIntentsRepo,
   InvitationClaim,
   InvitationClaimsRepo,
   NamesRepo,
@@ -124,6 +126,7 @@ export function createPostgresRepos(sql: Sql): {
   cards: CardsRepo;
   invitationClaims: InvitationClaimsRepo;
   purchases: PurchaseRepo;
+  certificationIntents: CertificationIntentsRepo;
 } {
   const names: NamesRepo = {
     async findByNormalized(normalized) {
@@ -499,9 +502,74 @@ export function createPostgresRepos(sql: Sql): {
       );
       return Number(rows[0]?.count ?? 0);
     },
+
+    async purchaseTotals() {
+      const { rows } = await sql.query<{ count: string; total_usd: string; last_settled: string | null }>(
+        `select count(*)::text as count,
+                coalesce(sum(price_usd), 0)::text as total_usd,
+                max(settled_at)::text as last_settled
+           from purchase_quotes
+          where status = 'settled'`,
+      );
+      const row = rows[0];
+      return {
+        count: Number(row?.count ?? 0),
+        totalUsd: Math.round(Number(row?.total_usd ?? 0) * 100) / 100,
+        lastSettledAt: row?.last_settled ? new Date(row.last_settled) : null,
+      };
+    },
   };
 
-  return { names, sponsorship, requests, cards, invitationClaims, purchases };
+  const certificationIntents: CertificationIntentsRepo = {
+    async insert({ contact, note, createdAt }) {
+      const normalized = contact.trim().toLowerCase();
+      const id = crypto.randomUUID();
+      // Idempotent per contact: a repeat sign-up keeps its original date.
+      const { rows } = await sql.query<{ id: string; contact: string; note: string | null; created_at: Date | string }>(
+        `insert into certification_intents (id, contact, note, created_at)
+         values ($1, $2, $3, $4)
+         on conflict (lower(contact)) do nothing
+         returning id, contact, note, created_at`,
+        [id, contact.trim(), note?.trim() || null, createdAt ?? new Date()],
+      );
+      if (rows[0]) {
+        const row = rows[0];
+        const record: CertificationIntent = {
+          id: row.id,
+          contact: row.contact,
+          note: row.note,
+          createdAt: new Date(row.created_at),
+        };
+        return record;
+      }
+      const existing = await sql.query<{ id: string; contact: string; note: string | null; created_at: Date | string }>(
+        'select id, contact, note, created_at from certification_intents where lower(contact) = $1',
+        [normalized],
+      );
+      const row = existing.rows[0];
+      return {
+        id: row.id,
+        contact: row.contact,
+        note: row.note,
+        createdAt: new Date(row.created_at),
+      };
+    },
+
+    async countAll() {
+      const { rows } = await sql.query<{ count: string }>('select count(*)::text as count from certification_intents');
+      return Number(rows[0]?.count ?? 0);
+    },
+
+    async countSince(since) {
+      const { rows } = await sql.query<{ count: string }>(
+        'select count(*)::text as count from certification_intents where created_at >= $1',
+        [since],
+      );
+      return Number(rows[0]?.count ?? 0);
+    },
+  };
+
+  return { names, sponsorship, requests, cards, invitationClaims, purchases, certificationIntents };
 }
 
 function isUniqueViolation(error: unknown): boolean {

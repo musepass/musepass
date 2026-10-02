@@ -102,6 +102,7 @@ export interface LimitsConfig {
     claimPerHourPerWallet: number;
     claimPerHourPerIp: number;
     mcpRequestsPerHourPerHost: number;
+    certificationIntentsPerHourPerIp: number;
   };
   /** D19: caps for the paid purchase rail (paid names bypass the free-claim quota). */
   purchase?: {

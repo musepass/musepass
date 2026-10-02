@@ -26,7 +26,8 @@
     "availabilityPerMinutePerIp": 60,
     "claimPerHourPerWallet": 5,
     "claimPerHourPerIp": 12,
-    "mcpRequestsPerHourPerHost": 120
+    "mcpRequestsPerHourPerHost": 120,
+    "certificationIntentsPerHourPerIp": 5
   },
   "purchase": {
     "$comment": "D19: caps for the paid rail. Paid names bypass the free-claim quota entirely; these keep issuer-gas exposure bounded.",

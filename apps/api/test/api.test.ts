@@ -156,6 +156,7 @@ function buildApp(overrides: Partial<MusenameDeps> = {}, config = testConfig()) 
     sponsorship: repos.sponsorship,
     invitationClaims: repos.invitationClaims,
     purchases: repos.purchases,
+    certificationIntents: repos.certificationIntents,
     indexKind: 'memory',
     clock: () => FIXED_NOW,
     ...overrides,
@@ -237,7 +238,8 @@ describe('GET /v1/config', () => {
     expect(body.data.features).toEqual({
       cards: false,
       trackRecord: false,
-      premiumPurchase: false,
+      // Purchase is live since the 2026-10-01 acceptance, so the front end may say so.
+      premiumPurchase: true,
       aiRegistration: true,
     });
   });
@@ -953,11 +955,18 @@ describe('GET /v1/names?owner=', () => {
 /* D19: the paid purchase rail                                         */
 /* ------------------------------------------------------------------ */
 
-/** The live config ships with purchase.enabled=false; tests switch it on. */
+/** The live config ships with purchase enabled (opened after the 2026-10-01 acceptance). */
 function purchaseConfig(): MusenameConfig {
   const config = testConfig();
   const purchase = config.pricing.purchase!;
   return { ...config, pricing: { ...config.pricing, purchase: { ...purchase, enabled: true } } };
+}
+
+/** The off switch still has to work: everything purchase-related must go quiet. */
+function disabledPurchaseConfig(): MusenameConfig {
+  const config = testConfig();
+  const purchase = config.pricing.purchase!;
+  return { ...config, pricing: { ...config.pricing, purchase: { ...purchase, enabled: false } } };
 }
 
 describe('POST /v1/names/purchase/quote (D19)', () => {
@@ -1036,7 +1045,7 @@ describe('POST /v1/names/purchase/quote (D19)', () => {
   });
 
   it('answers 503 while purchase is disabled in config', async () => {
-    const { app } = buildApp(); // live config: enabled=false
+    const { app } = buildApp({}, disabledPurchaseConfig());
     const quote = await app.request('/v1/names/purchase/quote', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -1375,9 +1384,82 @@ describe('GET /v1/config with purchase (D19)', () => {
   });
 
   it('hides the payment block while purchase is disabled', async () => {
-    const { app } = buildApp();
+    const { app } = buildApp({}, disabledPurchaseConfig());
     const body = await (await app.request('/v1/config')).json();
     expect(body.data.features.premiumPurchase).toBe(false);
     expect(body.data.payment).toBeNull();
+  });
+});
+
+describe('POST /v1/certification/intent', () => {
+  it('records a sign-up and publishes only the count', async () => {
+    const { app } = buildApp();
+    const response = await app.request('/v1/certification/intent', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ contact: 'Agent-Owner@example.com', note: 'would certify our escrow endpoint' }),
+    });
+    const body = await response.json();
+    expect(response.status).toBe(201);
+    expect(body.data).toEqual({ ok: true, totalIntents: 1 });
+    // The contact itself must never echo back.
+    expect(JSON.stringify(body)).not.toContain('Agent-Owner@example.com');
+  });
+
+  it('is idempotent per contact, keeping the first date', async () => {
+    const { app } = buildApp();
+    await app.request('/v1/certification/intent', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ contact: 'same@example.com' }),
+    });
+    const again = await app.request('/v1/certification/intent', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ contact: 'SAME@example.com' }),
+    });
+    const body = await again.json();
+    expect(again.status).toBe(201);
+    expect(body.data.totalIntents).toBe(1);
+  });
+
+  it('refuses a contact that is not an email address', async () => {
+    const { app } = buildApp();
+    for (const contact of ['', 'not-an-email', 'a@b', 'a b@c.d']) {
+      const response = await app.request('/v1/certification/intent', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ contact }),
+      });
+      expect(response.status).toBe(422);
+      expect((await response.json()).errors[0].code).toBe('INVALID_CONTACT');
+    }
+  });
+
+  it('rate limits repeat submissions from one IP', async () => {
+    const { app } = buildApp();
+    const headers = { 'content-type': 'application/json', 'x-forwarded-for': '9.9.9.9' };
+    let last;
+    for (let i = 0; i < 6; i += 1) {
+      last = await app.request('/v1/certification/intent', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ contact: `person${i}@example.com` }),
+      });
+    }
+    expect(last!.status).toBe(429);
+    expect((await last!.json()).errors[0].code).toBe('RATE_LIMITED');
+  });
+
+  it('surfaces the count in /v1/metrics without the contacts', async () => {
+    const { app } = buildApp();
+    await app.request('/v1/certification/intent', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ contact: 'counter@example.com' }),
+    });
+    const metrics = await (await app.request('/v1/metrics')).json();
+    expect(metrics.data.certificationIntents.total).toBe(1);
+    expect(JSON.stringify(metrics)).not.toContain('counter@example.com');
   });
 });

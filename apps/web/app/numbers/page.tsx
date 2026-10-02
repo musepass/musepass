@@ -117,6 +117,9 @@ export default async function NumbersPage() {
                 `${metrics.index.names} (${metrics.index.kind === 'memory' ? 'in-memory index' : 'database index'})`,
               )}
               {row('Of those, cards published', metrics.namesWithCard)}
+              {metrics.certificationIntents
+                ? row('Waiting for certification to open', metrics.certificationIntents.total)
+                : null}
 
               {metrics.index.warning ? (
                 <p className="body-2" style={{ fontSize: 14, opacity: 0.75 }}>
@@ -177,6 +180,60 @@ export default async function NumbersPage() {
                       ) : null}
                     </>
                   ) : null}
+                </>
+              ) : null}
+
+              {metrics.purchases ? (
+                <>
+                  <h2 className="faq-q" style={{ fontSize: 18, marginTop: 24 }}>
+                    Paid purchases
+                  </h2>
+                  <p className="body-2" style={{ fontSize: 14 }}>
+                    Short names and second names are sold for USDG, paid direct to a receive-only
+                    treasury address. Only completed purchases are counted here — a quote that
+                    expired or failed was never revenue, so it is not one.
+                  </p>
+                  {row('Names bought', metrics.purchases.settled)}
+                  {row('Paid to the treasury', `$${metrics.purchases.revenueUsd.toFixed(2)} ${metrics.purchases.currency}`)}
+                  {row(
+                    'Last completed purchase',
+                    metrics.purchases.lastSettledAt
+                      ? new Date(metrics.purchases.lastSettledAt).toISOString().replace('T', ' ').slice(0, 16) + ' UTC'
+                      : 'none yet',
+                  )}
+                </>
+              ) : null}
+
+              {metrics.dailyRegistrations ? (
+                <>
+                  <h2 className="faq-q" style={{ fontSize: 18, marginTop: 24 }}>
+                    Registrations, last 14 days
+                  </h2>
+                  <p className="body-2" style={{ fontSize: 14 }}>
+                    Names registered per UTC day, from the same index as above — the same honesty
+                    label applies.
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 72, marginTop: 12 }}>
+                    {metrics.dailyRegistrations.map((day) => {
+                      const max = Math.max(1, ...metrics.dailyRegistrations!.map((d) => d.registrations));
+                      return (
+                        <div
+                          key={day.date}
+                          title={`${day.date}: ${day.registrations}`}
+                          style={{
+                            flex: 1,
+                            height: `${Math.max(4, (day.registrations / max) * 100)}%`,
+                            minHeight: 3,
+                            background: day.registrations > 0 ? 'var(--accent, #111)' : 'var(--line)',
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="mono" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, opacity: 0.7, marginTop: 4 }}>
+                    <span>{metrics.dailyRegistrations[0]?.date}</span>
+                    <span>{metrics.dailyRegistrations[metrics.dailyRegistrations.length - 1]?.date}</span>
+                  </div>
                 </>
               ) : null}
 

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CertificationIntentForm } from '@/components/CertificationIntentForm';
 import { DocsLede, StatusTag } from '@/components/DocsMeta';
 import { DocsSidebar } from '@/components/DocsSidebar';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -152,6 +153,14 @@ export default async function PricingConceptPage() {
                 contract is not deployed, so nothing can be certified yet.
               </li>
             </ul>
+            <p>
+              If you would want your service certified the day that changes, leave a contact below.
+              Nothing is charged, and the list itself publishes counts only:{' '}
+              {metrics?.data?.certificationIntents
+                ? `${metrics.data.certificationIntents.total} ${metrics.data.certificationIntents.total === 1 ? 'person has' : 'people have'} signed up so far.`
+                : 'the count is on /numbers.'}
+            </p>
+            <CertificationIntentForm />
 
             <div className="docs-next">
               <Link className="btn btn-primary" href="/claim">

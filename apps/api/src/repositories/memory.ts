@@ -2,6 +2,8 @@ import type { Address } from 'viem';
 import type {
   CardVersion,
   CardsRepo,
+  CertificationIntent,
+  CertificationIntentsRepo,
   InvitationClaim,
   InvitationClaimsRepo,
   NamesRepo,
@@ -29,6 +31,7 @@ export function createMemoryRepos(): {
   cards: CardsRepo;
   invitationClaims: InvitationClaimsRepo;
   purchases: PurchaseRepo;
+  certificationIntents: CertificationIntentsRepo;
 } {
   const byNormalized = new Map<string, Registry>();
   const sponsorships: Array<SponsorshipEntry & { sponsoredAt: Date }> = [];
@@ -36,6 +39,7 @@ export function createMemoryRepos(): {
   const cardVersions: CardVersion[] = [];
   const invitationClaims = new Map<string, InvitationClaim>();
   const purchaseQuotes = new Map<string, PurchaseQuote>();
+  const certificationIntents = new Map<string, CertificationIntent>();
   let nextId = 1;
 
   const names: NamesRepo = {
@@ -229,7 +233,39 @@ export function createMemoryRepos(): {
           quote.createdAt >= since,
       ).length;
     },
+    async purchaseTotals() {
+      const settled = [...purchaseQuotes.values()].filter((quote) => quote.status === 'settled');
+      const totalUsd = settled.reduce((sum, quote) => sum + quote.priceUsd, 0);
+      const lastSettledAt = settled.reduce<Date | null>(
+        (latest, quote) => (latest === null || quote.expiresAt > latest ? quote.expiresAt : latest),
+        null,
+      );
+      return { count: settled.length, totalUsd: Math.round(totalUsd * 100) / 100, lastSettledAt };
+    },
   };
 
-  return { names, sponsorship, requests, cards, invitationClaims: claims, purchases };
+  const certification: CertificationIntentsRepo = {
+    async insert({ contact, note, createdAt }) {
+      const key = contact.trim().toLowerCase();
+      const existing = certificationIntents.get(key);
+      // A repeat sign-up is not a new signal; it keeps its original date.
+      if (existing) return existing;
+      const record: CertificationIntent = {
+        id: `cert-${nextId++}`,
+        contact: contact.trim(),
+        note: note?.trim() || null,
+        createdAt: createdAt ?? new Date(),
+      };
+      certificationIntents.set(key, record);
+      return record;
+    },
+    async countAll() {
+      return certificationIntents.size;
+    },
+    async countSince(since) {
+      return [...certificationIntents.values()].filter((entry) => entry.createdAt >= since).length;
+    },
+  };
+
+  return { names, sponsorship, requests, cards, invitationClaims: claims, purchases, certificationIntents: certification };
 }

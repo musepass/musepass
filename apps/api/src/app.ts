@@ -69,7 +69,7 @@ function boom(
 }
 
 export function createApp(deps: MusenameDeps) {
-  const { config, reservedIndex, chain, names, requests, cards, sponsorship, invitationClaims, purchases, indexKind, clock } = deps;
+  const { config, reservedIndex, chain, names, requests, cards, sponsorship, invitationClaims, purchases, certificationIntents, indexKind, clock } = deps;
   const app = new Hono();
   const buckets = new Map<string, RateBucket>();
 
@@ -340,10 +340,32 @@ export function createApp(deps: MusenameDeps) {
     // stranger can see it before the claim endpoint starts refusing.
     const startOfDay = new Date(clock());
     startOfDay.setUTCHours(0, 0, 0, 0);
-    const [sponsoredToday, sponsoredLifetime] = await Promise.all([
+    const sevenDaysAgo = new Date(startOfDay.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const [sponsoredToday, sponsoredLifetime, purchaseTotals, certIntents, certIntentsRecent] = await Promise.all([
       sponsorship.countPlatformSince(startOfDay),
       sponsorship.countPlatformLifetime(),
+      purchases.purchaseTotals(),
+      certificationIntents.countAll().catch(() => null),
+      certificationIntents.countSince(sevenDaysAgo).catch(() => null),
     ]);
+
+    // Fourteen UTC day buckets ending today, zero-filled. Computed from the
+    // index rows above, so it inherits their honesty label: with a memory index
+    // it describes this process, not the chain.
+    const daily: { date: string; registrations: number }[] = [];
+    const todayUtc = new Date(clock());
+    todayUtc.setUTCHours(0, 0, 0, 0);
+    const dayMs = 24 * 60 * 60 * 1000;
+    for (let offset = 13; offset >= 0; offset -= 1) {
+      const bucket = new Date(todayUtc.getTime() - offset * dayMs);
+      daily.push({ date: bucket.toISOString().slice(0, 10), registrations: 0 });
+    }
+    const dailyIndex = new Map(daily.map((entry, i) => [entry.date, i]));
+    for (const row of rows) {
+      const key = row.registeredAt.toISOString().slice(0, 10);
+      const i = dailyIndex.get(key);
+      if (i !== undefined) daily[i].registrations += 1;
+    }
 
     return c.json(
       {
@@ -377,6 +399,22 @@ export function createApp(deps: MusenameDeps) {
               : {}),
           },
           namesWithCard: withCard,
+          /** Paid purchases: settled quotes only. Open quotes are not revenue. */
+          purchases: {
+            settled: purchaseTotals.count,
+            revenueUsd: purchaseTotals.totalUsd,
+            currency: config.pricing.purchase?.currency ?? 'USDG',
+            lastSettledAt: purchaseTotals.lastSettledAt?.toISOString() ?? null,
+            note: 'settled purchases only; a quote that expired or failed is not counted',
+          },
+          /** Registrations per UTC day, last 14 days, from the same index as above. */
+          dailyRegistrations: daily,
+          /** Demand for the unbuilt certification tier. Counts only, never contacts. */
+          certificationIntents: {
+            total: certIntents,
+            last7Days: certIntentsRecent,
+            note: 'sign-ups to be told when certification opens; contacts are not published',
+          },
           /** The free-name giveaway: caps and how much of them is spent. */
           budget: {
             freeNamesTotalCap: config.limits.freeNamesTotalCap,
@@ -553,6 +591,73 @@ export function createApp(deps: MusenameDeps) {
       },
       200,
       { 'cache-control': 'public, max-age=60' },
+    );
+  });
+
+  /**
+   * Certification is designed, not running (phase 5, $5/month decided). This
+   * endpoint exists so demand can register itself while it is honest to ask:
+   * an email is stored, nothing is charged, and no promise of a launch date is
+   * made. Contacts stay private — only counts are published via /v1/metrics.
+   */
+  app.post('/v1/certification/intent', async (c) => {
+    const ip = (c.req.header('x-forwarded-for') ?? '').split(',')[0].trim();
+    if (ip && !rateLimit(c, `cert-intent:${ip}`, config.limits.rateLimits.certificationIntentsPerHourPerIp)) {
+      return c.json(
+        {
+          summary: {
+            zh: '这个 IP 提交得太频繁，一小时后再试。',
+            en: 'Too many sign-ups from this address; try again in an hour.',
+          },
+          errors: [
+            boom('RATE_LIMITED', 'too many certification intent submissions from this IP', {
+              zh: '提交太频繁，稍后再试。',
+              en: 'Too many submissions; try again later.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        429,
+      );
+    }
+
+    const body = await c.req.json().catch(() => null) as { contact?: unknown; note?: unknown } | null;
+    const contact = typeof body?.contact === 'string' ? body.contact.trim() : '';
+    const note = typeof body?.note === 'string' ? body.note.trim().slice(0, 500) : null;
+
+    const emailShape = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailShape.test(contact) || contact.length > 254) {
+      return c.json(
+        {
+          summary: {
+            zh: '需要一个看起来像邮箱的联系方式。',
+            en: 'A contact that looks like an email address is required.',
+          },
+          errors: [
+            boom('INVALID_CONTACT', 'contact must be an email address', {
+              zh: '联系方式必须是邮箱。',
+              en: 'The contact must be an email address.',
+            }),
+          ],
+          meta: meta(false),
+        },
+        422,
+      );
+    }
+
+    await certificationIntents.insert({ contact, note });
+    const total = await certificationIntents.countAll();
+    return c.json(
+      {
+        summary: {
+          zh: `已登记。认证上线时会通知你。目前共 ${total} 人登记。`,
+          en: `Signed up. You will be told when certification opens. ${total} people are on the list so far.`,
+        },
+        data: { ok: true, totalIntents: total },
+        errors: [],
+        meta: meta(false),
+      },
+      201,
     );
   });
 
