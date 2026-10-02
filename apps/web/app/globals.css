@@ -1548,3 +1548,62 @@ html.motion .reveal-children.is-visible > *:nth-child(6) { transition-delay: 450
     gap: 6px;
   }
 }
+
+/* ------------------------------------------------------------- agent town
+   The animated town next to the hero copy (components/AgentTown.tsx). The
+   search-following card floats over its lower-left corner, smaller, so both
+   stay visible. On narrow screens the card sits below the town instead. */
+.hero-visual {
+  position: relative;
+  min-width: 0;
+}
+
+.town {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: #07130f;
+  border: 1px solid rgba(18, 62, 52, 0.35);
+  box-shadow: 0 40px 80px -36px rgba(18, 62, 52, 0.6);
+}
+
+.town-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 6 / 5;
+}
+
+.hero-visual .card-wrap {
+  position: absolute;
+  left: -36px;
+  bottom: -44px;
+  width: 500px;
+  z-index: 2;
+  pointer-events: none;
+  justify-content: flex-start;
+}
+
+.hero-visual .card {
+  transform: rotate(-4deg) scale(0.54);
+  transform-origin: bottom left;
+}
+
+@media (max-width: 1180px) {
+  .hero-visual .card {
+    transform: rotate(-4deg) scale(0.48);
+  }
+}
+
+@media (max-width: 900px) {
+  .hero-visual .card-wrap {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: auto;
+    margin-top: 16px;
+    justify-content: center;
+  }
+  .hero-visual .card {
+    transform: none;
+  }
+}

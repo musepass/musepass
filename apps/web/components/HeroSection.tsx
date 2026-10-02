@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ApiError, checkAvailability, type PublicConfig } from '@/lib/api';
 import { resolveAvailability, type AvailabilityView } from '@/lib/availability';
+import { AgentTown } from './AgentTown';
 import { CardMock } from './CardMock';
 import { useWallet } from './WalletProvider';
 
@@ -143,7 +144,10 @@ export function HeroSection({ config }: { config: PublicConfig }) {
         </div>
       </div>
 
-      <CardMock label={display} rootName={config.rootName} />
+      <div className="hero-visual">
+        <AgentTown />
+        <CardMock label={display} rootName={config.rootName} />
+      </div>
     </section>
   );
 }
