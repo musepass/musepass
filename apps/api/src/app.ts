@@ -166,9 +166,9 @@ export function createApp(deps: MusenameDeps) {
     byLabel: Map<string, number>;
     expiresAt: number;
   } | null = null;
+  let genesisRefresh: Promise<void> | null = null;
 
-  async function genesisCover() {
-    if (genesisCache && genesisCache.expiresAt > Date.now()) return genesisCache;
+  async function buildGenesisCache(): Promise<void> {
     const registered = [...(await chain.listNames())].sort(
       (a, b) => a.blockNumber - b.blockNumber,
     );
@@ -189,6 +189,23 @@ export function createApp(deps: MusenameDeps) {
       byLabel.set(entry.label, number);
     }
     genesisCache = { numbered, byLabel, expiresAt: Date.now() + 5 * 60 * 1000 };
+  }
+
+  async function genesisCover() {
+    if (genesisCache && genesisCache.expiresAt > Date.now()) return genesisCache;
+    if (!genesisCache) {
+      // First call in the process: there is no stale value to serve.
+      await buildGenesisCache();
+      return genesisCache!;
+    }
+    // The rebuild is sequential chain reads — tens of seconds at the current
+    // name count — so the expired view is served stale while a single
+    // background refresh runs. Without this, one request every five minutes
+    // paid the whole rebuild (a cold /v1/names took ~45s, which timed out the
+    // card image renderer).
+    genesisRefresh ??= buildGenesisCache().finally(() => {
+      genesisRefresh = null;
+    });
     return genesisCache;
   }
 
