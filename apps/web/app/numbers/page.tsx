@@ -160,6 +160,14 @@ export default async function NumbersPage() {
                         'Estimated gas paid so far',
                         `$${metrics.budget.estimatedSpentUsd.toFixed(2)} / $${metrics.budget.totalCapUsd}`,
                       )}
+                      {metrics.budget.sponsorBalanceEth !== undefined
+                        ? row(
+                            'Gas in the sponsor wallet',
+                            metrics.budget.sponsorBalanceEth === null
+                              ? 'unavailable right now'
+                              : `${metrics.budget.sponsorBalanceEth.toFixed(5)} ETH`,
+                          )
+                        : null}
                     </>
                   ) : null}
 
@@ -235,6 +243,30 @@ export default async function NumbersPage() {
                     <span>{metrics.dailyRegistrations[0]?.date}</span>
                     <span>{metrics.dailyRegistrations[metrics.dailyRegistrations.length - 1]?.date}</span>
                   </div>
+                </>
+              ) : null}
+
+              {metrics.retention ? (
+                <>
+                  <h2 className="faq-q" style={{ fontSize: 18, marginTop: 24 }}>
+                    Coming back
+                  </h2>
+                  <p className="body-2" style={{ fontSize: 14 }}>
+                    A wallet counts as returning when it registered a second name or published a
+                    card within the window after its first name. Wallets younger than the window
+                    are not counted at all, and the counts are printed next to the share so a
+                    rate over three wallets cannot pretend to be a trend.
+                  </p>
+                  {row(
+                    'Returned within 1 day',
+                    `${metrics.retention.d1.returned} / ${metrics.retention.d1.eligible}` +
+                      (metrics.retention.d1.rate === null ? ' (too early to tell)' : ` (${Math.round(metrics.retention.d1.rate * 100)}%)`),
+                  )}
+                  {row(
+                    'Returned within 7 days',
+                    `${metrics.retention.d7.returned} / ${metrics.retention.d7.eligible}` +
+                      (metrics.retention.d7.rate === null ? ' (too early to tell)' : ` (${Math.round(metrics.retention.d7.rate * 100)}%)`),
+                  )}
                 </>
               ) : null}
 

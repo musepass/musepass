@@ -1,6 +1,7 @@
 import {
   createPublicClient,
   createWalletClient,
+  formatEther,
   http,
   namehash,
   type Address,
@@ -162,6 +163,7 @@ export function createChainReader(options: ChainReaderOptions): ChainReader {
    * every refresh is worse than one that is a few minutes old and says so.
    */
   let namesCache: { value: NamesList; expiresAt: number } | null = null;
+  let balanceCache: { value: number; expiresAt: number } | null = null;
 
   const requireAddresses = (): { registrar: Address; l2Registry: Address } => {
     if (!registrar || !l2Registry) {
@@ -355,6 +357,20 @@ export function createChainReader(options: ChainReaderOptions): ChainReader {
       if (!sawTo) return { ok: false, reason: 'WRONG_TO' as const };
       if (best < input.minAmount) return { ok: false, reason: 'INSUFFICIENT' as const };
       return { ok: true, amount: best, blockNumber: Number(receipt.blockNumber) };
+    },
+
+    /**
+     * The sponsor wallet's ETH balance, cached for five minutes so a metrics
+     * refresh cannot be talked into a per-request RPC round trip. Null when
+     * there is no issuer key or the RPC fails — the budget block says which.
+     */
+    async getSponsorBalanceEth() {
+      if (!issuerWallet) return null;
+      if (balanceCache && balanceCache.expiresAt > Date.now()) return balanceCache.value;
+      const wei = await publicClient.getBalance({ address: issuerWallet.account.address });
+      const value = Number(formatEther(wei));
+      balanceCache = { value, expiresAt: Date.now() + 5 * 60 * 1000 };
+      return value;
     },
   };
 }

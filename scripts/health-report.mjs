@@ -42,7 +42,13 @@ const brand = JSON.parse(readFileSync(resolve(configDir, 'brand.json'), 'utf8'))
 const NAME = 'peter.musepass.eth';
 const EXPECTED_ADDRESS = '0x2d319F9159e11ab729DFD510023E07e2C609BeF4';
 const RESOLVER = '0x9eA7A8896a68717e587BC1EE17B6b0B80EEeb443';
-const SPONSOR = '0x66F499e8F0A92e44A0F9c59a305E73a12b5684e7';
+// The wallet the live API's MUSENAME_ISSUER_KEY actually pays gas from. It was
+// pinned on 2026-10-02 by reading the `from` of a live sponsored registration;
+// the previous constant belonged to an earlier wallet, so the balance check
+// said "ok" while the real issuer was nearly empty. After any key rotation,
+// re-verify with the sender of the newest register transaction (or set
+// MUSENAME_ISSUER_ADDRESS in the unit's environment).
+const SPONSOR = (process.env.MUSENAME_ISSUER_ADDRESS ?? '0xc2bf5fda20fea5317dde510adb483961c5abc864').toLowerCase();
 const MIN_SPONSOR_ETH = 0.0002;
 const MAX_ANCHOR_AGE_DAYS = 2;
 

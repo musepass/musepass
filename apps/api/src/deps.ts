@@ -196,6 +196,13 @@ export interface ChainReader {
     | { ok: true; amount: bigint; blockNumber: number }
     | { ok: false; reason: 'NOT_FOUND' | 'REVERTED' | 'WRONG_TOKEN' | 'WRONG_FROM' | 'WRONG_TO' | 'INSUFFICIENT' }
   >;
+  /**
+   * Live ETH balance of the sponsor (issuer) wallet on the L2, published in
+   * the metrics budget block so a stranger can see the giveaway is funded.
+   * Optional: null when no issuer key is configured; implementations may
+   * cache, and an RPC failure surfaces as null rather than an error.
+   */
+  getSponsorBalanceEth?(): Promise<number | null>;
 }
 
 export type RegistrationRequestStatus = 'pending' | 'confirmed' | 'expired' | 'rejected';

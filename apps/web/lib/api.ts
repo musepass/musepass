@@ -321,6 +321,13 @@ export function fetchName(name: string, options?: RequestOptions) {
   return request<NameData>(`/v1/names/${encodeURIComponent(name)}`, {}, options);
 }
 
+export interface RetentionBucket {
+  days: number;
+  eligible: number;
+  returned: number;
+  rate: number | null;
+}
+
 export interface MetricsData {
   chain: {
     names: number | null;
@@ -338,6 +345,7 @@ export interface MetricsData {
     sponsoredLifetime: number;
     estimatedSpentUsd: number;
     totalCapUsd: number;
+    sponsorBalanceEth: number | null;
     note: string;
   };
   byTier: Record<string, number>;
@@ -352,6 +360,11 @@ export interface MetricsData {
     note: string;
   };
   dailyRegistrations?: Array<{ date: string; registrations: number }>;
+  retention?: {
+    d1: RetentionBucket;
+    d7: RetentionBucket;
+    note: string;
+  };
   certificationIntents?: { total: number; last7Days: number; note: string };
   notMeasured: Array<{ id: string; metric: string; why: string }>;
 }

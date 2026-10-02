@@ -1478,3 +1478,82 @@ describe('POST /v1/certification/intent', () => {
     expect(JSON.stringify(metrics)).not.toContain('counter@example.com');
   });
 });
+
+describe('retention and sponsor balance in /v1/metrics', () => {
+  const HOUR = 60 * 60 * 1000;
+  const DAY = 24 * HOUR;
+
+  async function seedName(
+    deps: MusenameDeps,
+    label: string,
+    owner: Address,
+    registeredAt: Date,
+  ) {
+    return deps.names.insert({
+      label,
+      fullName: `${label}.musepass.eth`,
+      normalized: label,
+      ownerAddress: owner,
+      tier: 'free',
+      status: 'active',
+      registeredVia: 'web',
+      agentHost: null,
+      txHash: null,
+      registeredAt,
+    });
+  }
+
+  it('counts a wallet as returning when it registered again or published a card in the window', async () => {
+    const { app, deps } = buildApp();
+    const now = FIXED_NOW.getTime();
+    const walletA = ('0x' + '11'.repeat(20)) as Address;
+    const walletB = ('0x' + '22'.repeat(20)) as Address;
+    const walletC = ('0x' + '33'.repeat(20)) as Address;
+
+    // A: second name 12h after the first — returns in both windows.
+    await seedName(deps, 'alpha', walletA, new Date(now - 10 * DAY));
+    await seedName(deps, 'alpha2', walletA, new Date(now - 10 * DAY + 12 * HOUR));
+    // B: card published three days after registering — returns in D7 only.
+    const bravo = await seedName(deps, 'bravo', walletB, new Date(now - 10 * DAY));
+    await deps.cards.addVersion({
+      nameId: bravo.id,
+      contentHash: `0x${'ab'.repeat(32)}`,
+      visibility: {},
+      createdAt: new Date(now - 7 * DAY),
+    });
+    // C: one name, never came back.
+    await seedName(deps, 'charlie', walletC, new Date(now - 10 * DAY));
+
+    const metrics = await (await app.request('/v1/metrics')).json();
+    const { d1, d7 } = metrics.data.retention;
+    expect(d1).toEqual({ days: 1, eligible: 3, returned: 1, rate: 0.333 });
+    expect(d7).toEqual({ days: 7, eligible: 3, returned: 2, rate: 0.667 });
+  });
+
+  it('excludes wallets younger than the window instead of counting them as churned', async () => {
+    const { app, deps } = buildApp();
+    const now = FIXED_NOW.getTime();
+    const fresh = ('0x' + '44'.repeat(20)) as Address;
+    await seedName(deps, 'fresh', fresh, new Date(now - 2 * HOUR));
+    const metrics = await (await app.request('/v1/metrics')).json();
+    expect(metrics.data.retention.d1).toEqual({ days: 1, eligible: 0, returned: 0, rate: null });
+    expect(metrics.data.retention.d7).toEqual({ days: 7, eligible: 0, returned: 0, rate: null });
+  });
+
+  it('publishes the sponsor gas balance when the chain reader offers it', async () => {
+    const base = fakeChain();
+    const { app } = buildApp({
+      chain: { ...base, async getSponsorBalanceEth() { return 0.00225; } },
+    });
+    const metrics = await (await app.request('/v1/metrics')).json();
+    expect(metrics.data.budget.sponsorBalanceEth).toBe(0.00225);
+    expect(metrics.data.budget.note).toContain('0.00225 ETH');
+  });
+
+  it('says null rather than inventing a balance the reader cannot produce', async () => {
+    const { app } = buildApp();
+    const metrics = await (await app.request('/v1/metrics')).json();
+    expect(metrics.data.budget.sponsorBalanceEth).toBeNull();
+    expect(metrics.data.budget.note).toContain('unavailable');
+  });
+});

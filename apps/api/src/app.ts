@@ -338,15 +338,50 @@ export function createApp(deps: MusenameDeps) {
 
     let withCard = 0;
     let firstRegisteredAt: string | null = null;
+    // Every action timestamp per owner (lowercased): a registration or a card
+    // version. Retention is computed from this: the earliest timestamp is the
+    // wallet's arrival, anything after it is a return visit.
+    const actionsByOwner = new Map<string, number[]>();
+    const recordAction = (owner: string, at: Date) => {
+      const key = owner.toLowerCase();
+      const list = actionsByOwner.get(key) ?? [];
+      list.push(at.getTime());
+      actionsByOwner.set(key, list);
+    };
     for (const row of rows) {
       byTier[row.tier] = (byTier[row.tier] ?? 0) + 1;
       byChannel[row.registeredVia] = (byChannel[row.registeredVia] ?? 0) + 1;
       byStatus[row.status] = (byStatus[row.status] ?? 0) + 1;
       const stamp = row.registeredAt.toISOString();
       if (firstRegisteredAt === null || stamp < firstRegisteredAt) firstRegisteredAt = stamp;
+      recordAction(row.ownerAddress, row.registeredAt);
       const versions = await cards.listVersions(row.id);
+      for (const version of versions) recordAction(row.ownerAddress, version.createdAt);
       if (versions.length > 0) withCard += 1;
     }
+
+    // D1/D7 retention: of the wallets whose first name is old enough to judge,
+    // the share that registered again or published a card within the window.
+    // Counts are published next to the rate so small numbers stay honest.
+    const nowMs = clock().getTime();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const retention = ([1, 7] as const).map((days) => {
+      const windowMs = days * dayMs;
+      let eligible = 0;
+      let returned = 0;
+      for (const actions of actionsByOwner.values()) {
+        const first = Math.min(...actions);
+        if (first > nowMs - windowMs) continue;
+        eligible += 1;
+        if (actions.some((at) => at > first && at - first <= windowMs)) returned += 1;
+      }
+      return {
+        days,
+        eligible,
+        returned,
+        rate: eligible > 0 ? Number((returned / eligible).toFixed(3)) : null,
+      };
+    });
 
     const chainCount = chainNames.length;
     const indexedOwners = new Set(rows.map((row) => row.ownerAddress.toLowerCase()));
@@ -365,6 +400,9 @@ export function createApp(deps: MusenameDeps) {
       certificationIntents.countAll().catch(() => null),
       certificationIntents.countSince(sevenDaysAgo).catch(() => null),
     ]);
+    // The gas tank behind the giveaway. Null when the issuer key is not
+    // configured or the RPC is unreachable — the note says so.
+    const sponsorBalanceEth = await (chain.getSponsorBalanceEth?.() ?? Promise.resolve(null)).catch(() => null);
 
     // Fourteen UTC day buckets ending today, zero-filled. Computed from the
     // index rows above, so it inherits their honesty label: with a memory index
@@ -372,7 +410,6 @@ export function createApp(deps: MusenameDeps) {
     const daily: { date: string; registrations: number }[] = [];
     const todayUtc = new Date(clock());
     todayUtc.setUTCHours(0, 0, 0, 0);
-    const dayMs = 24 * 60 * 60 * 1000;
     for (let offset = 13; offset >= 0; offset -= 1) {
       const bucket = new Date(todayUtc.getTime() - offset * dayMs);
       daily.push({ date: bucket.toISOString().slice(0, 10), registrations: 0 });
@@ -426,6 +463,17 @@ export function createApp(deps: MusenameDeps) {
           },
           /** Registrations per UTC day, last 14 days, from the same index as above. */
           dailyRegistrations: daily,
+          /**
+           * D1/D7 retention: of the wallets whose first name is at least that
+           * old, the share that came back — registered a second name or
+           * published a card — within the window. Counts ride along so a rate
+           * over three wallets cannot masquerade as a trend.
+           */
+          retention: {
+            d1: retention[0],
+            d7: retention[1],
+            note: 'a return is a second registration or a published card by the same wallet, within the window of its first registration; wallets younger than the window are not counted',
+          },
           /** Demand for the unbuilt certification tier. Counts only, never contacts. */
           certificationIntents: {
             total: certIntents,
@@ -442,7 +490,12 @@ export function createApp(deps: MusenameDeps) {
               (sponsoredLifetime * config.limits.sponsorship.estimatedGasUsdPerName).toFixed(2),
             ),
             totalCapUsd: config.limits.sponsorship.platformTotalCapUsd,
-            note: 'free claims pause when the count cap or the USD cap is reached; both are published here',
+            sponsorBalanceEth,
+            note:
+              'free claims pause when the count cap or the USD cap is reached; both are published here' +
+              (sponsorBalanceEth === null
+                ? '; the sponsor balance is unavailable right now (no issuer key configured, or the RPC did not answer)'
+                : `; the sponsor wallet held ${sponsorBalanceEth.toFixed(5)} ETH for gas when this was read (cached five minutes)`),
           },
           byTier,
           byChannel,
