@@ -14,6 +14,13 @@
   "registrarTx": "0xe01cd3b2fad0be96b89b249b790390d91eedecdc530360415802bb5f2e1fe231",
   "addRegistrarTx": "0xeba5fa4688edad7d62305a0cfc98d88887b66572645f7a64c6367116dd967b7a",
   "issuer": "0xC2bf5fdA20fEA5317DdE510aDb483961c5ABc864",
+  "nftMetadata": {
+    "$comment": "The registry itself is the ERC-721 (Durin L2Registry); tokenId is the name's node in decimal. setBaseURI (2026-10-02, signed by the registry owner) points tokenURI at the web app's metadata route, which reads names(node) straight from the chain and serves image = /name/<label>/card.png. Before this, tokenURI returned an on-chain JSON with the name only and no image.",
+    "setBaseURITx": "0xbbc6dc23a2c55d26d963e8a8a307f620ad383f29b8a25591889e3a723413a6af",
+    "baseURI": "https://musepass.xyz/nft/",
+    "route": "apps/web/app/nft/[tokenId]/route.ts",
+    "verifiedTokenURI": "https://musepass.xyz/nft/58684116078054252344833263567411543217948319990386290030224873202891908050250 (peter.musepass.eth, 200)"
+  },
   "mainnetSetup": {
     "$comment": "Root name connected 2026-09-30. Two transactions signed by the name owner (0x022Ce19a…85b7): the resolver learns where the data lives, then the root points at the resolver — that order, so the root itself never goes unresolvable halfway. Verified afterwards with scripts/l1-resolver.mjs (8/8) and a real ENS lookup of five names.",
     "setResolverTx": "0xc423ffff8e475be73965b0293961ad116f431c2da39e6e2b4cbcc01d37df7664",
