@@ -22,6 +22,12 @@ export default async function TermsPage() {
     </>
   );
 
+  // The paid rail (D19) renders its live prices only when the API says it is
+  // open; the fallback config has payment: null, so a prerender during an API
+  // outage still shows the honest "not purchasable" paragraph.
+  const sellable = config.pricing.premiumTiers.filter((tier) => tier.sellable);
+  const purchaseOpen = config.payment !== null && config.features.premiumPurchase;
+
   return (
     <div className="page">
       <div className="container">
@@ -61,13 +67,55 @@ export default async function TermsPage() {
 
           {section(
             'Paid items',
+            purchaseOpen ? (
+              <p>
+                A 4-character name sells for{' '}
+                {sellable.length > 0 ? sellable.map((tier) => `$${tier.priceUsd}`).join(', ') : '$5'},
+                and a second or later name of five characters or more for{' '}
+                {config.payment?.additionalNameUsd !== null ? `$${config.payment?.additionalNameUsd}` : '$1'},
+                paid in {config.payment?.currency} on {config.chain.name}. The
+                payment is a wallet-to-wallet transfer from you to a receive-only
+                treasury address; the name is issued only after the transfer is
+                verified on chain. Names of 1–3 characters stay with the project
+                and are not on sale. Certified records are priced at{' '}
+                {config.pricing.certificationMonthlyUsd} {config.pricing.currency}/month and are
+                not purchasable yet: that flow is not built. Payments are final once
+                the name is registered. If you paid and no name could be issued —
+                for example the label was taken in the minutes before your payment
+                landed — write to{' '}
+                <a href={`mailto:${config.supportEmail}`}>{config.supportEmail}</a> and the
+                payment is returned to the address that sent it.
+              </p>
+            ) : (
+              <p>
+                Short names are priced by length and certified records at{' '}
+                {config.pricing.certificationMonthlyUsd} {config.pricing.currency}/month. Neither is
+                purchasable today: the payment flow is not built, and no price has ever been charged.
+                Nothing here takes payment, so nothing here can bill you.
+              </p>
+            ),
+          )}
+
+          {section(
+            'Impersonation and complaints',
             <p>
-              Short names are priced by length and certified records at{' '}
-              {config.pricing.certificationMonthlyUsd} {config.pricing.currency}/month. Neither is
-              purchasable today: the payment flow is not built, and no price has ever been charged.
-              Nothing here takes payment, so nothing here can bill you.
+              Every wallet can claim an unused name, so a name can be held by
+              someone who is not the person or brand it evokes. If a name
+              impersonates you or a brand you represent, write to{' '}
+              <a href={`mailto:${config.supportEmail}`}>{config.supportEmail}</a> with the name and
+              evidence of who you are; we answer within 48 hours. What we can do:
+              refuse further service to that wallet and say so through the
+              API&apos;s error rather than silently, add the name and its confusable
+              variants to the reserved list so the variants cannot be registered by
+              anyone else, and stop paying gas for that wallet. What we do not do:
+              we do not adjudicate who someone &quot;really&quot; is, and, as above, an
+              issued name stays with the wallet holding it — we cannot move, freeze
+              or reverse one. Who can do what today, including the registry admin,
+              is written on{' '}
+              <a href={`https://${config.siteUrl.replace(/^https?:\/\//, '')}/trust`}>the trust page</a>.
             </p>,
           )}
+
 
           {section(
             'Your wallet, your responsibility',

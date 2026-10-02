@@ -136,6 +136,24 @@ const REQUIRED = [
     needle: 'The first name is free',
     because: 'the free rail is open to every wallet; the homepage has to say so',
   },
+  // Terms (2026-10-02): the paid rail is live (D19), so the terms must state
+  // the real prices, the receive-only treasury, and the refund path for a
+  // payment that landed but could not be issued.
+  {
+    id: 'terms-purchase-refund',
+    file: 'apps/web/app/terms/page.tsx',
+    needle: 'payment is returned to the address that sent it',
+    because: 'a paid rail with no stated refund path for failed issuance is a lie of omission',
+  },
+  // Terms (2026-10-02): D20 opened registration to every wallet, so
+  // impersonation is the predictable abuse; the complaint path and its SLA
+  // must exist in writing before it is needed.
+  {
+    id: 'terms-impersonation-sla',
+    file: 'apps/web/app/terms/page.tsx',
+    needle: 'we answer within 48 hours',
+    because: 'anyone can claim a name; the complaint route and its SLA have to be findable',
+  },
 ];
 
 const missing = [];
