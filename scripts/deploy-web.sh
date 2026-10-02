@@ -65,6 +65,13 @@ fi
 mkdir -p "$BUNDLE/apps/web/.next"
 cp -R apps/web/.next/static "$BUNDLE/apps/web/.next/static"
 
+# The same is true of public/ assets (passport artwork): standalone does not
+# include them, and the server serves them from beside server.js at runtime.
+if [ -d apps/web/public ]; then
+  mkdir -p "$BUNDLE/apps/web/public"
+  cp -R apps/web/public/. "$BUNDLE/apps/web/public"
+fi
+
 # COPYFILE_DISABLE: without it, macOS tar writes an AppleDouble `._file` beside
 # every real file. The live directory still carries a set from an earlier deploy.
 COPYFILE_DISABLE=1 tar -C "$BUNDLE" -czf "$TARBALL" .

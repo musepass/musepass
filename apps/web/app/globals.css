@@ -1423,6 +1423,32 @@ html.motion .reveal-children.is-visible > *:nth-child(6) { transition-delay: 450
   margin: 12px 0 18px;
 }
 
+.passport-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 16px 0 8px;
+}
+
+.passport-figure {
+  margin: 0 0 20px;
+}
+
+.passport-figure img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.passport-figure figcaption {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
 .docs-table {
   width: 100%;
   border-collapse: collapse;

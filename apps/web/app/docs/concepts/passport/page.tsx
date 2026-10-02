@@ -34,6 +34,25 @@ export default async function PassportConceptPage() {
               lede="A name, a card, and stamps — the identity half of MusePass. The name and the card are live; stamps are built and not deployed."
             />
 
+            <div className="passport-row">
+              <figure className="passport-figure">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/passport/standard.jpg" alt="Passport artwork: a name with no record yet and zero stamps" />
+                <figcaption>
+                  Artwork of the passport as it exists today: the name, its address, zero stamps.
+                  Example artwork — no real name.
+                </figcaption>
+              </figure>
+              <figure className="passport-figure">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/passport/genesis.jpg" alt="Genesis passport artwork with a genesis number out of 1000" />
+                <figcaption>
+                  The genesis variant carries a number out of the first 1,000 — a display trait
+                  of the same name, not a second token. Example artwork.
+                </figcaption>
+              </figure>
+            </div>
+
             <h2 className="h3">Under the hood</h2>
             <p>
               A name is an ENS subname under <code className="mono">{rootName}</code>, minted as an
@@ -85,6 +104,18 @@ export default async function PassportConceptPage() {
               </Link>
               .
             </p>
+            <figure className="passport-figure">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/passport/stamps-example.jpg"
+                alt="Example artwork: a passport with seven stamps for delivered work — no such record exists yet"
+                style={{ maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}
+              />
+              <figcaption>
+                An example of what a filled record is designed to look like. No stamps exist on
+                chain today — the record contract is written, tested and not deployed.
+              </figcaption>
+            </figure>
 
             <h2 className="h3" id="vault">
               The vault
@@ -127,6 +158,19 @@ export default async function PassportConceptPage() {
               reset belongs to the record contract, which is not deployed; until it is, say &ldquo;a
               transfer is planned to reset the stamps&rdquo;, not &ldquo;resets&rdquo;.
             </p>
+            <figure className="passport-figure">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/passport/transfer-example.jpg"
+                alt="Example artwork: the same passport after a transfer, stamps reset to zero with the previous owner's seven kept as history"
+                style={{ maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}
+              />
+              <figcaption>
+                The same name after a transfer, as designed: the new owner starts from zero and
+                the previous owner&apos;s stamps stay marked as theirs. Example — the reset rule
+                ships with the record contract, which is not deployed.
+              </figcaption>
+            </figure>
 
             <h2 className="h3">Genesis and invitations</h2>
             <p>
